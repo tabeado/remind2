@@ -1368,7 +1368,7 @@ reportFE <- function(gdx, regionSubsetList = NULL,
     # KK: Mappings from gams set names to names in mifs. If new CDR methods are added to REMIND, please add
     # the method to CDR_te_list: "<method name in REMIND>"="<method name displayed in reporting>"
     # If a final energy carrier not included in CDR_FE_list is used, please also add it to the list.
-    CDR_te_list <- list("dac"="DAC", "weathering"="EW")
+    CDR_te_list <- list("dac"="DAC", "weathering"="EW", "oae"="OAE")
     CDR_FE_list <- list("feels"="Electricity", "fegas"="Gases", "fehes"="Heat", "feh2s"="Hydrogen", "fedie"="Diesel")
 
     # loop to compute variables "FE|CDR|++|<CDR technology> (EJ/yr)" and "FE|CDR|<CDR technology>|+|<FE type> (EJ/yr)",
@@ -1765,8 +1765,8 @@ reportFE <- function(gdx, regionSubsetList = NULL,
   ### end of "### temporary (!) industry non-energy use reporting" for Ariadne
 
   # in case the current non-energy use implementation creates negative values, set them to 0
-  if (any(out < 0)) {
-    out[out < 0] <- 0
+  if ((any(out < 0)) %in% c(FALSE, NA)) {
+    out[out < 0 | is.na(out)] <- 0
   }
 
 # report feedstocks use by carrier when available

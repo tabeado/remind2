@@ -7,6 +7,7 @@ showLinePlots(data, "Carbon Management|Carbon Capture")
 showAreaAndBarPlotsPlus(data, "Carbon Management|Carbon Capture", scales = "fixed")
 showAreaAndBarPlotsPlus(data, "Carbon Management|Carbon Capture|Biomass|Pe2Se", scales = "fixed")
 showAreaAndBarPlotsPlus(data, "Carbon Management|Carbon Capture|Fossil|Pe2Se", scales = "fixed")
+showAreaAndBarPlotsPlus(data, "Carbon Management|Carbon Capture|OAE calcination", scales = "fixed")
 
 # industry ----
 showAreaAndBarPlotsPlus(data,
@@ -33,7 +34,8 @@ showLinePlots(data, "Carbon Management|Storage|Share of annual potential used")
 showAreaAndBarPlots(data,
                     vars = c("Carbon Management|Storage"),
                     tot = "Carbon Management|Storage|Maximum annual CO2 storage potential")
-```
+showAreaAndBarPlotsPlus(data, "Carbon Management|Storage|OAE calcination", scales = "fixed")
+
 
 ## Usage
 
@@ -53,6 +55,16 @@ showAreaAndBarPlots(data,
                     vars = c('Carbon Management|Storage',
                              'Carbon Management|Usage'),
                     tot = 'Carbon Management|Carbon Capture')
+```
+## OAE
+
+```{r OAE}
+tot <- "Emi|CO2|CDR|OAE"
+items <- c(
+"Emi|CO2|CDR|OAE|Ocean Uptake",
+"Emi|CO2|CDR|OAE|Calcination emissions"
+)
+showAreaAndBarPlots(data, items, tot, scales = "fixed")
 ```
 
 # Materials
