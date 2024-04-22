@@ -24,6 +24,7 @@ Emi|GHG;Emi|GHG|+++|Agriculture;1
 Emi|GHG;Emi|GHG|+++|Land-Use Change;1
 Emi|GHG;Emi|CO2|CDR|BECCS;1
 Emi|GHG;Emi|CO2|CDR|DACCS;1
+Emi|GHG;Emi|CO2|CDR|Biochar;1
 Emi|GHG;Emi|CO2|CDR|Industry CCS|Synthetic Fuels;1
 Emi|GHG;Emi|CO2|CDR|EW;1
 Emi|GHG;Emi|CO2|CDR|Materials|+|Plastics;1
@@ -39,6 +40,7 @@ Emi|CO2;Emi|CO2|Energy|Demand|+|CDR;1
 Emi|CO2;Emi|CO2|+|Land-Use Change;1
 Emi|CO2;Emi|CO2|+|Industrial Processes;1
 Emi|CO2;Emi|CO2|CDR|BECCS;1
+Emi|CO2;Emi|CO2|CDR|Biochar;1
 Emi|CO2;Emi|CO2|CDR|Industry CCS|Synthetic Fuels;1
 Emi|CO2;Emi|CO2|CDR|DACCS;1
 Emi|CO2;Emi|CO2|CDR|EW;1
@@ -53,7 +55,7 @@ Emi|GHG 1;Emi|CO2|+|Land-Use Change;1
 Emi|GHG 1;Emi|GHG|+|CH4;1
 Emi|GHG 1;Emi|GHG|+|N2O;1
 Emi|GHG 1;Emi|GHG|+|F-Gases;1
-Emi|GHG 1;Emi|CO2|+|non-BECCS CDR;1
+Emi|GHG 1;Emi|CO2|+|non-ES CDR;1
 ;;
 # cumulated total CO2 emissions by sectors with separation into gross and negative emissions;;
 Emi|CO2|Cumulated;Emi|CO2|Cumulated|Land-Use Change;1
@@ -66,6 +68,7 @@ Emi|CO2|Cumulated;Emi|CO2|Cumulated|Gross|Energy|Supply|Non-electric;1
 Emi|CO2|Cumulated;Emi|CO2|Cumulated|Gross|Energy|Supply|Electricity;1
 Emi|CO2|Cumulated;Emi|CO2|Cumulated|Gross|Energy|Waste;1
 Emi|CO2|Cumulated;Emi|CO2|Cumulated|CDR|BECCS;1
+Emi|CO2|Cumulated;Emi|CO2|Cumulated|CDR|Biochar;1
 Emi|CO2|Cumulated;Emi|CO2|Cumulated|CDR|Industry CCS|Synthetic Fuels;1
 Emi|CO2|Cumulated;Emi|CO2|Cumulated|CDR|DACCS;1
 Emi|CO2|Cumulated;Emi|CO2|Cumulated|CDR|EW;1
@@ -76,6 +79,7 @@ Emi|CO2|Cumulated;Emi|CO2|Cumulated|CDR|OAE;1
 Emi|CO2|CDR;Emi|CO2|CDR|Land-Use Change;1
 Emi|CO2|CDR;Emi|CO2|CDR|BECCS|Pe2Se;1
 Emi|CO2|CDR;Emi|CO2|CDR|BECCS|Industry;1
+Emi|CO2|CDR;Emi|CO2|CDR|Biochar;1
 Emi|CO2|CDR;Emi|CO2|CDR|Industry CCS|Synthetic Fuels;1
 Emi|CO2|CDR;Emi|CO2|CDR|DACCS;1
 Emi|CO2|CDR;Emi|CO2|CDR|EW;1

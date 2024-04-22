@@ -284,10 +284,10 @@ showLinePlots(data, items)
 ```
 
 
-### non-BECCS CDR
+### non-Energy System CDR
 
-```{r CO2 non-BECCS CDR}
-showLinePlots(data, "Emi|CO2|non-BECCS CDR")
+```{r CO2 non-Energy System CDR}
+showLinePlots(data, "Emi|CO2|non-ES CDR")
 ```
 
 ### CDR
@@ -298,6 +298,7 @@ items <- c(
   "Emi|CO2|Gross|Energy and Industrial Processes",
   "Emi|CO2|Land-Use Change",
   "Emi|CO2|CDR|BECCS",
+  "Emi|CO2|CDR|Biochar",
   "Emi|CO2|CDR|Industry CCS|Synthetic Fuels",
   "Emi|CO2|CDR|DACCS",
   "Emi|CO2|CDR|OAE",
@@ -313,6 +314,7 @@ items <- c(
   "Emi|CO2|CDR|Land-Use Change",
   "Emi|CO2|CDR|BECCS|Pe2Se",
   "Emi|CO2|CDR|BECCS|Industry",
+  "Emi|CO2|CDR|Biochar",
   "Emi|CO2|CDR|Industry CCS|Synthetic Fuels",
   "Emi|CO2|CDR|DACCS",
   "Emi|CO2|CDR|OAE",
@@ -362,6 +364,7 @@ items <- c(
   "Emi|CO2|Cumulated|Land-Use Change",
   "Emi|CO2|Cumulated|CDR|BECCS|Pe2Se",
   "Emi|CO2|Cumulated|CDR|BECCS|Industry",
+  "Emi|CO2|Cumulated|CDR|Biochar",
   "Emi|CO2|Cumulated|CDR|Industry CCS|Synthetic Fuels",
   "Emi|CO2|Cumulated|CDR|DACCS",
   "Emi|CO2|Cumulated|CDR|OAE",
@@ -381,7 +384,7 @@ items <- c(
   "Emi|GHG|ETS|Transport",
   "Emi|GHG|ETS|Extraction",
   "Emi|GHG|ETS|Waste",
-  "Emi|GHG|ETS|non-BECCS CDR")
+  "Emi|GHG|ETS|non-ES CDR")
 showAreaAndBarPlots(data, items, tot, scales = "fixed")
 ```
 
