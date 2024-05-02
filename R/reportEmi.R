@@ -23,10 +23,7 @@
 #' @importFrom magclass mselect mselect<- collapseDim getItems getRegions getYears
 #' @importFrom madrat toolAggregate
 #' @importFrom tibble as_tibble
-
-#gdx <- "/p/tmp/tabeado/sebiochar_AprRelease/remind/output/Npi-Heat_2024-04-17_16.38.42/fulldata.gdx"
-#output <- NULL
-#t = c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150)
+#' @importFrom piamutils deletePlus
 
 reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                       t = c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150)) {
