@@ -13,7 +13,7 @@ items <- c(
   "Emi|GHG|CH4",
   "Emi|GHG|N2O",
   "Emi|GHG|F-Gases",
-  "Emi|CO2|non-BECCS CDR")
+  "Emi|CO2|non-ES CDR")
 showAreaAndBarPlots(data, items, tot, scales = "fixed")
 ```
 
@@ -33,6 +33,7 @@ items <- c(
   "Emi|GHG|Land-Use Change",
   "Emi|GHG|Waste",
   "Emi|CO2|CDR|BECCS",
+  "Emi|CO2|CDR|Biochar",
   "Emi|CO2|CDR|Industry CCS|Synthetic Fuels",
   "Emi|CO2|CDR|DACCS",
   "Emi|CO2|CDR|EW")
@@ -59,6 +60,7 @@ items <- c(
   "Emi|CO2|Gross|Energy|Supply|Non-electric",
   "Emi|CO2|Gross|Energy|Supply|Electricity",
   "Emi|CO2|CDR|BECCS",
+  "Emi|CO2|CDR|Biochar",
   "Emi|CO2|CDR|Industry CCS|Synthetic Fuels",
   "Emi|CO2|CDR|DACCS",
   "Emi|CO2|CDR|EW")
@@ -86,6 +88,7 @@ items <- c(
   "Emi|CO2|Cumulated|Gross|Energy|Supply|Non-electric",
   "Emi|CO2|Cumulated|Gross|Energy|Supply|Electricity",
   "Emi|CO2|Cumulated|CDR|BECCS",
+  "Emi|CO2|CDR|Biochar",
   "Emi|CO2|Cumulated|CDR|Industry CCS|Synthetic Fuels",
   "Emi|CO2|Cumulated|CDR|DACCS",
   "Emi|CO2|Cumulated|CDR|EW")
