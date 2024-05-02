@@ -25,6 +25,11 @@
 #' @importFrom gdx readGDX
 #' @importFrom dplyr filter
 
+#gdx <- "/p/tmp/tabeado/sebiochar_AprRelease/remind/output/PB650-HeatRoberts_2024-04-20_20.50.00/fulldata.gdx"
+#output=NULL
+#regionSubsetList=NULL
+#t=c(seq(2005,2060,5),seq(2070,2110,10),2130,2150)
+
 reportCosts <- function(gdx,output=NULL,regionSubsetList=NULL,t=c(seq(2005,2060,5),seq(2070,2110,10),2130,2150)) {
 
   # Cost calculation requires information from other reportings
@@ -521,6 +526,10 @@ reportCosts <- function(gdx,output=NULL,regionSubsetList=NULL,t=c(seq(2005,2060,
   cost <- op_costs(ei=perenew,eo=se_Liq,te=pe2se$all_te,e2e=pe2se,teall2rlf=teall2rlf,vm_prodE=vm_prodSe,pm_data=pm_data,vm_cap=vm_cap,v_investcost=v_investcost)
   tmp  <- mbind(tmp,setNames(cost + output[regi_on_gdx,,"Energy Investments|Liquids|Bio (billion US$2005/yr)"], "Total Energy costs|Liquids|Bio (billion US$2005/yr)"))
 
+ ##### Biochar
+  cost <- op_costs(ei="pebiolc",eo="sebiochar",te=pe2se$all_te,e2e=pe2se,teall2rlf=teall2rlf,vm_prodE=vm_prodSe,pm_data=pm_data,vm_cap=vm_cap,v_investcost=v_investcost)
+  tmp  <- mbind(tmp,setNames(cost + output[regi_on_gdx,,"Energy Investments|Pyrolysis (billion US$2005/yr)"], "Total Energy costs|Pyrolysis (billion US$2005/yr)"))
+
   ##### CO2 Trans&Stor
   cost <- op_costs(ei=ccs2te$all_enty,eo=ccs2te$all_enty1,te=ccs2te$all_te,e2e=ccs2te,teall2rlf=teall2rlf,vm_prodE=NULL,pm_data=pm_data,vm_cap=vm_cap,v_investcost=v_investcost)
   tmp  <- mbind(tmp,setNames(cost + output[regi_on_gdx,,"Energy Investments|CO2 Trans&Stor (billion US$2005/yr)"], "Total Energy costs|CO2 Trans&Stor (billion US$2005/yr)"))
@@ -580,6 +589,12 @@ reportCosts <- function(gdx,output=NULL,regionSubsetList=NULL,t=c(seq(2005,2060,
   cost1 <- op_costs(ei="pebiolc",eo="seel",te=teccs,e2e=pe2se,teall2rlf=teall2rlf,vm_prodE=vm_prodSe,pm_data=pm_data,vm_cap=vm_cap,v_investcost=v_investcost)
   cost2 <- price_pebiolc * op_costs_part2_bio_nuc(pe="pebiolc",se="seel",te=teccs,vm_prodSe,pe2se,p_dataeta,pm_conv_TWa_EJ)
   tmp  <- mbind(tmp,setNames(cost1+cost2, "Operational costs|Elec|Biomass|w/ CC (billion US$2005/yr)"))
+
+
+  cost1 <- op_costs(ei="pebiolc",eo="sebiochar",te=tenoccs,e2e=pe2se,teall2rlf=teall2rlf,vm_prodE=vm_prodSe,pm_data=pm_data,vm_cap=vm_cap,v_investcost=v_investcost)
+  cost2 <- price_pebiolc * op_costs_part2_bio_nuc(pe="pebiolc",se="sebiochar",te=tenoccs,vm_prodSe,pe2se,p_dataeta,pm_conv_TWa_EJ)
+  tmp  <- mbind(tmp,setNames(cost1+cost2, "Operational costs|Biochar|Biomass|w/o CC (billion US$2005/yr)"))
+
 
   ##### Nuclear
   cost1 <- op_costs(ei="peur",eo="seel",te="tnrs",e2e=pe2se,teall2rlf=teall2rlf,vm_prodE=vm_prodSe,pm_data=pm_data,vm_cap=vm_cap,v_investcost=v_investcost)
