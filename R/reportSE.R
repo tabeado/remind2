@@ -24,6 +24,9 @@
 #' @importFrom abind abind
 #' @importFrom rlang sym
 
+#gdx <- "/p/tmp/tabeado/sebiochar_AprRelease/remind/output/Npi-Heat_2024-04-17_16.38.42/fulldata.gdx"
+#regionSubsetList = NULL
+#t = c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150)
 reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150)) {
 
   ####### get realisations #########
@@ -36,6 +39,8 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
 
   ####### conversion factors ##########
   pm_conv_TWa_EJ <- 31.536
+  pm_conv_EJbiochar_to_Mtbiochar <- 1/(29*10^9/10^12) # 30 MJ/t char => Mt / EJ
+
   ####### read in needed data #########
   ## sets
   pe2se    <- readGDX(gdx, "pe2se")
@@ -55,6 +60,8 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   se_Liq    <- intersect(c("seliqfos", "seliqbio", "seliqsyn"), entySe)
   se_Gas    <- intersect(c("segafos", "segabio", "segasyn"), entySe)
   se_Solids <- intersect(c("sesofos", "sesobio"), entySe)
+  se_Biochar <- intersect(c("sebiochar"), entySe)
+
 
   # Gases and Liquids can also be made from H2 via CCU
   input_gas <- c(entyPe, "seh2")
@@ -69,7 +76,7 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   p_macBase <- readGDX(gdx, c("p_macBaseMagpie", "pm_macBaseMagpie","p_macBase"), format = "first_found")
   #  p_macEmi  <- readGDX(gdx,"p_macEmi")
   ## variables
-  vm_prodSe <- readGDX(gdx, name = c("vm_prodSe", "v_seprod"), field = "l", restore_zeros = FALSE, format = "first_found") * pm_conv_TWa_EJ
+  vm_prodSe <- readGDX(gdx, name = c("vm_prodSe", "v_seprod"), field = "l", restore_zeros = FALSE, format = "first_found") * pm_conv_TWa_EJ ## this includes biochar
   vm_prodSe <- mselect(vm_prodSe, all_enty1 = entySe)
 
   #  storloss only exist for versions previous to the power module creation and for the IntC and DTcoup power module realisation
@@ -157,7 +164,7 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
 
   ## Biomass
   tmp1 <- mbind(tmp1,
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, entySe, name = "SE|Biomass (EJ/yr)")
+    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, entySe, name = "SE|Biomass (EJ/yr)") # should Bionass for Biochar be included here?
   )
 
   ## Electricity
@@ -168,10 +175,14 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
     se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seel",                    name = "SE|Electricity|+|Biomass (EJ/yr)"),
     se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seel", te = teccs,        name = "SE|Electricity|Biomass|+|w/ CC (EJ/yr)"),
     se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seel", te = tenoccs,      name = "SE|Electricity|Biomass|+|w/o CC (EJ/yr)"),
+    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seel", te = c("biopyrElec","biopyrCHP","biopyrCHP850"), 
+                                                                                name = "SE|Electricity|Biomass|+|w/o CC|Pyrolysis (EJ/yr)"), ## need to fix the |+| notation + decide how to include BC if elec version ends up in main trunk
     se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seel", te = "bioigccc",   name = "SE|Electricity|Biomass|++|Gasification Combined Cycle w/ CC (EJ/yr)"),
     se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seel", te = "bioigcc",    name = "SE|Electricity|Biomass|++|Gasification Combined Cycle w/o CC (EJ/yr)"),
     se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seel", te = "biochp",     name = "SE|Electricity|Biomass|++|Combined Heat and Power w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seel", te = setdiff(pe2se$all_te, c("bioigccc", "bioigcc", "biochp")),
+        se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seel", te = c("biopyrElec","biopyrCHP","biopyrCHP850"),    
+                                                                                name = "SE|Electricity|Biomass|++|Pyrolysis (EJ/yr)"),
+    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seel", te = setdiff(pe2se$all_te, c("bioigccc", "bioigcc", "biochp", "biopyrElec","biopyrCHP","biopyrCHP850")),
                                                                                 name = "SE|Electricity|Biomass|++|Other (EJ/yr)"),
 
     se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", "seel",                 name = "SE|Electricity|+|Coal (EJ/yr)"),
@@ -279,7 +290,9 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
     se.prod(vm_prodSe, dataoc, oc2te, entySe,  entyPe, "sehe", te = techp,      name = "SE|Heat|Combined Heat and Power (EJ/yr)"),
     se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", "sehe", te = "coalchp", name = "SE|Heat|Coal|Combined Heat and Power (EJ/yr)"),
     se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegas", "sehe", te = "gaschp",   name = "SE|Heat|Gas|Combined Heat and Power (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe,  pebio, "sehe", te = "biochp",    name = "SE|Heat|Biomass|Combined Heat and Power (EJ/yr)")
+    se.prod(vm_prodSe, dataoc, oc2te, entySe,  pebio, "sehe", te = "biochp",    name = "SE|Heat|Biomass|Combined Heat and Power (EJ/yr)"),
+    se.prod(vm_prodSe, dataoc, oc2te, entySe,  pebio, "sehe", te = c("biopyrHeat","biopyrCHP","biopyrCHP850"), 
+                                                                                name = "SE|Heat|Biomass|Pyrolysis (EJ/yr)")
   )
 
   ## Hydrogen
@@ -346,6 +359,30 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
                                                                                 name = "SE|Solids|+|Biomass (EJ/yr)"),
     se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, se_Solids, te = "biotr",   name = "SE|Solids|+|Traditional Biomass (EJ/yr)")
   )
+
+    #  ## Biochar =>
+    #         ## QUESTIONS:
+    #            # Where to add it? new category "products"? make it part of "production" which is derived for industry in reportFE.R? NOTE: then it also needs to be adjusted in reportTechnology
+    #            # only Mt or also in EJ?
+    #            # is "+" logic correct?
+  vm_prodBC <- vm_prodSe[,,"sebiochar"] * pm_conv_EJbiochar_to_Mtbiochar
+
+
+  tmp1 <- mbind(tmp1,
+    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pebiolc", se_Biochar,                           name = "SE|Biochar (EJ/yr)"),
+    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pebiolc", se_Biochar,te = "biopyrKonTiki",      name = "SE|Biochar|KonTiki (EJ/yr)"),
+    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pebiolc", se_Biochar,te = "biopyrElec",         name = "SE|Biochar|biopyrElec (EJ/yr)"),
+    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pebiolc", se_Biochar,te = "biopyrHeat",         name = "SE|Biochar|biopyrHeat (EJ/yr)"),
+    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pebiolc", se_Biochar,te = "biopyrCHP",          name = "SE|Biochar|biopyrCHP (EJ/yr)"),
+    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pebiolc", se_Biochar,te = "biopyrCHP850",       name = "SE|Biochar|biopyrCHP850 (EJ/yr)"),
+    se.prod(vm_prodBC, dataoc, oc2te, entySe, "pebiolc", se_Biochar,                           name = "SE|Biochar (Mt/yr)"),
+    se.prod(vm_prodBC, dataoc, oc2te, entySe, "pebiolc", se_Biochar,te = "biopyrKonTiki",      name = "SE|Biochar|KonTiki (Mt/yr)"),
+    se.prod(vm_prodBC, dataoc, oc2te, entySe, "pebiolc", se_Biochar,te = "biopyrElec",         name = "SE|Biochar|biopyrElec (Mt/yr)"),
+    se.prod(vm_prodBC, dataoc, oc2te, entySe, "pebiolc", se_Biochar,te = "biopyrHeat",         name = "SE|Biochar|biopyrHeat (Mt/yr)"),
+    se.prod(vm_prodBC, dataoc, oc2te, entySe, "pebiolc", se_Biochar,te = "biopyrCHP",          name = "SE|Biochar|biopyrCHP (Mt/yr)"),
+    se.prod(vm_prodBC, dataoc, oc2te, entySe, "pebiolc", se_Biochar,te = "biopyrCHP850",       name = "SE|Biochar|biopyrCHP850 (Mt/yr)")
+  )
+
 
   ## Trade
   if (module2realisation["trade", 2] == "se_trade") {
@@ -425,6 +462,12 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
     -pm_conv_TWa_EJ *
       (dimSums(CoeffOwnConsSeel_woCCS[, , "geohe"] * prodOwnCons[, , "geohe"], dim = 3)),
     "SE|Input|Electricity|Self Consumption Energy System|Central Ground Heat Pump (EJ/yr)"))
+
+    tmp1 <- mbind(tmp1, setNames(
+    -pm_conv_TWa_EJ *
+      (dimSums(CoeffOwnConsSeel_woCCS[, , "biopyrHeat"] * prodOwnCons[, , "biopyrHeat"], dim = 3)),
+    "SE|Input|Electricity|Self Consumption Energy System|biopyrHeat (EJ/yr)"))
+
 
   # electricity for fuel extraction, e.g. electricity used for oil and gas extraction
 
