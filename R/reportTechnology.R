@@ -49,6 +49,8 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
   p_dataeta    <- readGDX(gdx, name = c("pm_dataeta", "p_dataeta"), format = "first_found")
   p_eta_conv   <- readGDX(gdx, name = c("pm_eta_conv", "p_eta_conv"), format = "first_found")
   pm_inco0_t   <- readGDX(gdx, name = c("pm_inco0_t", "p_inco0_t"), format = "first_found")
+
+  # load technology data
   v_investcost <- readGDX(gdx, name = c("vm_costTeCapital", "v_costTeCapital", "v_investcost"), field = "l", format = "first_found")
 
   y <- Reduce(intersect, list(getYears(p_dataeta), getYears(p_eta_conv), getYears(v_investcost)))
@@ -139,7 +141,11 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
     "gashp"  = "Heat|Gas",
     "coalhp" = "Heat|Coal",
     "geohe"  = "Heat|Electricity|Heat Pump",
-    "biohp"  = "Heat|Biomass"
+    "biohp"  = "Heat|Biomass",
+    "biopyrElec" = "Biochar|biopyrElec",
+    "biopyrHeat" = "Biochar|biopyrHeat",
+    "biopyrCHP" = "Biochar|biopyrCHP",
+    "biopyrCHP850" = "Biochar|biopyrCHP850"
   )
 
   if (tran_mod == "complex") {
