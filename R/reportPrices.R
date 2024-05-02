@@ -94,6 +94,7 @@ reportPrices <- function(gdx, output=NULL, regionSubsetList=NULL,
   p47_taxCO2eq_SectorAggFE <- readGDX(gdx,name="p47_taxCO2eq_SectorAggFE",format="first_found",react="silent")[, t,]
   ## variables
   pric_emu       <- readGDX(gdx,name="vm_pebiolc_price",field="l",format="first_found")[, t,]
+  specificPrices <- readGDX(gdx, "v_priceOfSpecificGoods",field="l",format="first_found")[,t,]
 
   ## equations
   budget.m       <- readGDX(gdx,name='qm_budget',types = "equations",field = "m",format = "first_found")[, t,] # Alternative: calcPrice
@@ -173,6 +174,16 @@ reportPrices <- function(gdx, output=NULL, regionSubsetList=NULL,
   p_weights_FEprice_diepet <- p_weights_FEprice_diepet[,getYears(pm_FEPrice),]
 
   out <- NULL
+
+  # "Specific goods" Prices
+  pm_trilUSDpTWaBC_to_USDptBC <- 919.584 * 1.2 #   [USD/t BC] / [TrilUSD/TWa BC]
+
+  out <- mbind(
+      out,
+      setNames(mselect(specificPrices, all_te = "biochar4soil") * pm_trilUSDpTWaBC_to_USDptBC,
+              "Price|Biochar (US$2015/t Biochar)")
+      )
+
 
   ## calculate prices as weighted average prices across markets
   ## FE Transport Prices
@@ -1109,6 +1120,11 @@ reportPrices <- function(gdx, output=NULL, regionSubsetList=NULL,
       out[region,,"Internal|Price|Biomass|Shiftfactor ()"] <- NA
     }
   }
+
+
+
+
+
 
   # comment out this section for now as errors, debug this section if needed
   # # ---- debug information for industry/subsectors ----
