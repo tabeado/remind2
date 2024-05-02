@@ -21,6 +21,9 @@
 #' @importFrom gdx readGDX
 #' @importFrom magclass mselect getYears getNames<- mbind setNames
 
+#gdx <- "/p/tmp/tabeado/sebiochar_AprRelease/remind/output/Npi-Heat_2024-04-17_16.38.42/fulldata.gdx"
+
+
 reportPE <- function(gdx,regionSubsetList=NULL,t=c(seq(2005,2060,5),seq(2070,2110,10),2130,2150)){
   ####### conversion factors ##########
   TWa_2_EJ     <- 31.536
@@ -129,6 +132,7 @@ reportPE <- function(gdx,regionSubsetList=NULL,t=c(seq(2005,2060,5),seq(2070,211
   tmp3 <- mbind(pe_carrier(demPE,dataoc,oc2te,sety,pebio,"seel",                     name="PE|Biomass|Electricity (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,"seel",teccs,               name="PE|Biomass|Electricity|w/ CC (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,"seel",tenoccs,             name="PE|Biomass|Electricity|w/o CC (EJ/yr)"),
+                pe_carrier(demPE,dataoc,oc2te,sety,pebio,"seel",c("biopyrElec","biopyrCHP","biopyrCHP850"),    name="PE|Biomass|Electricity|w/o CC|Pyrolysis (EJ/yr)"),                
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,se_Gas,                     name="PE|Biomass|Gases (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,se_Gas,teccs,               name="PE|Biomass|Gases|w/ CC (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,se_Gas,tenoccs,             name="PE|Biomass|Gases|w/o CC (EJ/yr)"),
@@ -149,13 +153,17 @@ reportPE <- function(gdx,regionSubsetList=NULL,t=c(seq(2005,2060,5),seq(2070,211
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,se_Liq , c("bioftcrec"),
                                                                                      name="PE|Biomass|Liquids|Biodiesel|w/ CC (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,se_Liq , c("bioftrec","biodiesel"),
-                                                                                     name="PE|Biomass|Liquids|Biodiesel|w/o CC (EJ/yr)"),
+                                                                                     name="PE|Biomass|Liquids|Biodiesel|w/o CC (EJ/yr)"),                              
                 
-                
-                
-                
-                pe_carrier(demPE,dataoc,oc2te,sety,pebio,c(se_Solids),                  name="PE|Biomass|Solids (EJ/yr)"),
+                pe_carrier(demPE,dataoc,oc2te,sety,pebio,c(se_Solids),               name="PE|Biomass|Solids (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,c("sehe"),                  name="PE|Biomass|Heat (EJ/yr)"),
+                pe_carrier(demPE,dataoc,oc2te,sety,pebio,"sehe", c("biohp","biochp"),         name="PE|Biomass|Heat|w/o CC|C_HP (EJ/yr)"),
+                pe_carrier(demPE,dataoc,oc2te,sety,pebio,"sehe", c("biopyrHeat","biopyrCHP","biopyrCHP850"),   
+                                                                                     name="PE|Biomass|Heat|w/o CC|Pyrolysis (EJ/yr)"),
+
+                pe_carrier(demPE,dataoc,oc2te,sety,pebio,"sebiochar", name="PE|Biomass|Biochar (EJ/yr)"),        
+
+
                 pe_carrier(demPE,dataoc,oc2te,sety,"pecoal","seel",                  name="PE|Coal|Electricity (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,"pecoal","seel",teccs,            name="PE|Coal|Electricity|w/ CC (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,"pecoal","seel",tenoccs,          name="PE|Coal|Electricity|w/o CC (EJ/yr)"),
