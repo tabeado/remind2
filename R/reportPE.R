@@ -129,6 +129,8 @@ reportPE <- function(gdx,regionSubsetList=NULL,t=c(seq(2005,2060,5),seq(2070,211
   tmp3 <- mbind(pe_carrier(demPE,dataoc,oc2te,sety,pebio,"seel",                     name="PE|Biomass|Electricity (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,"seel",teccs,               name="PE|Biomass|Electricity|w/ CC (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,"seel",tenoccs,             name="PE|Biomass|Electricity|w/o CC (EJ/yr)"),
+                pe_carrier(demPE,dataoc,oc2te,sety,pebio,"seel",c("biopyrOnly","biopyrCHP","biopyrCHP850","biopyrFuel" ),   
+                                                                                     name="PE|Biomass|Electricity|w/o CC|Pyrolysis (EJ/yr)"),        
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,se_Gas,                     name="PE|Biomass|Gases (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,se_Gas,teccs,               name="PE|Biomass|Gases|w/ CC (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,se_Gas,tenoccs,             name="PE|Biomass|Gases|w/o CC (EJ/yr)"),
@@ -138,7 +140,7 @@ reportPE <- function(gdx,regionSubsetList=NULL,t=c(seq(2005,2060,5),seq(2070,211
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,se_Liq ,                    name="PE|Biomass|Liquids (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,se_Liq,teccs,               name="PE|Biomass|Liquids|w/ CC (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,se_Liq,tenoccs,             name="PE|Biomass|Liquids|w/o CC (EJ/yr)"),
-                
+
                 pe_carrier(demPE,dataoc,oc2te,sety,"pebiolc",se_Liq ,                name="PE|Biomass|Liquids|Cellulosic (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,"pebiolc",se_Liq ,teccs,          name="PE|Biomass|Liquids|Cellulosic|w/ CC (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,"pebiolc",se_Liq ,tenoccs,        name="PE|Biomass|Liquids|Cellulosic|w/o CC (EJ/yr)"),
@@ -154,8 +156,12 @@ reportPE <- function(gdx,regionSubsetList=NULL,t=c(seq(2005,2060,5),seq(2070,211
                 
                 
                 
-                pe_carrier(demPE,dataoc,oc2te,sety,pebio,c(se_Solids),                  name="PE|Biomass|Solids (EJ/yr)"),
+                pe_carrier(demPE,dataoc,oc2te,sety,pebio,c(se_Solids),               name="PE|Biomass|Solids (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,c("sehe"),                  name="PE|Biomass|Heat (EJ/yr)"),
+                pe_carrier(demPE,dataoc,oc2te,sety,pebio,"sehe", c("biohp","biochp"), name="PE|Biomass|Heat|w/o CC|C_HP (EJ/yr)"),
+                pe_carrier(demPE,dataoc,oc2te,sety,pebio,"sehe", c("biopyrHeat","biopyrCHP","biopyrCHP850"),   
+                                                                                     name="PE|Biomass|Heat|w/o CC|Pyrolysis (EJ/yr)"),
+                pe_carrier(demPE,dataoc,oc2te,sety,pebio,"sebiochar", name="PE|Biomass|Biochar (EJ/yr)"),    
                 pe_carrier(demPE,dataoc,oc2te,sety,"pecoal","seel",                  name="PE|Coal|Electricity (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,"pecoal","seel",teccs,            name="PE|Coal|Electricity|w/ CC (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,"pecoal","seel",tenoccs,          name="PE|Coal|Electricity|w/o CC (EJ/yr)"),
