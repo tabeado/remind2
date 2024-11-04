@@ -139,7 +139,11 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
     "gashp"  = "Heat|Gas",
     "coalhp" = "Heat|Coal",
     "geohe"  = "Heat|Electricity|Heat Pump",
-    "biohp"  = "Heat|Biomass"
+    "biohp"  = "Heat|Biomass",
+    "biopyrHeat" = "Biochar|biopyrHeat",
+    "biopyrCHP" = "Biochar|biopyrCHP",
+    "biopyrCHP850" = "Biochar|biopyrCHP850",
+    "biopyrFuel" = "Biochar|biopyrFuel"
   )
 
   if (tran_mod == "complex") {
