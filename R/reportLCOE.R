@@ -46,7 +46,7 @@ reportLCOE <- function(gdx, output.type = "both"){
 
  vm_capFac <- readGDX(gdx, "vm_capFac", field = "l", restore_zeros = F)
  qm_balcapture  <- readGDX(gdx,"q_balcapture",field="m", restore_zeros = F)
- vm_co2CCS <- readGDX(gdx, "vm_co2CCS", field = "l", restore_zeros = F)
+ vm_co2CCS <- readGDX(gdx, "vm_co2CCS", field = "l", restore_zeros = F)[,,"ccsinje.1"]
  vm_co2capture <- readGDX(gdx, "vm_co2capture", field="l", restore_zeros = F)
  pm_emifac <- readGDX(gdx, "pm_emiFac", field = "l", restore_zeros = F)
  v32_storloss <- readGDX(gdx, "v32_storloss", field = "l")
@@ -73,8 +73,9 @@ reportLCOE <- function(gdx, output.type = "both"){
  ttot     <- as.numeric(readGDX(gdx,"ttot"))
  ttot_before2005 <- paste0("y",ttot[which(ttot <= 2000)])
  ttot_from2005 <- paste0("y",ttot[which(ttot >= 2005)])
+ ttot_from1990 <- ttot[which(ttot >= 1990)]
  te        <- readGDX(gdx,"te")
- te <- te[!te %in% c("lng_liq","gas_pipe", "lng_gas", "lng_ves", "coal_ves", "pipe_gas", "termX_lng", "termM_lng", "vess_lng")]
+ te <- te[!te %in% c("lng_liq","gas_pipe", "lng_gas", "lng_ves", "coal_ves", "pipe_gas", "termX_lng", "termM_lng", "vess_lng", "biochar4soil")]
  p_priceCO2 <- readGDX(gdx,name=c("p_priceCO2","pm_priceCO2"),format="first_found") # co2 price
 
 
@@ -114,6 +115,7 @@ reportLCOE <- function(gdx, output.type = "both"){
  teNoCCS   <- readGDX(gdx,"teNoCCS")
  techp     <- readGDX(gdx,c("teChp","techp"),format="first_found")
  teReNoBio <- readGDX(gdx,"teReNoBio")
+ teBiochar <- readGDX(gdx,"emiBiochar2te",restore_zeros = F, react = "silent")$all_te
  teCDR     <- readGDX(gdx,"te_used33")
  EW_name   <- "weathering" # necessary for backward compatibility
 
@@ -232,12 +234,12 @@ reportLCOE <- function(gdx, output.type = "both"){
 
 
  # take 74 tech from p_omeg, although in v_direct_in 114 in total
-  te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_inv_annuity[,ttot,]),magclass::getNames(te_inv_annuity[,ttot,]))
-  # loop over ttot
- for(t0 in ttot){
+  te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot_from1990,]),getYears(te_inv_annuity[,ttot_from1990,]),magclass::getNames(te_inv_annuity[,ttot_from1990,]))
+  # loop over ttot -- only from 1990 instead of 1900 to make the loop faster. NEEDS TO BE CHECKED FOR TECHS ALREADY EXISTING BEFORE 2005, whether this makes a relevant difference!
+ for(t0 in ttot_from1990){
    for(a in magclass::getNames(te_inv_annuity) ) {
      # all ttot before t0
-     t_id <- ttot[ttot<=t0]
+      t_id <- ttot_from1990[ttot_from1990<=t0]
      # only the time (t_id) within the opTimeYr of a specific technology a
      t_id <- t_id[t_id >= (t0 - max(as.numeric(opTimeYr2te$opTimeYr[opTimeYr2te$all_te==a]))+1)]
      p_omeg_h <- new.magpie(getRegions(p_omeg),years=t_id,names=a)
@@ -248,12 +250,12 @@ reportLCOE <- function(gdx, output.type = "both"){
    } # a
  }  # t0
 
- te_annual_inv_cost_wadj <- new.magpie(getRegions(te_inv_annuity_wadj[,ttot,]),getYears(te_inv_annuity_wadj[,ttot,]),magclass::getNames(te_inv_annuity_wadj[,ttot,]))
+ te_annual_inv_cost_wadj <- new.magpie(getRegions(te_inv_annuity_wadj[,ttot_from1990,]),getYears(te_inv_annuity_wadj[,ttot_from1990,]),magclass::getNames(te_inv_annuity_wadj[,ttot_from1990,]))
  # loop over ttot
- for(t0 in ttot){
+ for(t0 in ttot_from1990){
    for(a in magclass::getNames(te_inv_annuity_wadj) ) {
      # all ttot before t0
-     t_id <- ttot[ttot<=t0]
+    t_id <- ttot_from1990[ttot_from1990<=t0]
      # only the time (t_id) within the opTimeYr of a specific technology a
      t_id <- t_id[t_id >= (t0 - max(as.numeric(opTimeYr2te$opTimeYr[opTimeYr2te$all_te==a]))+1)]
      p_omeg_h <- new.magpie(getRegions(p_omeg),years=t_id,names=a)
@@ -489,7 +491,16 @@ reportLCOE <- function(gdx, output.type = "both"){
  te_cco2 <- intersect(getNames(cco2_byTech_tCO2),getNames(te_inv_annuity)) # Technologies that capture co2 to enter ccus system, no matter which source
 
   # for LCO-sc: calculate stored CO2 to calculate cost per tCO2
-  cdrco2_byTech_tCO2 <- vm_emiCdrTeDetail[,,setdiff(teCDR,te_cco2)]*s_GtC2tCO2*-1 # will become relevant when biochar included
+    if (length(setdiff(teCDR[1],te_cco2))==0){
+    cdrco2_byTech_tC_EW <- NULL
+    } else {
+    cdrco2_byTech_tC_EW <- vm_emiCdrTeDetail[,,setdiff(teCDR,te_cco2)]
+    }
+  if (is.null(teBiochar)){  # relevant for backward compatibility
+    cdrco2_byTech_tC_BC <- NULL
+    } else {
+    cdrco2_byTech_tC_BC <- setNames(v_emiTeDetail[,,teBiochar][,,"co2"],teBiochar)}
+  cdrco2_byTech_tCO2 <- mbind(cdrco2_byTech_tC_EW, cdrco2_byTech_tC_BC) * s_GtC2tCO2*-1 
 
   # enhanced weathering:
   if (EW_name %in% teCDR){
@@ -524,6 +535,53 @@ reportLCOE <- function(gdx, output.type = "both"){
  total_te_energy_usable <- total_te_energy
  total_te_energy_usable[,,teVRE] <- total_te_energy[,,teVRE] - v32_storloss[,ttot_from2005,teVRE]*s_twa2mwh
 
+##### 13. sub-part: Revenues
+ teBECCS <- readGDX(gdx,"teBECCS")
+ teAllCdrTechs <- c(teBECCS,teBiochar,teCDR) 
+### CO2 revenue
+ te_annual_co2revenue <- new.magpie(getRegions(te_inv_annuity), ttot_from2005,
+                                    magclass::getNames(te_inv_annuity), fill = 0)
+    # for BECCS and biochar
+ te_annual_co2revenue[,,teBECCS] <- setNames(p_priceCO2[,ttot_from2005,] 
+                                              * dimSums(v_emiTeDetail[,ttot_from2005,teBECCS][,,"cco2"], dim=c(3.1,3.2,3.4), na.rm=T)
+                                              * dimSums(vm_co2CCS/vm_co2capture) 
+                                              * 1e9,teBECCS) # $/tC * GtC/yr * share of captured stored * 1e9 t/Gt = $/yr for that CO2 that is stored
+ te_annual_co2revenue[,,teBiochar] <- setNames(( p_priceCO2[,ttot_from2005,]
+                                               * - v_emiTeDetail[,ttot_from2005,"co2"][,,teBiochar]
+                                               * 1e9),teBiochar) # $/tC * GtC/yr * 1e9 t/Gt = $/yr
+ # add DAC and Enhanced weathering BUT NOTE: 
+ te_annual_co2revenue[,,"dac"] <- setNames(( p_priceCO2[,getYears(vm_emiCdrTeDetail[,,"dac"]),]
+                                             * vm_emiCdrTeDetail[,,"dac"]
+                                             * dimSums(vm_co2CCS/vm_co2capture)
+                                             * 1e9),"dac") # $/tC * GtC/yr * share of captured stored  * 1e9 t/Gt = $/yr
+ if (EW_name %in% teAllCdrTechs){
+  te_annual_co2revenue[,,EW_name] <- setNames(( p_priceCO2[,getYears(vm_emiCdrTeDetail[,,EW_name]),]
+                                             * vm_emiCdrTeDetail[,,EW_name] * 1e9),EW_name) # $/tC * GtC/yr * 1e9 t/Gt = $/yr
+ }
+# ENERGY REVENUE
+# main product
+te_annual_en_revenue <- new.magpie(getRegions(te_inv_annuity),ttot_from2005,magclass::getNames(te_inv_annuity), fill=0)
+te_annual_en_revenue[,,pe2se$all_te] <- setNames(Fuel.Price[,ttot_from2005,pe2se$all_enty1] *     
+                                        setNames(vm_prodSe[,ttot_from2005,pe2se$all_te], pe2se$all_enty1), pe2se$all_te)
+                                      # Fuel.Price is already in USD
+# secondary product
+pm_SecOutputFactors <- pm_prodCouple[,,getNames(pm_prodCouple)[pm_prodCouple[reg1,,]>0]] # keep only second fuel production, not own consumption
+SecOutputTechs <- getNames(pm_SecOutputFactors,dim=3)
+#SecOutputTechs2 <- getItems(pm_SecOutputFactors, dim=3.3,full=TRUE)[duplicated(getItems(pm_SecOutputFactors, dim=3.3,full=TRUE))] ## this can surely be done in a simpler manner.
+te_annual_en2_revenue <- new.magpie(getRegions(te_inv_annuity),ttot_from2005, getNames(te_inv_annuity) , fill=0)  
+te_annual_en2_revenue[,,SecOutputTechs] <- setNames(dimSums(pm_SecOutputFactors * vm_prodSe[,ttot_from2005,SecOutputTechs]
+                                                              * Fuel.Price[,ttot_from2005, getNames(pm_SecOutputFactors, dim = 4)], dim=3.4) , SecOutputTechs)
+#te_annual_en2_revenue[,,SecOutputTechs] <- collapseDim(pm_SecOutputFactors * vm_prodSe[,ttot_from2005,SecOutputTechs]* 
+                                                       #1e+12 * Fuel.Price[,ttot_from2005, getNames(pm_SecOutputFactors, dim = 4)], dim = 1)
+# NON-ENERGY
+te2enty_SpecificRevenue <- readGDX(gdx,"SpecificRevenueEntyandTe")
+te_SpecificRevenue <- te2enty_SpecificRevenue$teSpecificRevenue
+te_annual_otherRevenue <- new.magpie(getRegions(te_inv_annuity),ttot_from2005, getNames(te_inv_annuity) , fill=0)  
+v_Biochar_Price <- 10^12 *  readGDX(gdx,"v_priceOfSpecificGoods", field="l",restore_zeros=F,react="silent")[,,te_SpecificRevenue] 
+                ## [10^12 USD/tr USD] * [trUSD/TWa]  --> [USD/TWa BC]
+te_annual_otherRevenue[,,teBiochar] <- vm_prodSe[,,teBiochar] * v_Biochar_Price
+### TOTAL Revenue
+te_annual_totalRevenue <- te_annual_co2revenue + te_annual_en_revenue + te_annual_en2_revenue + te_annual_otherRevenue
 
 
  ####################################################
@@ -640,8 +698,20 @@ reportLCOE <- function(gdx, output.type = "both"){
                       te_annual_fuel_cost[,,te_cco2] + te_annual_secFuel_cost[,,te_cco2] + te_annual_otherFuel_cost[,,te_cco2]) / cco2_byTech_tCO2[,ttot_from2005,te_cco2] +
                       te_annual_ccsInj_inclAdjCost[,ttot_from2005,cco2Techs]/ (cco2_byTech_tCO2[,ttot_from2005,cco2Techs] * dimSums(vm_co2CCS/vm_co2capture)) ,
                        paste0("LCOCCS|average|","ico2|",te_cco2,"|carbon management", "|Total Cost w/ Adj Cost")),
+           setNames(te_annual_totalRevenue[,ttot_from2005,te_cco2]/cco2_byTech_tCO2[,ttot_from2005,te_cco2],
+                       paste0("LCOCC|average|","ico2|",te_cco2, "|carbon management","|Total revenue")),
+           setNames(te_annual_co2revenue[,ttot_from2005,te_cco2]/cco2_byTech_tCO2[,ttot_from2005,te_cco2],
+                       paste0("LCOCC|average|","cco2|",te_cco2, "|carbon management","|CO2 revenue")),
+           setNames(te_annual_en_revenue[,,te_cco2]/cco2_byTech_tCO2[,ttot_from2005,te_cco2],
+                       paste0("LCOCC|average|","cco2|",te_cco2, "|carbon management","|Energy revenue")),
+           setNames(te_annual_en2_revenue[,,te_cco2]/cco2_byTech_tCO2[,ttot_from2005,te_cco2],
+                       paste0("LCOCC|average|","cco2|",te_cco2, "|carbon management","|2nd energy revenue")),
+           setNames(te_annual_otherRevenue[,,te_cco2]/cco2_byTech_tCO2[,ttot_from2005,te_cco2],
+                       paste0("LCOCC|average|","cco2|",te_cco2, "|carbon management","|Other revenue")),
+      
       #### Carbon storing Technologies (other than CCUS chain; for now only if EW included, will include biochar in future)
-          if (EW_name %in% teCDR){mbind(
+          if (!is.null(te_sco2)){
+            mbind(
           ## calculation based on removal initiated in t
               setNames(te_annual_inv_cost[,ttot_from2005,te_sco2]/cdrco2_byTech_tCO2[,ttot_from2005,te_sco2],
                        paste0("LCOCS|average|","sco2|",te_sco2,"|carbon management", "|Investment Cost")),
@@ -657,7 +727,29 @@ reportLCOE <- function(gdx, output.type = "both"){
                        paste0("LCOCS|average|","sco2|",te_sco2, "|carbon management","|OMF Cost")),
               setNames(te_annual_OMV_cost[,,te_sco2]/cdrco2_byTech_tCO2[,ttot_from2005,te_sco2],
                        paste0("LCOCS|average|","sco2|",te_sco2, "|carbon management","|OMV Cost")),
-              # specific to enhanced weathering
+                            # revenue
+               setNames(te_annual_totalRevenue[,,te_sco2]/cdrco2_byTech_tCO2[,ttot_from2005,te_sco2],
+                       paste0("LCOCS|average|","sco2|",te_sco2, "|carbon management","|Total revenue")),
+               setNames(te_annual_co2revenue[,,te_sco2]/cdrco2_byTech_tCO2[,ttot_from2005,te_sco2],
+                       paste0("LCOCS|average|","sco2|",te_sco2, "|carbon management","|CO2 revenue")),
+               setNames(te_annual_en_revenue[,,te_sco2]/cdrco2_byTech_tCO2[,ttot_from2005,te_sco2],
+                       paste0("LCOCS|average|","sco2|",te_sco2, "|carbon management","|Energy revenue")),            
+               setNames(te_annual_en2_revenue[,,te_sco2]/cdrco2_byTech_tCO2[,ttot_from2005,te_sco2],
+                       paste0("LCOCS|average|","sco2|",te_sco2, "|carbon management","|2nd energy revenue")),
+               setNames(te_annual_otherRevenue[,,te_sco2]/cdrco2_byTech_tCO2[,ttot_from2005,te_sco2],
+                       paste0("LCOCS|average|","sco2|",te_sco2, "|carbon management","|Other revenue")),
+            # Total cost biochar
+             if (!is.null(teBiochar)){mbind(
+              setNames((te_annual_inv_cost[,ttot_from2005,teBiochar] + te_annual_fuel_cost[,,teBiochar] + te_annual_secFuel_cost[,,teBiochar] + 
+                	      te_annual_otherFuel_cost[,,teBiochar] + te_annual_OMF_cost[,,teBiochar] + te_annual_OMV_cost[,,teBiochar] ) / cdrco2_byTech_tCO2[,ttot_from2005,teBiochar],
+                       paste0("LCOCS|average|","sco2|",teBiochar,"|carbon management", "|Total Cost")),
+              setNames((te_annual_inv_cost_wadj[,ttot_from2005,teBiochar] + te_annual_fuel_cost[,,teBiochar] + te_annual_secFuel_cost[,,teBiochar] + 
+                	      te_annual_otherFuel_cost[,,teBiochar] + te_annual_OMF_cost[,,teBiochar] + te_annual_OMV_cost[,,teBiochar]) / cdrco2_byTech_tCO2[,ttot_from2005,teBiochar],
+                       paste0("LCOCS|average|","sco2|",teBiochar,"|carbon management", "|Total Cost w/ Adj Cost"))
+                       )
+                       } else {NULL},
+           # specific to enhanced weathering 
+           if (EW_name %in% teCDR){mbind(
               setNames(EW_fixed_other_cost[,,]/cdrco2_byTech_tCO2[,ttot_from2005,EW_name],
                        paste0("LCOCS|average|","sco2|",EW_name, "|carbon management","|OMF other Cost")),
               setNames(EW_fixed_transport_cost/cdrco2_byTech_tCO2[,ttot_from2005,EW_name],
@@ -669,8 +761,10 @@ reportLCOE <- function(gdx, output.type = "both"){
               setNames((te_annual_inv_cost_wadj[,ttot_from2005,EW_name] + te_annual_otherFuel_cost[,,EW_name] + EW_fixed_other_cost +
                         EW_fixed_transport_cost ) / cdrco2_byTech_tCO2[,ttot_from2005,EW_name],
                        paste0("LCOCS|average|","sco2|",EW_name,"|carbon management", "|Total Cost w/ Adj Cost"))
-                       )}
-          else {NULL}
+                       )
+                       } else {NULL}
+          )} else {NULL}
+ 
  )*1.2
 
  # convert to better dimensional format
