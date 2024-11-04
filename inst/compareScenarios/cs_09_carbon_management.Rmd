@@ -115,3 +115,22 @@ showAreaAndBarPlots(data,
                                  "Carbon Management|Materials|Plastics|Waste|Other destination"), 
                         scales = "fixed")
 ```
+
+## Biochar production 
+```{r Biochar Total Line Plot Only}
+showLinePlots(data, "SE|Biochar Mt")
+```
+
+```{r Biochar area by type}
+showAreaAndBarPlots(
+  data = data,
+  vars = rev(c('SE|Biochar Mt|KonTiki (Mt/yr)', 
+                'SE|Biochar Mt|biopyrOnly (Mt/yr)',
+                'SE|Biochar Mt|biopyrHeat (Mt/yr)', 
+                'SE|Biochar Mt|biopyrCHP (Mt/yr)',  
+                'SE|Biochar Mt|biopyrCHP850 (Mt/yr)',
+                'SE|Biochar Mt|biopyrFuel (Mt/yr)')),
+  tot = 'SE|Biochar Mt (Mt/yr)',
+  scales = 'fixed',
+  orderVars = 'user')
+```
