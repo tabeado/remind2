@@ -380,7 +380,7 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
                 se.prod(vm_prodSe, dataoc_w_selfOC, oc2te, entySe, "peoil", "seel", te = tenoccs,    name = "SE|Net|Electricity|Oil|w/o CC (EJ/yr)"),
                 se.prod(vm_prodSe, dataoc_w_selfOC, oc2te, entySe, "peoil", "seel", te = "dot",      name = "SE|Net|Electricity|Oil|DOT (EJ/yr)"),
 
-                se.prod(vm_prodSe, dataoc_w_selfOC, oc2te, entySe, entyPe, "seel", te = terenew_nobio,
+                se.prod(vm_prodSe, dataoc_w_selfOC, oc2te, entySe, entyPe, "seel", te = teReNoBio,
                         name = "SE|Net|Electricity|Non-Biomass Renewables (EJ/yr)"),
 
                 se.prod(vm_prodSe, dataoc_w_selfOC, oc2te, entySe, "peur", "seel",                   name = "SE|Net|Electricity|+|Nuclear (EJ/yr)"))
