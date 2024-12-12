@@ -321,13 +321,13 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   v37_plasticsCarbon <- readGDX(gdx, "v37_plasticsCarbon", field = "l", temporal = 1, spatial = 2,
                                 restore_zeros = FALSE, react = "silent")[,t,]
 
-  vm_feedstockEmiUnknownFate  <- readGDX(gdx, "vm_feedstockEmiUnknownFate", field = "l", restore_zeros = FALSE,
+  vm_feedstockEmiUnknownFate  <- readGDX(gdx, c("vm_feedstockEmiUnknownFate",
+                                                "v37_feedstockEmiUnknownFate"),
+                                         field = "l", restore_zeros = FALSE,
                                            spatial = 2, react = "silent")[,t,]
 
-  vm_incinerationEmi <- readGDX(gdx, 'o37_incinerationEmi', restore_zeros = FALSE, spatial = 2,
-                                  react = 'silent')
-
-  vm_incinerationEmi <- readGDX(gdx, "vm_incinerationEmi", field = "l",
+  vm_incinerationEmi <- readGDX(gdx, c("vm_incinerationEmi","v37_incinerationEmi"),
+                                    field = "l",
                                     restore_zeros = FALSE, spatial = 2,
                                     react = "silent")[,t,]
 
@@ -344,6 +344,23 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
 
   vm_nonIncineratedPlastics   <- readGDX(gdx, "vm_nonIncineratedPlastics", field = "l", restore_zeros = FALSE,
                                            spatial = 2, react = "silent")[,t,]
+
+  v37_plasticWaste <- readGDX(gdx, "v37_plasticWaste", field = "l",
+                              restore_zeros = F,
+                              spatial = 2,
+                              react = "silent")[,t,]
+
+  pm_incinerationRate <- readGDX(gdx, "pm_incinerationRate",
+                                 field = "l",
+                                 restore_zeros = F,
+                                 spatial = 2,
+                                 react = "silent")[,t,]
+
+  if (is.null(vm_nonIncineratedPlastics)) {
+    vm_nonIncineratedPlastics <- (1-pm_incinerationRate) * v37_plasticWaste
+  }
+
+
 
 
   # variable for carbon embedded in non-incinerated plastics:
