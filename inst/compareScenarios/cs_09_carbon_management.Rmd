@@ -115,3 +115,16 @@ showAreaAndBarPlots(data,
                                  "Carbon Management|Materials|Plastics|Waste|Other destination"), 
                         scales = "fixed")
 ```
+
+## Feedstock Carbon by SE carrier and fate
+
+```{r}
+showAreaAndBarPlots(data,
+                    vars = c("Carbon Management|Feedstocks|Emitted|+|Fossil",
+                             "Carbon Management|Feedstocks|Emitted|+|Biomass",
+                             "Carbon Management|Feedstocks|Emitted|+|Synthetic",
+                             "Carbon Management|Feedstocks|Stored|+|Fossil",
+                             "Carbon Management|Feedstocks|Stored|+|Biomass",
+                             "Carbon Management|Feedstocks|Stored|+|Synthetic"),
+                    tot = "Carbon Management|Feedstocks")
+```
