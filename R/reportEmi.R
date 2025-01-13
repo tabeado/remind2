@@ -360,6 +360,9 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                                  spatial = 2,
                                  react = "silent")[,t,]
 
+  # replace NA by 0
+  pm_incinerationRate[is.na(pm_incinerationRate)] <- 0
+
   if (is.null(vm_nonIncineratedPlastics)) {
     vm_nonIncineratedPlastics <- (1-pm_incinerationRate) * v37_plasticWaste
   }
