@@ -1420,6 +1420,8 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
              "Carbon Management|Carbon Capture (Mt CO2/yr)")
   )
 
+  ### 3.2 Carbon in Materials ----
+
   # add materials-related carbon management variables
   # carbon management: flows of carbon going into materials
   out <- mbind(out,
@@ -1458,7 +1460,156 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   )
 
 
-  ### 3.2 Carbon Capture (Industry-specific) ----
+  # add variables for total inflow and outflow of carbon in industrial feedstocks
+  v37_feedstocksCarbon <- readGDX(gdx,"v37_feedstocksCarbon", field = "l", restore_zeros = F, spatial = 2)
+  v37_incineratedPlastics <- readGDX(gdx, "v37_incineratedPlastics", field = "l", restore_zeros = F)
+  cm_nonPlasticFeedstockEmiShare <- readGDX(gdx, "cm_nonPlasticFeedstockEmiShare") %>%
+                                      as.vector()
+  s37_plasticsShare <- readGDX(gdx, "s37_plasticsShare") %>%
+                        as.vector()
+
+
+  out <- mbind(out,
+                setNames(dimSums(v37_feedstocksCarbon, dim=3) * GtC_2_MtCO2,
+                         "Carbon Management|Feedstocks (Mt CO2/yr)"))
+
+
+  pm_emifacNonEnergy_ForallCarriers <- setNames(collapseNames(pm_emifacNonEnergy[,,"co2"]),
+                                          c("fesos",
+                                            "fehos",
+                                            "fegas"))
+
+  # feestock carbon emitted
+
+  # fossil feedstock carbon emitted
+  out <- mbind(out,
+                setNames(   (
+                            # emissions from plastic waste incineration
+                            dimSums(mselect(vm_incinerationEmi,
+                                            all_enty = entySEfos), dim = 3)
+                          #   # chemical process emissions from feedstock conversion processes
+                          # + dimSums(mselect(dimSums(vm_demFENonEnergySector * pm_emifacNonEnergy_ForallCarriers,
+                          #                           c(3.2,3.3,3.4)),
+                          #                   all_enty = entySEfos), dim = 3)
+                            # emissions from non-plastic waste
+                          + dimSums(mselect(v37_feedstocksCarbon,
+                                            all_enty = entySEfos), dim = 3)  * (1 - s37_plasticsShare) * cm_nonPlasticFeedstockEmiShare
+                          ) * GtC_2_MtCO2,
+                        "Carbon Management|Feedstocks|Emitted|+|Fossil (Mt CO2/yr)"
+                ))
+
+  # biomass feedstock carbon emitted
+  out <- mbind(out,
+               setNames(   (
+                 # emissions from plastic waste incineration
+                 dimSums(mselect(vm_incinerationEmi,
+                                 all_enty = entySEbio), dim = 3)
+                 # # chemical process emissions from feedstock conversion processes
+                 # + dimSums(mselect(dimSums(vm_demFENonEnergySector * pm_emifacNonEnergy_ForallCarriers,
+                 #                           c(3.2,3.3,3.4)),
+                 #                   all_enty = entySEbio), dim = 3)
+                 # emissions from non-plastic waste
+                 + dimSums(mselect(v37_feedstocksCarbon,
+                                   all_enty = entySEbio), dim = 3)  * (1 - s37_plasticsShare) * cm_nonPlasticFeedstockEmiShare
+               ) * GtC_2_MtCO2,
+               "Carbon Management|Feedstocks|Emitted|+|Biomass (Mt CO2/yr)"
+               ))
+
+  # synthetic fuel feedstock carbon emitted
+  out <- mbind(out,
+               setNames(   (
+                 # emissions from plastic waste incineration
+                 dimSums(mselect(vm_incinerationEmi,
+                                 all_enty = entySEsyn), dim = 3)
+                 # # chemical process emissions from feedstock conversion processes
+                 # + dimSums(mselect(dimSums(vm_demFENonEnergySector * pm_emifacNonEnergy_ForallCarriers,
+                 #                           c(3.2,3.3,3.4)),
+                 #                   all_enty = entySEsyn), dim = 3)
+                 # emissions from non-plastic waste
+                 + dimSums(mselect(v37_feedstocksCarbon,
+                                   all_enty = entySEsyn), dim = 3)  * (1 - s37_plasticsShare) * cm_nonPlasticFeedstockEmiShare
+               ) * GtC_2_MtCO2,
+               "Carbon Management|Feedstocks|Emitted|+|Synthetic (Mt CO2/yr)"
+               ))
+
+  # total feedstock carbon emitted
+  out <- mbind(out,
+               setNames(   (
+                 # emissions from plastic waste incineration
+                 dimSums(mselect(vm_incinerationEmi), dim = 3)
+                 # # chemical process emissions from feedstock conversion processes
+                 # + dimSums(mselect(dimSums(vm_demFENonEnergySector * pm_emifacNonEnergy_ForallCarriers,
+                 #                           c(3.2,3.3,3.4))), dim = 3)
+                 # emissions from non-plastic waste
+                 + dimSums(mselect(v37_feedstocksCarbon), dim = 3)  * (1 - s37_plasticsShare) * cm_nonPlasticFeedstockEmiShare
+               ) * GtC_2_MtCO2,
+               "Carbon Management|Feedstocks|+|Emitted (Mt CO2/yr)"
+               ))
+
+  # feestock carbon stored
+
+  # fossil feedstock carbon stored
+  out <- mbind(out,
+                setNames( (
+                    # carbon in plastic waste incineration CCS/CCU
+                    dimSums(mselect(vm_incinerationCCS,
+                                  all_enty = entySEfos), dim = 3)
+                    # carbon in non-incinerated plastic waste
+                  + dimSums(mselect(v37_plasticWaste,
+                                    all_enty = entySEfos), dim = 3) * (1 - pm_incinerationRate)
+                    # carbon in non-emitted non-plastic waste
+                  + dimSums(mselect(v37_feedstocksCarbon,
+                                    all_enty = entySEfos), dim = 3)  * (1 - s37_plasticsShare) * (1 - cm_nonPlasticFeedstockEmiShare)
+                ) * GtC_2_MtCO2,
+                  "Carbon Management|Feedstocks|Stored|+|Fossil (Mt CO2/yr)"))
+
+  # biomass feedstock carbon stored
+  out <- mbind(out,
+                setNames( (
+                  # carbon in plastic waste incineration CCS/CCU
+                  dimSums(mselect(vm_incinerationCCS,
+                                  all_enty = entySEbio), dim = 3)
+                  # carbon in non-incinerated plastic waste
+                  + dimSums(mselect(v37_plasticWaste,
+                                    all_enty = entySEbio), dim = 3) * (1 - pm_incinerationRate)
+                  # carbon in non-emitted non-plastic waste
+                  + dimSums(mselect(v37_feedstocksCarbon,
+                                    all_enty = entySEbio), dim = 3)  * (1 - s37_plasticsShare) * (1 - cm_nonPlasticFeedstockEmiShare)
+                ) * GtC_2_MtCO2,
+                "Carbon Management|Feedstocks|Stored|+|Biomass (Mt CO2/yr)"))
+
+  # synthetic fuel feedstock carbon stored
+  out <- mbind(out,
+                setNames( (
+                  # carbon in plastic waste incineration CCS/CCU
+                  dimSums(mselect(vm_incinerationCCS,
+                                  all_enty = entySEsyn), dim = 3)
+                  # carbon in non-incinerated plastic waste
+                  + dimSums(mselect(v37_plasticWaste,
+                                    all_enty = entySEsyn), dim = 3) * (1 - pm_incinerationRate)
+                  # carbon in non-emitted non-plastic waste
+                  + dimSums(mselect(v37_feedstocksCarbon,
+                                    all_enty = entySEsyn), dim = 3)  * (1 - s37_plasticsShare) * (1 - cm_nonPlasticFeedstockEmiShare)
+                ) * GtC_2_MtCO2,
+                "Carbon Management|Feedstocks|Stored|+|Synthetic (Mt CO2/yr)"))
+
+  # total feedstock carbon stored
+  out <- mbind(out,
+                setNames( (
+                  # carbon in plastic waste incineration CCS/CCU
+                  dimSums(mselect(vm_incinerationCCS), dim = 3)
+                  # carbon in non-incinerated plastic waste
+                  + dimSums(mselect(v37_plasticWaste), dim = 3) * (1 - pm_incinerationRate)
+                  # carbon in non-emitted non-plastic waste
+                  + dimSums(mselect(v37_feedstocksCarbon), dim = 3)  * (1 - s37_plasticsShare) * (1 - cm_nonPlasticFeedstockEmiShare)
+                ) * GtC_2_MtCO2,
+                "Carbon Management|Feedstocks|+|Stored (Mt CO2/yr)"))
+
+
+
+
+
+  ### 3.3 Carbon Capture (Industry-specific) ----
     variable_prefix  <- 'Carbon Management|Carbon Capture|Industry Energy|'
     variable_postfix <- ' (Mt CO2/yr)'
 
@@ -1544,7 +1695,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                         "Carbon Management|Venting of Captured Carbon (Mt CO2/yr)")
   )
 
-  ### 3.3 Carbon usage ----
+  ### 3.4 Carbon usage ----
 
   # storage/usage of captured carbon
   out <- mbind(out,
@@ -1569,7 +1720,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                           "Carbon Management|Share of Stored CO2 from Captured CO2 (%)")
   )
 
-  ### 3.4 Carbon storage ----
+  ### 3.5 Carbon storage ----
 
   # maximum annual carbon storage and share that is used
   out <- mbind(out,
@@ -1686,7 +1837,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                        "Carbon Management|Storage|Fossil|Pe2Se|+|Gases w/ couple prod (Mt CO2/yr)")
   )
 
-  ### 3.5 CDR variables ----
+  ### 3.6 CDR variables ----
 
 
   # Defined as non-fossil permanent sequestration of carbon in land / geological storage / oceans.
@@ -1817,7 +1968,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   )
 
 
-  ### 3.6 Emissions Accounted in Other Sectors via CCU ----
+  ### 3.7 Emissions Accounted in Other Sectors via CCU ----
 
   # TODO: still need to decide where to put non-plastics and non-incineration emissions ->
 
