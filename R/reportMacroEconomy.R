@@ -58,34 +58,27 @@ reportMacroEconomy <- function(gdx, regionSubsetList = NULL,
 
   # Realisation of the different modules
   if (!is.null(module2realisation) && (!"CES_structure" %in% module2realisation[, 1])) {
-    indu_mod <- findRealModule(module2realisation, "industry")
     buil_mod <- findRealModule(module2realisation, "buildings")
   } else {
-    indu_mod <- "fixed_shares"
     buil_mod <- "simple"
   }
 
   steel_process_based <- "steel" %in% readGDX(gdx, "secInd37Prc", react='silent')
 
-  # choose the CES entries names for transport
-  name_trsp <- c("fepet", "ueLDVt", "fedie", "ueHDVt", "feelt", "ueelTt")
-  name_trsp <- name_trsp[name_trsp %in% getNames(vm_cesIO)]
-
-
   cons     <- setNames(readGDX(gdx, name = "vm_cons", field = "l", format = "first_found")[, t2005to2150, ] * 1000,
-                  "Consumption (billion US$2017/yr)")
+                       "Consumption (billion US$2017/yr)")
   gdp      <- setNames(vm_cesIO[, , "inco"] * 1000,        "GDP|MER (billion US$2017/yr)")
   shPPPMER <- readGDX(gdx, c("pm_shPPPMER", "p_ratio_ppp"), format = "first_found")
   gdp_ppp  <- setNames(gdp / shPPPMER, "GDP|PPP (billion US$2017/yr)")
   invE     <- setNames(readGDX(gdx, name = c("v_costInv", "v_costin"), field = "l", format = "first_found") * 1000,
-                  "Energy Investments (billion US$2017/yr)")
+                       "Energy Investments (billion US$2017/yr)")
   pop      <- setNames(readGDX(gdx, name = c("pm_pop", "pm_datapop"), format = "first_found")[, t2005to2150, ] * 1000,
-                  "Population (million)")
+                       "Population (million)")
 
 
   damageFactor      <- setNames(readGDX(gdx, name = c("vm_damageFactor", "vm_damage"), field = "l",
                                         format = "first_found"),
-                       "Damage factor (1)")
+                                "Damage factor (1)")
 
   # Calculate net GDP using the damage factors
   tintersect <- intersect(getYears(gdp), getYears(damageFactor))
@@ -154,11 +147,6 @@ reportMacroEconomy <- function(gdx, regionSubsetList = NULL,
   # macro
   ces <- mbind(ces, setNames(vm_cesIO[, , "kap"] * 1000, "CES_input|kap (billion US$2017)"))
 
-  # transport
-  ces <- mbind(ces, setNames(vm_cesIO[, , name_trsp[3]] * TWa_2_EJ, "CES_input|feelt (EJ/yr)"))
-  ces <- mbind(ces, setNames(vm_cesIO[, , name_trsp[1]] * TWa_2_EJ, "CES_input|fepet (EJ/yr)"))
-  ces <- mbind(ces, setNames(vm_cesIO[, , name_trsp[2]] * TWa_2_EJ, "CES_input|fedie (EJ/yr)"))
-
   if (buil_mod == "simple") {
     ces <- mbind(ces, setNames(vm_cesIO[, , "feelb"] * TWa_2_EJ, "CES_input|feelb (EJ/yr)"))
     ces <- mbind(ces, setNames(vm_cesIO[, , "fegab"] * TWa_2_EJ, "CES_input|fegab (EJ/yr)"))
@@ -168,32 +156,24 @@ reportMacroEconomy <- function(gdx, regionSubsetList = NULL,
     ces <- mbind(ces, setNames(vm_cesIO[, , "feh2b"] * TWa_2_EJ, "CES_input|feh2b (EJ/yr)"))
   }
 
-  if (indu_mod == "fixed_shares") {
-    ces <- mbind(ces, setNames(vm_cesIO[, , "feeli"] * TWa_2_EJ, "CES_input|feeli (EJ/yr)"))
-    ces <- mbind(ces, setNames(vm_cesIO[, , "fegai"] * TWa_2_EJ, "CES_input|fegai (EJ/yr)"))
-    ces <- mbind(ces, setNames(vm_cesIO[, , "fehoi"] * TWa_2_EJ, "CES_input|fehoi (EJ/yr)"))
-    ces <- mbind(ces, setNames(vm_cesIO[, , "fesoi"] * TWa_2_EJ, "CES_input|fesoi (EJ/yr)"))
-    ces <- mbind(ces, setNames(vm_cesIO[, , "fehei"] * TWa_2_EJ, "CES_input|fehei (EJ/yr)"))
-    ces <- mbind(ces, setNames(vm_cesIO[, , "feh2i"] * TWa_2_EJ, "CES_input|feh2i (EJ/yr)"))
-  } else if ("subsectors" == indu_mod) {
-    ces <- mbind(
-      ces,
-      mbind(
-        lapply(ppfkap_ind,
-               function(x) {
-                 setNames(vm_cesIO[, , x] * 1000,
-                          paste0("CES_input|", x, " (billion US$2017)"))
-               }
-        )),
 
-      mbind(lapply(ppfen_ind,
-                   function(x) {
-                     setNames(vm_cesIO[, , x] * TWa_2_EJ,
-                              paste0("CES_input|", x, " (EJ/yr)"))
-                   }
-      ))
-    )
-  }
+  ces <- mbind(
+    ces,
+    mbind(
+      lapply(ppfkap_ind,
+             function(x) {
+               setNames(vm_cesIO[, , x] * 1000,
+                        paste0("CES_input|", x, " (billion US$2017)"))
+             }
+      )),
+
+    mbind(lapply(ppfen_ind,
+                 function(x) {
+                   setNames(vm_cesIO[, , x] * TWa_2_EJ,
+                            paste0("CES_input|", x, " (EJ/yr)"))
+                 }
+    ))
+  )
 
 
   #### ---- additional variables for CES function reporting ----
@@ -204,104 +184,97 @@ reportMacroEconomy <- function(gdx, regionSubsetList = NULL,
   # check that CES derivatives output parameter exists in GDX
   if ((length(o01_CESmrs > 0)) & (length(o01_CESderivatives > 0))) {
 
-  ## 1.) CES Prices (CES Derivatives)
+    ## 1.) CES Prices (CES Derivatives)
 
-  # remove inco from inputs as no CES derivative exists
-  inputs <- inputs[inputs != "inco"]
-  # get sets of CES inputs which are FEs and those which are no FEs
-  inputs.fe <- grep("fe",inputs, value=T)
-  inputs.nofe <- setdiff(inputs,inputs.fe)
+    # remove inco from inputs as no CES derivative exists
+    inputs <- inputs[inputs != "inco"]
+    # get sets of CES inputs which are FEs and those which are no FEs
+    inputs.fe <- grep("fe",inputs, value=T)
+    inputs.nofe <- setdiff(inputs,inputs.fe)
 
-  # CES prices of inputs are derivatives of inco (GDP) w.r.t to input
-  CES.price <- collapseNames(mselect(o01_CESderivatives, all_in = "inco", all_in1 = inputs))
+    # CES prices of inputs are derivatives of inco (GDP) w.r.t to input
+    CES.price <- collapseNames(mselect(o01_CESderivatives, all_in = "inco", all_in1 = inputs))
 
-  # convert FE input prices to USD/GJ (like PE, SE, FE Prices)
-  CES.price.fe <- setNames(CES.price[,,inputs.fe] / as.numeric(sm_DpGJ_2_TDpTWa),
-                           paste0("Internal|CES Function|CES Price|",
-                                  getNames(CES.price[,,inputs.fe]), " (US$2017/GJ)"))
-
-  # leave non-FE input prices generally as they are in trUSD/CES input
-  CES.price.nofe <- setNames(CES.price[,,inputs.nofe],
+    # convert FE input prices to USD/GJ (like PE, SE, FE Prices)
+    CES.price.fe <- setNames(CES.price[,,inputs.fe] / as.numeric(sm_DpGJ_2_TDpTWa),
                              paste0("Internal|CES Function|CES Price|",
-                                    getNames(CES.price[,,inputs.nofe]), " (trUS$2017/Input)"))
+                                    getNames(CES.price[,,inputs.fe]), " (US$2017/GJ)"))
 
-  # bind FE and non-FE CES prices to one array
-  CES.price <- mbind(CES.price.fe, CES.price.nofe)
+    # leave non-FE input prices generally as they are in trUSD/CES input
+    CES.price.nofe <- setNames(CES.price[,,inputs.nofe],
+                               paste0("Internal|CES Function|CES Price|",
+                                      getNames(CES.price[,,inputs.nofe]), " (trUS$2017/Input)"))
 
-
-
-  ## 2.) Marginal rates of substitution
-
-  # equals ratio of CES prices
-  # corresponds to amount of second input needed to substitute the first input to generate the same economic value
-  # only needed for certain FE inputs to assess substitution/rebound effect from price changes
-
-  # add MRS from o01_CESmrs parameter
-  mrs.report <- c("feelhpb.fehob",
-                  "feelhpb.fesob",
-                  "feelhpb.feheb",
-                  "feelhpb.feelrhb",
-                  "feh2b.fegab")
-
-  if (indu_mod == "subsectors") {
-
-
-  mrs.report <- c(mrs.report,
+    # bind FE and non-FE CES prices to one array
+    CES.price <- mbind(CES.price.fe, CES.price.nofe)
 
 
 
-                  "feelhth_otherInd.fega_otherInd",
-                  "feelhth_otherInd.feli_otherInd",
-                  "feelhth_otherInd.feso_otherInd",
-                  "feelhth_chemicals.fega_chemicals",
-                  "feelhth_chemicals.feli_chemicals",
+    ## 2.) Marginal rates of substitution
 
-                  "feh2_otherInd.fega_otherInd",
-                  "feh2_otherInd.feli_otherInd",
-                  "feh2_otherInd.feso_otherInd",
-                  "feh2_chemicals.fega_chemicals",
-                  "feh2_chemicals.feli_chemicals",
-                  "feh2_cement.fega_cement",
-                  "feh2_cement.feso_cement",
-                  "feh2_cement.feli_cement")
+    # equals ratio of CES prices
+    # corresponds to amount of second input needed to substitute the first input to generate the same economic value
+    # only needed for certain FE inputs to assess substitution/rebound effect from price changes
 
-  if (!steel_process_based) {
-    mrs.report <- append(mrs.report,
-                  "feh2_steel.feso_steel"
-                  )
-  }
+    # add MRS from o01_CESmrs parameter
+    mrs.report <- c("feelhpb.fehob",
+                    "feelhpb.fesob",
+                    "feelhpb.feheb",
+                    "feelhpb.feelrhb",
+                    "feh2b.fegab",
 
-  }
+                    "feelhth_otherInd.fega_otherInd",
+                    "feelhth_otherInd.feli_otherInd",
+                    "feelhth_otherInd.feso_otherInd",
+                    "feelhth_chemicals.fega_chemicals",
+                    "feelhth_chemicals.feli_chemicals",
 
-  CES.mrs <- collapseDim(setNames(o01_CESmrs[,,mrs.report],
-                          paste0("Internal|CES Function|MRS|",gsub("\\.","\\|",mrs.report), " (ratio)")))
+                    "feh2_otherInd.fega_otherInd",
+                    "feh2_otherInd.feli_otherInd",
+                    "feh2_otherInd.feso_otherInd",
+                    "feh2_chemicals.fega_chemicals",
+                    "feh2_chemicals.feli_chemicals",
+                    "feh2_cement.fega_cement",
+                    "feh2_cement.feso_cement",
+                    "feh2_cement.feli_cement")
 
-  # add further MRS by calculating price ratio for inputs which are not in one nest
-  if (indu_mod == "subsectors") {
-  CES.mrs <- mbind( CES.mrs,
+    if (!steel_process_based) {
+      mrs.report <- append(mrs.report,
+                           "feh2_steel.feso_steel"
+      )
+    }
 
-                    setNames(CES.price[,,"Internal|CES Function|CES Price|feelhpb (US$2017/GJ)"] /
-                               CES.price[,,"Internal|CES Function|CES Price|fegab (US$2017/GJ)"],
-                             "Internal|CES Function|MRS|feelhpb|fegab (ratio)"),
 
-                    setNames(CES.price[,,"Internal|CES Function|CES Price|feelhpb (US$2017/GJ)"] /
-                               CES.price[,,"Internal|CES Function|CES Price|feh2b (US$2017/GJ)"],
-                             "Internal|CES Function|MRS|feelhpb|feh2b (ratio)"))
 
-  if (!steel_process_based) {
+    CES.mrs <- collapseDim(setNames(o01_CESmrs[,,mrs.report],
+                                    paste0("Internal|CES Function|MRS|",gsub("\\.","\\|",mrs.report), " (ratio)")))
+
+    # add further MRS by calculating price ratio for inputs which are not in one nest
+
     CES.mrs <- mbind( CES.mrs,
-                    setNames(CES.price[,,"Internal|CES Function|CES Price|feel_steel_secondary (US$2017/GJ)"] /
-                               CES.price[,,"Internal|CES Function|CES Price|feso_steel (US$2017/GJ)"],
-                             "Internal|CES Function|MRS|feel_steel_secondary|feso_steel (ratio)"))
-  }
-  }
 
-  ## 3.) Value generated by CES Inputs (price * quantity)
-  CES.value <- setNames( mselect(o01_CESderivatives, all_in  = "inco", all_in1 = inputs) * vm_cesIO[,getYears(o01_CESderivatives),inputs] * 1000,
-                         paste0("Internal|CES Function|Value|",inputs, " (billion US$2017)"))
+                      setNames(CES.price[,,"Internal|CES Function|CES Price|feelhpb (US$2017/GJ)"] /
+                                 CES.price[,,"Internal|CES Function|CES Price|fegab (US$2017/GJ)"],
+                               "Internal|CES Function|MRS|feelhpb|fegab (ratio)"),
 
-  # bind all CES variables together in one array
-  ces <- mbind(ces,CES.price,CES.mrs,CES.value)
+                      setNames(CES.price[,,"Internal|CES Function|CES Price|feelhpb (US$2017/GJ)"] /
+                                 CES.price[,,"Internal|CES Function|CES Price|feh2b (US$2017/GJ)"],
+                               "Internal|CES Function|MRS|feelhpb|feh2b (ratio)"))
+
+    if (!steel_process_based) {
+      CES.mrs <- mbind( CES.mrs,
+                        setNames(CES.price[,,"Internal|CES Function|CES Price|feel_steel_secondary (US$2017/GJ)"] /
+                                   CES.price[,,"Internal|CES Function|CES Price|feso_steel (US$2017/GJ)"],
+                                 "Internal|CES Function|MRS|feel_steel_secondary|feso_steel (ratio)"))
+    }
+
+
+    ## 3.) Value generated by CES Inputs (price * quantity)
+    CES.value <- setNames( mselect(o01_CESderivatives, all_in  = "inco", all_in1 = inputs) * vm_cesIO[,getYears(o01_CESderivatives),inputs] * 1000,
+                           paste0("Internal|CES Function|Value|",inputs, " (billion US$2017)"))
+
+    # bind all CES variables together in one array
+    ces <- mbind(ces,CES.price,CES.mrs,CES.value)
 
   }
   #### end CES function reporting
@@ -347,17 +320,17 @@ reportMacroEconomy <- function(gdx, regionSubsetList = NULL,
   for (t in getYears(out[, which(getYears(out, as.integer = TRUE) > 2005 &
                                  getYears(out, as.integer = TRUE) < max(getYears(out, as.integer = TRUE))), ])) {
     inteRate[, t, "Interest Rate (t+1)/(t-1)|Real (unitless)"] <-
-       (1
-        - ((setYears(pm_pvp[, (which(getYears(pm_pvp) == t) + 1), ], t) /
-              setYears(pm_pvp[, (which(getYears(pm_pvp) == t) - 1), ], t))
-            ^ (1 / (getYears(pm_pvp[, (which(getYears(pm_pvp) == t) + 1), ], as.integer = TRUE) -
-                     getYears(pm_pvp[, (which(getYears(pm_pvp) == t) - 1), ], as.integer = TRUE)))
-           )
+      (1
+       - ((setYears(pm_pvp[, (which(getYears(pm_pvp) == t) + 1), ], t) /
+             setYears(pm_pvp[, (which(getYears(pm_pvp) == t) - 1), ], t))
+          ^ (1 / (getYears(pm_pvp[, (which(getYears(pm_pvp) == t) + 1), ], as.integer = TRUE) -
+                    getYears(pm_pvp[, (which(getYears(pm_pvp) == t) - 1), ], as.integer = TRUE)))
        )
+      )
     inteRate[, t, "Interest Rate t/(t-1)|Real (unitless)"] <-
       (1
        - ((pm_pvp[, t, ] / setYears(pm_pvp[, (which(getYears(pm_pvp) == t) - 1), ], t))
-           ^ (1 / (getYears(pm_pvp[, t, ], as.integer = TRUE) - getYears(pm_pvp[, (which(getYears(pm_pvp) == t) - 1), ],
+          ^ (1 / (getYears(pm_pvp[, t, ], as.integer = TRUE) - getYears(pm_pvp[, (which(getYears(pm_pvp) == t) - 1), ],
                                                                         as.integer = TRUE)))
        )
       )
