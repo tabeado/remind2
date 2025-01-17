@@ -220,7 +220,7 @@ reportEnergyInvestment <- function(gdx, regionSubsetList = NULL,
   tmp <- mbind(tmp, setNames(inv_se(ie = "pebio", te = "biopyrOnly", oe = "sebiochar", pe2se, adjte, v_directteinv, v_adjustteinv), "Energy Investments|Pyrolysis|biopyrOnly (billion US$2005/yr)"))
   tmp <- mbind(tmp, setNames(inv_se(ie = "pebio", te = "biopyrHeat", oe = "sebiochar", pe2se, adjte, v_directteinv, v_adjustteinv), "Energy Investments|Pyrolysis|biopyrHeat (billion US$2005/yr)"))
   tmp <- mbind(tmp, setNames(inv_se(ie = "pebio", te = "biopyrCHP", oe = "sebiochar", pe2se, adjte, v_directteinv, v_adjustteinv), "Energy Investments|Pyrolysis|biopyrCHP (billion US$2005/yr)"))
-  tmp <- mbind(tmp, setNames(inv_se(ie = "pebio", te = "biopyrCHP850", oe = "sebiochar", pe2se, adjte, v_directteinv, v_adjustteinv), "Energy Investments|Pyrolysis|biopyrCHP850 (billion US$2005/yr)"))
+  #tmp <- mbind(tmp, setNames(inv_se(ie = "pebio", te = "biopyrCHP850", oe = "sebiochar", pe2se, adjte, v_directteinv, v_adjustteinv), "Energy Investments|Pyrolysis|biopyrCHP850 (billion US$2005/yr)"))
   tmp <- mbind(tmp, setNames(inv_se(ie = "pebio", te = "biopyrFuel", oe = "sebiochar", pe2se, adjte, v_directteinv, v_adjustteinv), "Energy Investments|Pyrolysis|biopyrFuel (billion US$2005/yr)"))
 
   tmp <- mbind(tmp, setNames((tmp[, , "Energy Investments|Supply (billion US$2017/yr)"]
