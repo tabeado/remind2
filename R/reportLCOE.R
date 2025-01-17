@@ -51,7 +51,7 @@ reportLCOE <- function(gdx, output.type = "both") {
   vm_capFac <- readGDX(gdx, "vm_capFac", field = "l", restore_zeros = FALSE)
   qm_balcapture  <- readGDX(gdx, "q_balcapture", field = "m", restore_zeros = FALSE)
   vm_co2CCS <- readGDX(gdx, "vm_co2CCS", field = "l", restore_zeros = FALSE)
-  vm_co2capture <- readGDX(gdx, "vm_co2capture", field = "l", restore_zeros = FALSE)
+  vm_co2capture <- readGDX(gdx, c("vm_co2capture","v_co2capture"), field = "l", restore_zeros = FALSE)
   pm_emifac <- readGDX(gdx, "pm_emiFac", field = "l", restore_zeros = FALSE)
   v32_storloss <- readGDX(gdx, "v32_storloss", field = "l")
 
@@ -140,9 +140,16 @@ reportLCOE <- function(gdx, output.type = "both") {
     pm_SEPrice <- readGDX(gdx, "pm_SEPrice", restore_zeros = FALSE)
 
     ## variables
-    vm_costInvTeDir <- readGDX(gdx, name = c("vm_costInvTeDir", "v_costInvTeDir", "v_directteinv"), field = "l", format = "first_found")[, ttot, ] ## Total direct Investment Cost in Timestep
-    vm_costInvTeAdj <- readGDX(gdx, name = c("vm_costInvTeAdj", "v_costInvTeAdj"), field = "l", format = "first_found")[, ttot, ] ## total adjustment cost in period
-    vm_deltaCap   <- readGDX(gdx, name = c("vm_deltaCap"), field = "l", format = "first_found")[, ttot, ]
+
+    ## Total direct Investment Cost in Timestep
+    vm_costInvTeDir <- readGDX(gdx, name = c("vm_costInvTeDir", "v_costInvTeDir", "v_directteinv"), field = "l", format = "first_found")[, ttot, ]
+
+    ## total adjustment cost in period
+    vm_costInvTeAdj <- readGDX(gdx, name = c("vm_costInvTeAdj", "v_costInvTeAdj"), field = "l", format = "first_found")[, ttot, ]
+
+    # capacity additions per year
+    vm_deltaCap <- readGDX(gdx, name = c("vm_deltaCap"), field = "l", format = "first_found")[, ttot, ]
+
     vm_demPe      <- readGDX(gdx, name = c("vm_demPe", "v_pedem"), field = "l", restore_zeros = FALSE, format = "first_found")
     v_investcost  <- readGDX(gdx, name = c("vm_costTeCapital", "v_costTeCapital", "v_investcost"), field = "l", format = "first_found")[, ttot, ]
     vm_cap        <- readGDX(gdx, name = c("vm_cap"), field = "l", format = "first_found")
@@ -1299,7 +1306,7 @@ te_annual_totalRevenue <- te_annual_co2revenue + te_annual_en_revenue + te_annua
 
     ### 13. calculate share stored carbon from capture carbon
     vm_co2CCS <- readGDX(gdx, "vm_co2CCS", field = "l", restore_zeros = FALSE)
-    vm_co2capture <- readGDX(gdx, "vm_co2capture", field = "l", restore_zeros = FALSE)
+    vm_co2capture <- readGDX(gdx, c("vm_co2capture","v_co2capture"), field = "l", restore_zeros = FALSE)
 
     if (getSets(vm_co2capture)[[3]] == "emiAll") {
       sel_vm_co2capture_cco2 <- mselect(vm_co2capture, emiAll = "cco2")
@@ -1378,7 +1385,7 @@ te_annual_totalRevenue <- te_annual_co2revenue + te_annual_en_revenue + te_annua
     # for now take the storage share of the construction year of plant, it will not change much over time
     # (if CCS, then no CCU and v_capturevalve is mostly small)
     vm_co2CCS <- readGDX(gdx, "vm_co2CCS", field = "l", restore_zeros = FALSE)
-    vm_co2capture <- readGDX(gdx, "vm_co2capture", field = "l", restore_zeros = FALSE)
+    vm_co2capture <- readGDX(gdx, c("vm_co2capture","v_co2capture"), field = "l", restore_zeros = FALSE)
 
 
     # calculate stored CO2 per output of capture technology (GtC/TWa)
@@ -1690,13 +1697,12 @@ te_annual_totalRevenue <- te_annual_co2revenue + te_annual_en_revenue + te_annua
   LCOE.out.inclGlobal[getRegions(LCOE.out), , ] <- LCOE.out
   LCOE.out.inclGlobal["GLO", , ] <- dimSums(LCOE.out, dim = 1) / length(getRegions(LCOE.out))
 
-
-
-  if (output.type %in% c("marginal detail")) {
-    return(df.LCOE)
+  if (output.type  == "marginal detail") {
+    out <- df.LCOE
   } else {
-    return(LCOE.out.inclGlobal)
+    out <- LCOE.out.inclGlobal
   }
 
-  return(LCOE.out)
+  return(out)
+
 }
