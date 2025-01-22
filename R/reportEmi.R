@@ -200,7 +200,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   # maximum annual CO2 storage potential assumed
   max_geolStorage <-  readGDX(gdx, "vm_co2CCS", field = "up", restore_zeros = F)[, t, "ccsinje.1"]  # CO2 captured per industry subsector
 
-  # CO2 captured per industry subsector
+  ## Read CO2 captured per industry subsector ----
   # NOTE: The parameter pm_IndstCO2Captured was calculated without taking into
   # account the different emission factors of energy carriers, so we recalculate
   # it here.  Might load it again when we are reasonably sure we won't process
@@ -283,6 +283,70 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
 
   rm(vm_emiIndCCS_tibble, subsector_total_emissions, pm_emifac_tibble)
 
+
+  ## Read-in chemical feedstocks variables ----
+  v37_plasticsCarbon <- readGDX(gdx, "v37_plasticsCarbon", field = "l", temporal = 1, spatial = 2,
+                                restore_zeros = FALSE, react = "silent")[,t,]
+
+  v37_emiChemicalsProcess <- readGDX(gdx, "v37_emiChemicalsProcess", field = "l",
+                                     restore_zeros = F, react = "silent")[,t,]
+
+  v37_emiNonFosNonIncineratedPlastics <- readGDX(gdx, "v37_emiNonFosNonIncineratedPlastics", field = "l",
+                                                 restore_zeros = F, react = "silent")[,t,]
+
+  v37_emiNonPlasticWaste <- readGDX(gdx, "v37_emiNonPlasticWaste", field = "l",
+                                    restore_zeros = F, react = "silent")[,t,]
+
+  vm_incinerationEmi <- readGDX(gdx, c("vm_incinerationEmi","v37_incinerationEmi"),
+                                field = "l",
+                                restore_zeros = FALSE, spatial = 2,
+                                react = "silent")[,t,]
+
+
+  vm_incinerationCCS <- readGDX(gdx, 'vm_incinerationCCS', field = 'l',
+                                restore_zeros = FALSE, spatial = 2,
+                                react = 'silent')[,t,]
+
+  if (is.null(vm_incinerationCCS)) {
+    rm('vm_incinerationCCS')
+  } else {
+    vm_incinerationCCS <- magclass::matchDim(vm_incinerationCCS, vm_incinerationEmi)
+  }
+
+  vm_nonIncineratedPlastics   <- readGDX(gdx, "vm_nonIncineratedPlastics", field = "l", restore_zeros = FALSE,
+                                         spatial = 2, react = "silent")[,t,]
+
+  v37_plasticWaste <- readGDX(gdx, "v37_plasticWaste", field = "l",
+                              restore_zeros = F,
+                              spatial = 2,
+                              react = "silent")[,t,]
+
+  pm_incinerationRate <- readGDX(gdx, "pm_incinerationRate",
+                                 field = "l",
+                                 restore_zeros = F,
+                                 spatial = 2,
+                                 react = "silent")[,t,]
+
+  # replace NA by 0
+  pm_incinerationRate[is.na(pm_incinerationRate)] <- 0
+
+  if (is.null(vm_nonIncineratedPlastics)) {
+    vm_nonIncineratedPlastics <- (1-pm_incinerationRate) * v37_plasticWaste
+  }
+
+
+  # read in total feedstocks carbon
+  v37_feedstocksCarbon <- readGDX(gdx,"v37_feedstocksCarbon", field = "l", restore_zeros = F, spatial = 2)
+  # read in total carbon in incinerated plastics
+  v37_incineratedPlastics <- readGDX(gdx, "v37_incineratedPlastics", field = "l", restore_zeros = F)
+  # read in share of non-plastics carbon that gets emitted
+  cm_nonPlasticFeedstockEmiShare <- readGDX(gdx, "cm_nonPlasticFeedstockEmiShare") %>%
+    as.vector()
+  # read in share of plastics in feedstocks
+  s37_plasticsShare <- readGDX(gdx, "s37_plasticsShare") %>%
+    as.vector()
+
+
   # utility functions ----
   # Convert a mixer table into a list that can be passed to mselect() to
   # select specified dimensions from a magpie object
@@ -304,6 +368,9 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
     return(selector)
   }
 
+
+
+
   # Preliminary Calculations----
 
   # calculate FE without non-energy use
@@ -315,63 +382,6 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   # calculate FE without non-energy use
   vm_demFeSector_woNonEn <- vm_demFeSector
   vm_demFeSector_woNonEn[,,getNames(vm_demFENonEnergySector )] <- vm_demFeSector[,,getNames(vm_demFENonEnergySector)] - vm_demFENonEnergySector
-
-
-  # Read-in chemical feedstocks variables
-  v37_plasticsCarbon <- readGDX(gdx, "v37_plasticsCarbon", field = "l", temporal = 1, spatial = 2,
-                                restore_zeros = FALSE, react = "silent")[,t,]
-
-  v37_emiChemicalsProcess <- readGDX(gdx, "v37_emiChemicalsProcess", field = "l",
-                                     restore_zeros = F, react = "silent")[,t,]
-
-  v37_emiNonFosNonIncineratedPlastics <- readGDX(gdx, "v37_emiNonFosNonIncineratedPlastics", field = "l",
-                                     restore_zeros = F, react = "silent")[,t,]
-
-  v37_emiNonPlasticWaste <- readGDX(gdx, "v37_emiNonPlasticWaste", field = "l",
-                                     restore_zeros = F, react = "silent")[,t,]
-
-  vm_incinerationEmi <- readGDX(gdx, c("vm_incinerationEmi","v37_incinerationEmi"),
-                                    field = "l",
-                                    restore_zeros = FALSE, spatial = 2,
-                                    react = "silent")[,t,]
-
-
-  vm_incinerationCCS <- readGDX(gdx, 'vm_incinerationCCS', field = 'l',
-                                  restore_zeros = FALSE, spatial = 2,
-                                  react = 'silent')[,t,]
-
-  if (is.null(vm_incinerationCCS)) {
-      rm('vm_incinerationCCS')
-    } else {
-      vm_incinerationCCS <- magclass::matchDim(vm_incinerationCCS, vm_incinerationEmi)
-  }
-
-  vm_nonIncineratedPlastics   <- readGDX(gdx, "vm_nonIncineratedPlastics", field = "l", restore_zeros = FALSE,
-                                           spatial = 2, react = "silent")[,t,]
-
-  v37_plasticWaste <- readGDX(gdx, "v37_plasticWaste", field = "l",
-                              restore_zeros = F,
-                              spatial = 2,
-                              react = "silent")[,t,]
-
-  pm_incinerationRate <- readGDX(gdx, "pm_incinerationRate",
-                                 field = "l",
-                                 restore_zeros = F,
-                                 spatial = 2,
-                                 react = "silent")[,t,]
-
-  # replace NA by 0
-  pm_incinerationRate[is.na(pm_incinerationRate)] <- 0
-
-  if (is.null(vm_nonIncineratedPlastics)) {
-    vm_nonIncineratedPlastics <- (1-pm_incinerationRate) * v37_plasticWaste
-  }
-
-
-  # variable for non-fossil carbon embedded in non-incinerated plastics:
-  # convert sign as plastic CDR defined positive
-  plastic_CDR <- dimSums(mselect(-v37_emiNonFosNonIncineratedPlastics,
-                          all_enty = "co2"), dim=3)
 
 
 
@@ -1423,7 +1433,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
              "Carbon Management|Carbon Capture (Mt CO2/yr)")
   )
 
-  ### 3.2 Carbon in Materials ----
+  ### 3.2 Carbon in Materials / Products ----
 
   # add materials-related carbon management variables
   # carbon management: flows of carbon going into materials
@@ -1464,23 +1474,12 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
 
 
   # add variables for total inflow and outflow of carbon in industrial feedstocks
-  v37_feedstocksCarbon <- readGDX(gdx,"v37_feedstocksCarbon", field = "l", restore_zeros = F, spatial = 2)
-  v37_incineratedPlastics <- readGDX(gdx, "v37_incineratedPlastics", field = "l", restore_zeros = F)
-  cm_nonPlasticFeedstockEmiShare <- readGDX(gdx, "cm_nonPlasticFeedstockEmiShare") %>%
-                                      as.vector()
-  s37_plasticsShare <- readGDX(gdx, "s37_plasticsShare") %>%
-                        as.vector()
-
-
   out <- mbind(out,
                 setNames(dimSums(v37_feedstocksCarbon, dim=3) * GtC_2_MtCO2,
                          "Carbon Management|Feedstocks (Mt CO2/yr)"))
 
 
-  pm_emifacNonEnergy_ForallCarriers <- setNames(collapseNames(pm_emifacNonEnergy[,,"co2"]),
-                                          c("fesos",
-                                            "fehos",
-                                            "fegas"))
+
 
   # feestock carbon emitted
 
