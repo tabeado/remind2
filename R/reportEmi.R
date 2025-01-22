@@ -1429,16 +1429,16 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                # carbon in plastics
                setNames(dimSums(v37_plasticsCarbon, dim = 3) * GtC_2_MtCO2,
                         "Carbon Management|Materials|+|Plastics (Mt CO2/yr)"),
-               # carbon in carbon fibres
-               #setNames(dimSums( carbonfibersVariable * GtC_2_MtCO2,
-               #        "Carbon Management|Materials|+|Carbon fibers (Mt CO2/yr)"),
+               # carbon in non-plastics
+               setNames(dimSums(mselect(v37_feedstocksCarbon), dim = 3)  * (1 - s37_plasticsShare) * GtC_2_MtCO2,
+                        "Carbon Management|Materials|+|Non-Plastics (Mt CO2/yr)"),
                # total co2 in materials
-               # other materials need to be added here
-               setNames(dimSums(v37_plasticsCarbon, dim = 3) * GtC_2_MtCO2,
+               setNames(dimSums(v37_feedstocksCarbon, dim = 3) * GtC_2_MtCO2,
                         "Carbon Management|Materials (Mt CO2/yr)")
     )
 
-  # carbon management: fate of plastics
+  # carbon management: fate of materials
+  # TODO: think about whether to change other destination to "landfilled" / "stored"
   out <- mbind(out,
 
             # carbon in plastics that are incinerated
@@ -1446,7 +1446,14 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                     "Carbon Management|Materials|Plastics|Waste|++|Incineration (Mt CO2/yr)"),
             # carbon in plastics with other fate
             setNames(dimSums(vm_nonIncineratedPlastics, dim = 3) * GtC_2_MtCO2,
-                     "Carbon Management|Materials|Plastics|Waste|++|Other destination (Mt CO2/yr)")
+                     "Carbon Management|Materials|Plastics|Waste|++|Other destination (Mt CO2/yr)"),
+
+            # carbon in non-plastics that is emitted
+            setNames( dimSums(mselect(v37_feedstocksCarbon), dim = 3)  * (1 - s37_plasticsShare) * cm_nonPlasticFeedstockEmiShare * GtC_2_MtCO2,
+                     "Carbon Management|Materials|Non-Plastics|+|Incineration (Mt CO2/yr)"),
+            # carbon in non-plastics that is not emitted
+            setNames(dimSums(mselect(v37_feedstocksCarbon), dim = 3)  * (1 - s37_plasticsShare) * (1 - cm_nonPlasticFeedstockEmiShare) * GtC_2_MtCO2,
+                     "Carbon Management|Materials|Non-Plastics|+|Other destination (Mt CO2/yr)")
 
     )
 
@@ -1870,6 +1877,17 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
               setNames(-out[, , "Carbon Management|Materials|Plastics|Waste|++|Other destination (Mt CO2/yr)"] * p_share_atmosco2_plastics,
                        "Emi|CO2|CDR|Materials|+|Plastics (Mt CO2/yr)"),
 
+              # CO2 stored in non-plastic products that are landfilled / not incinerated
+              # Note: uses share of atmospheric carbon in plastics for now as fossil/bio/synfuel shares are fixed across all types of feedstocks at the moment
+              setNames(-out[, , "Carbon Management|Materials|Non-Plastics|+|Other destination (Mt CO2/yr)"] * p_share_atmosco2_plastics,
+                       "Emi|CO2|CDR|Materials|+|Non-Plastics (Mt CO2/yr)"),
+
+              # CO2 stored in products
+              # Note: non-plastics use share of atmospheric carbon in plastics for now as fossil/bio/synfuel shares are fixed across all types of feedstocks at the moment
+              setNames((-out[, , "Carbon Management|Materials|Non-Plastics|+|Other destination (Mt CO2/yr)"]
+                       -out[, , "Carbon Management|Materials|Plastics|Waste|++|Other destination (Mt CO2/yr)"])  * p_share_atmosco2_plastics,
+                       "Emi|CO2|CDR|Materials (Mt CO2/yr)"),
+
               # total DACCS
               setNames(-out[, , "Carbon Management|Storage|+|DAC (Mt CO2/yr)"]
                       + (1 - s33_capture_rate) * v33_co2emi_non_atm_gas[, , "dac"] * GtC_2_MtCO2,
@@ -1939,21 +1957,14 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                          + out[, , "Emi|CO2|CDR|OAE (Mt CO2/yr)"]
                          + out[, , "Emi|CO2|CDR|EW (Mt CO2/yr)"]
                          + out[, , "Emi|CO2|CDR|Industry CCS|Synthetic Fuels (Mt CO2/yr)"]
-                         + out[, , "Emi|CO2|CDR|Materials|+|Plastics (Mt CO2/yr)"],
+                         + out[, , "Emi|CO2|CDR|Materials (Mt CO2/yr)"],
                          "Emi|CO2|CDR (Mt CO2/yr)")
   )
 
 
   ### 3.7 Emissions Accounted in Other Sectors via CCU ----
 
-  # TODO: still need to decide where to put non-plastics and non-incineration emissions ->
-
-  # if to waste -> still need to adapt CCU accounted for other sectors in
-  # 1) gross emissions section
-  # 2) cumulative emissions
-  # 3) summation groupis
-
-  # This accounts negative emissions from CO2 of fossil-based synfuels that is permanently stored either in plastics (waste sector) or via industry CCS (industry sector).
+  # This accounts negative emissions from CO2 of fossil-based synfuels that is permanently stored either in materials (waste sector) or via industry CCS (industry sector).
   # This variable is necessary as it reports negative emissions that need to be accounted to the industry/waste sector because
   # emissions for CCU were already accounted upstream in the sector that captured the carbon. If the industry/waste sector stores this
   # carbon, it is eventually not emitted such that it needs to be accounted negative in the industry/waste sector. However, these negative emissions
@@ -1961,15 +1972,17 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   out <- mbind(out,
                setNames( -out[, , "Carbon Management|Storage|Industry Energy|+|Synfuel (Mt CO2/yr)"] * (1-p_share_atmosco2),
                          "Emi|CO2|Accounted in Other Sectors via CCU|Energy|Industry|Fossil Synfuel CCS (Mt CO2/yr)"),
-              setNames(  -out[, , "Carbon Management|Materials|Plastics|Waste|++|Other destination (Mt CO2/yr)"] * p_share_fossyn_plastics,
-                         "Emi|CO2|Accounted in Other Sectors via CCU|Waste|Fossil Synfuel Plastics Sequestration (Mt CO2/yr)"))
+              setNames(  (-out[, , "Carbon Management|Materials|Plastics|Waste|++|Other destination (Mt CO2/yr)"]
+                          # as for non-plastics materials CDR -> use fossil synfuel share from plastics also for non-plastics as these shares are fixed across use cases
+                         - out[, , "Carbon Management|Materials|Non-Plastics|+|Other destination (Mt CO2/yr)"] )* p_share_fossyn_plastics,
+                         "Emi|CO2|Accounted in Other Sectors via CCU|Waste|Fossil Synfuel Materials Sequestration (Mt CO2/yr)"))
 
   out <- mbind(out,
                 setNames(  out[,,"Emi|CO2|Accounted in Other Sectors via CCU|Energy|Industry|Fossil Synfuel CCS (Mt CO2/yr)"],
                          "Emi|CO2|Accounted in Other Sectors via CCU|Energy|Industry (Mt CO2/yr)"))
 
   out <- mbind(out,
-               setNames(  out[,,"Emi|CO2|Accounted in Other Sectors via CCU|Energy|Industry|Fossil Synfuel CCS (Mt CO2/yr)"],
+               setNames(  out[,,"Emi|CO2|Accounted in Other Sectors via CCU|Waste|Fossil Synfuel Materials Sequestration (Mt CO2/yr)"],
                           "Emi|CO2|Accounted in Other Sectors via CCU|Waste (Mt CO2/yr)"))
 
   out <- mbind(out,
@@ -2033,10 +2046,16 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                setNames(out[, , "Emi|CO2|Energy|+|Demand (Mt CO2/yr)"]
                         - out[, , "Emi|CO2|CDR|Industry CCS|Synthetic Fuels (Mt CO2/yr)"]
                         - out[, , "Emi|CO2|CDR|BECCS|Industry (Mt CO2/yr)"]
-                        - out[, , "Emi|CO2|CDR|Materials|+|Plastics (Mt CO2/yr)"]
                         - out[, , "Emi|CO2|Accounted in Other Sectors via CCU|Energy|Industry (Mt CO2/yr)"],
                         "Emi|CO2|Gross|Energy|+|Demand (Mt CO2/yr)")
   )
+
+  # gross CO2 emissions of waste sector (IPCC sector 5)
+  out <- mbind(out,
+               setNames(out[, , "Emi|CO2|+|Waste (Mt CO2/yr)"]
+                        - out[, , "Emi|CO2|CDR|Materials (Mt CO2/yr)"]
+                        - out[, , "Emi|CO2|Accounted in Other Sectors via CCU|Waste (Mt CO2/yr)"],
+                        "Emi|CO2|Gross|Waste (Mt CO2/yr)"))
 
 
 
@@ -2053,14 +2072,14 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                  setNames(out[, , "Emi|CO2|Energy and Industrial Processes (Mt CO2/yr)"]
                           - out[, , "Emi|CO2|CDR|Industry CCS|Synthetic Fuels (Mt CO2/yr)"]
                           - out[, , "Emi|CO2|CDR|BECCS (Mt CO2/yr)"]
-                          - out[, , "Emi|CO2|CDR|Materials|+|Plastics (Mt CO2/yr)"]
                           - out[, , "Emi|CO2|Accounted in Other Sectors via CCU|Energy|Industry (Mt CO2/yr)"],
                           "Emi|CO2|Gross|Energy and Industrial Processes (Mt CO2/yr)"),
+
 
                  # total gross emissions
                  setNames(out[, , "Emi|CO2 (Mt CO2/yr)"]
                           - out[, , "Emi|CO2|CDR (Mt CO2/yr)"]
-                          - out[, , "Emi|CO2|Accounted in Other Sectors via CCU|Energy|Industry (Mt CO2/yr)"],
+                          - out[, , "Emi|CO2|Accounted in Other Sectors via CCU (Mt CO2/yr)"],
                           "Emi|CO2|Gross (Mt CO2/yr)")
     )
 
@@ -2414,17 +2433,41 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
 
   )
 
-
+  # total energy-related gross GHG emissions
   out <- mbind(out,
 
                # total gross energy emissions
                setNames(out[, , "Emi|GHG|+++|Energy (Mt CO2eq/yr)"]
                         - out[, , "Emi|CO2|CDR|Industry CCS|Synthetic Fuels (Mt CO2/yr)"]
                         - out[, , "Emi|CO2|CDR|BECCS (Mt CO2/yr)"]
-                        - out[, , "Emi|CO2|CDR|Materials|+|Plastics (Mt CO2/yr)"]
                         - out[, , "Emi|CO2|Accounted in Other Sectors via CCU|Energy|Industry (Mt CO2/yr)"],
                         "Emi|GHG|Gross|Energy (Mt CO2eq/yr)")
     )
+
+  # total gross waste GHG emissions
+  out <- mbind(out,
+
+               # total gross energy emissions
+               setNames(out[, , "Emi|GHG|+++|Waste (Mt CO2eq/yr)"]
+                        - out[, , "Emi|CO2|CDR|Materials (Mt CO2/yr)"]
+                        - out[, , "Emi|CO2|Accounted in Other Sectors via CCU|Waste (Mt CO2/yr)"],
+                        "Emi|GHG|Gross|Waste (Mt CO2eq/yr)")
+  )
+
+  # gross GHG emissions excluding CDR that is done outside the CDR sector
+  # (e.g. excluding CDR accounted as energy-related negative emissions)
+  out <- mbind(out,
+
+               # total gross emissions
+               setNames(out[, , "Emi|GHG (Mt CO2eq/yr)"]
+                        - out[, , "Emi|CO2|CDR|Industry CCS|Synthetic Fuels (Mt CO2/yr)"]
+                        - out[, , "Emi|CO2|CDR|BECCS (Mt CO2/yr)"]
+                        - out[, , "Emi|CO2|CDR|Materials (Mt CO2/yr)"]
+                        - out[, , "Emi|CO2|Accounted in Other Sectors via CCU (Mt CO2/yr)"],
+                        "Emi|GHG|Gross (Mt CO2eq/yr)")
+  )
+
+
 
 
   # electric and non-electric supply GHG emissions (needed for total GHG stacked plots with gross emissions)
@@ -2926,8 +2969,8 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
       "Emi|CO2|CDR|EW (Mt CO2/yr)",
       "Emi|CO2|CDR|OAE (Mt CO2/yr)",
       "Emi|CO2|CDR|Land-Use Change (Mt CO2/yr)",
-      "Emi|CO2|CDR|Materials|+|Plastics (Mt CO2/yr)",
-      "Emi|CO2|Accounted in Other Sectors via CCU|Energy|Industry (Mt CO2/yr)"
+      "Emi|CO2|CDR|Materials (Mt CO2/yr)",
+      "Emi|CO2|Accounted in Other Sectors via CCU (Mt CO2/yr)"
     )
 
   # variable names for cumulated emissions variables
