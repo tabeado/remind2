@@ -1381,7 +1381,6 @@ reportLCOE <- function(gdx, output.type = "both") {
 
     ### for buildings and industry (calculate average cost for simplicity, not marginal)
 
-    v37_costAddTeInvH2 <- readGDX(gdx, "v37_costAddTeInvH2", field = "l", restore_zeros = FALSE, react = "silent")
     v36_costAddTeInvH2 <- readGDX(gdx, "v36_costAddTeInvH2", field = "l", restore_zeros = FALSE, react = "silent")
 
     df.AddTeInvH2 <- NULL
@@ -1395,19 +1394,6 @@ reportLCOE <- function(gdx, output.type = "both") {
 
       df.AddTeInvH2 <- rbind(df.AddTeInvH2, df.AddTeInvH2Build)
     }
-
-    if (!is.null(v37_costAddTeInvH2)) {
-
-      df.AddTeInvH2Indst <- as.quitte(v37_costAddTeInvH2[, ttot_from2005, "tdh2s"] / collapseNames(dimSums(vm_demFeSector[, ttot_from2005, "seh2.feh2s.indst"], dim = 3.4, na.rm = TRUE)) / s_twa2mwh * 1e12 * s_usd2017t2015) %>%
-        mutate(value = ifelse(is.infinite(value), 0, value)) %>%
-        mutate(emi_sectors = "industry") %>%
-        select(region, period, all_te, emi_sectors, value) %>%
-        rename(AddH2TdCost = value, sector = emi_sectors, tech = all_te)
-
-      df.AddTeInvH2 <- rbind(df.AddTeInvH2, df.AddTeInvH2Indst)
-    }
-
-
 
     # Join all data for marginal LCOE calculation ----
 
