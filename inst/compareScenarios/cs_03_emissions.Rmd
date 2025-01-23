@@ -237,14 +237,14 @@ showLinePlots(data, "Emi|CO2|Energy|Demand|Buildings|Waste")
 #### Negative Waste Emissions from Non-incinerated Non-fossil Plastics
 ```{r CO2 waste non-incinerated plastics}
 
-showLinePlots(data, "Emi|CO2|Waste|+|Non-Incinerated Plastic (Mt CO2/yr)")
+showLinePlots(data, "Emi|CO2|Waste|Non-Incinerated Plastic")
 ```
 
 
 #### Waste Emissions from Non-plastic Materials (without energy recovery)
 ```{r CO2 waste non-plastic Materials}
 
-showLinePlots(data, "Emi|CO2|Waste|Non-plastic Waste (Mt CO2/yr)")
+showLinePlots(data, "Emi|CO2|Waste|Non-plastic Waste")
 ```
 
 
