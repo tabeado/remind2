@@ -467,15 +467,22 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
 
     if (exists('vm_incinerationCCS')) {
       # calculate captured waste carbon used for CCU (not stored but released)
-      WasteCCU <- dimSums(vm_incinerationCCS, dim=3) * (1 - dimSums(vm_co2CCS, dim=3) / dimSums(vm_co2capture, dim=3))
+      WasteCCU <- dimSums(vm_incinerationCCS, dim=c(3.2,3.3)) * (1 - dimSums(vm_co2CCS, dim=3) / dimSums(vm_co2capture, dim=3))
       WasteCCU[is.na(WasteCCU)] <- 0
     } else {
       # set to zero for GDXs where no waste carbon capture implemented
       WasteCCU <- dimSums(vm_incinerationEmi[,,entySEfos], dim=3) * 0
     }
 
+    # energy-related plastic waste incineration emissions
+    # fossil waste incineration emissions - non-fossil waste incineration CCS + waste incineration CCU
+    # (CCU is accounted as emissions with the sector where the carbon originates from,
+    # in this case the waste sector if carbon is captured in waste incineration plants)
     EmiWasteInc <- setNames(( dimSums(vm_incinerationEmi[,,entySEfos], dim=3)
-                              + WasteCCU
+                              - dimSums(mselect(vm_incinerationCCS, all_enty = c(entySEbio,
+                                                                                 entySEsyn)),
+                                        dim = 3)
+                              + dimSums(WasteCCU, dim=3)
                               )* GtC_2_MtCO2,
                               "Emi|CO2|Energy|Waste|Plastics Incineration (Mt CO2/yr)")
 
@@ -1484,6 +1491,9 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                             # emissions from plastic waste incineration
                             dimSums(mselect(vm_incinerationEmi,
                                             all_enty = entySEfos), dim = 3)
+                            # emission from plastics waste incineration with CCU
+                            # (based on vm_incinerationCCS part of which gets reemitted via CCU)
+                          + dimSums(mselect(WasteCCU, all_enty = entySEfos), dim=3)
                             # emissions from non-plastic waste
                           + dimSums(mselect(v37_feedstocksCarbon,
                                             all_enty = entySEfos), dim = 3)  * (1 - s37_plasticsShare) * cm_nonPlasticFeedstockEmiShare
@@ -1497,6 +1507,9 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                  # emissions from plastic waste incineration
                  dimSums(mselect(vm_incinerationEmi,
                                  all_enty = entySEbio), dim = 3)
+                 # emission from plastics waste incineration with CCU
+                 # (based on vm_incinerationCCS part of which gets reemitted via CCU)
+                 + dimSums(mselect(WasteCCU, all_enty = entySEbio), dim=3)
                  # emissions from non-plastic waste
                  + dimSums(mselect(v37_feedstocksCarbon,
                                    all_enty = entySEbio), dim = 3)  * (1 - s37_plasticsShare) * cm_nonPlasticFeedstockEmiShare
@@ -1511,6 +1524,10 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                  dimSums(mselect(vm_incinerationEmi,
                                  all_enty = entySEsyn), dim = 3)
 
+                 # emission from plastics waste incineration with CCU
+                 # (based on vm_incinerationCCS part of which gets reemitted via CCU)
+                 + dimSums(mselect(WasteCCU, all_enty = entySEsyn), dim=3)
+
                  # emissions from non-plastic waste
                  + dimSums(mselect(v37_feedstocksCarbon,
                                    all_enty = entySEsyn), dim = 3)  * (1 - s37_plasticsShare) * cm_nonPlasticFeedstockEmiShare
@@ -1523,6 +1540,9 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                setNames(   (
                  # emissions from plastic waste incineration
                  dimSums(mselect(vm_incinerationEmi), dim = 3)
+                 # emission from plastics waste incineration with CCU
+                 # (based on vm_incinerationCCS part of which gets reemitted via CCU)
+                 + dimSums(WasteCCU, dim=3)
                  # emissions from non-plastic waste
                  + dimSums(mselect(v37_feedstocksCarbon), dim = 3)  * (1 - s37_plasticsShare) * cm_nonPlasticFeedstockEmiShare
                ) * GtC_2_MtCO2,
@@ -1537,6 +1557,9 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                     # carbon in plastic waste incineration CCS/CCU
                     dimSums(mselect(vm_incinerationCCS,
                                   all_enty = entySEfos), dim = 3)
+                    # substract reemited via CCU
+                    # (based on vm_incinerationCCS part of which gets reemitted via CCU)
+                  - dimSums(mselect(WasteCCU, all_enty = entySEfos), dim=3)
                     # carbon in non-incinerated plastic waste
                   + dimSums(mselect(v37_plasticWaste,
                                     all_enty = entySEfos), dim = 3) * (1 - pm_incinerationRate)
@@ -1552,6 +1575,9 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                   # carbon in plastic waste incineration CCS/CCU
                   dimSums(mselect(vm_incinerationCCS,
                                   all_enty = entySEbio), dim = 3)
+                  # substract reemited via CCU
+                  # (based on vm_incinerationCCS part of which gets reemitted via CCU)
+                  - dimSums(mselect(WasteCCU, all_enty = entySEbio), dim=3)
                   # carbon in non-incinerated plastic waste
                   + dimSums(mselect(v37_plasticWaste,
                                     all_enty = entySEbio), dim = 3) * (1 - pm_incinerationRate)
@@ -1567,6 +1593,9 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                   # carbon in plastic waste incineration CCS/CCU
                   dimSums(mselect(vm_incinerationCCS,
                                   all_enty = entySEsyn), dim = 3)
+                  # substract reemited via CCU
+                  # (based on vm_incinerationCCS part of which gets reemitted via CCU)
+                  - dimSums(mselect(WasteCCU, all_enty = entySEsyn), dim=3)
                   # carbon in non-incinerated plastic waste
                   + dimSums(mselect(v37_plasticWaste,
                                     all_enty = entySEsyn), dim = 3) * (1 - pm_incinerationRate)
@@ -1581,6 +1610,9 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                 setNames( (
                   # carbon in plastic waste incineration CCS/CCU
                   dimSums(mselect(vm_incinerationCCS), dim = 3)
+                  # substract reemited via CCU
+                  # (based on vm_incinerationCCS part of which gets reemitted via CCU)
+                  - dimSums(WasteCCU, dim=3)
                   # carbon in non-incinerated plastic waste
                   + dimSums(mselect(v37_plasticWaste), dim = 3) * (1 - pm_incinerationRate)
                   # carbon in non-emitted non-plastic waste
