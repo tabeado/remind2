@@ -1415,6 +1415,19 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
       * GtC_2_MtCO2,
       "Carbon Management|Carbon Capture|+|Industry Energy (Mt CO2/yr)"),
 
+    # total waste incineration carbon capture
+    setNames(dimSums(vm_incinerationCCS, dim = 3) * GtC_2_MtCO2,
+             paste0('Carbon Management|Carbon Capture|+|Waste (Mt CO2/yr)')),
+
+    setNames(dimSums(mselect(vm_incinerationCCS, all_enty =  entySEfos), dim = 3) * GtC_2_MtCO2,
+             'Carbon Management|Carbon Capture|Waste|+|Fossil (Mt CO2/yr)'),
+
+    setNames(dimSums(mselect(vm_incinerationCCS, all_enty =  entySEbio), dim = 3) * GtC_2_MtCO2,
+             'Carbon Management|Carbon Capture|Waste|+|Biomass (Mt CO2/yr)'),
+
+    setNames(dimSums(mselect(vm_incinerationCCS, all_enty =  entySEsyn), dim = 3) * GtC_2_MtCO2,
+             'Carbon Management|Carbon Capture|Waste|+|Synfuels (Mt CO2/yr)'),
+
     # total co2 captured in industry from process emissions (only cement process
     # CO2 for now)
     setNames(
@@ -1427,13 +1440,6 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
       * GtC_2_MtCO2,
       "Carbon Management|Carbon Capture|Industry Process|+|Cement (Mt CO2/yr)"),
 
-    if (exists('vm_incinerationCCS'))
-    {
-      setNames(dimSums(vm_incinerationCCS, dim = 3) * GtC_2_MtCO2,
-               paste0('Carbon Management|Carbon Capture|+|Waste|',
-                      'Plastics Incineration (Mt CO2/yr)'))
-    },
-
     # total co2 captured by DAC
     setNames(-vm_emiCdrTeDetail[, , "dac"] * GtC_2_MtCO2,
              "Carbon Management|Carbon Capture|+|DAC (Mt CO2/yr)"),
@@ -1444,6 +1450,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
       * GtC_2_MtCO2,
       "Carbon Management|Carbon Capture|+|OAE calcination (Mt CO2/yr)")
   )
+
 
   out <- mbind(
     out,
@@ -1812,18 +1819,31 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
         out[, , "Carbon Management|Carbon Capture|Industry Energy|+|Synfuel (Mt CO2/yr)"]
       * p_share_CCS,
       "Carbon Management|Storage|Industry Energy|+|Synfuel (Mt CO2/yr)"),
+
+    setNames(
+             out[,,"Carbon Management|Carbon Capture|+|Waste (Mt CO2/yr)"]
+             * p_share_CCS,
+             paste0('Carbon Management|Storage|+|Waste (Mt CO2/yr)')),
+
+    setNames(
+             out[,,"Carbon Management|Carbon Capture|Waste|+|Fossil (Mt CO2/yr)"]
+             * p_share_CCS,
+             paste0('Carbon Management|Storage|Waste|+|Fossil (Mt CO2/yr)')),
+
+    setNames(
+             out[,,"Carbon Management|Carbon Capture|Waste|+|Biomass (Mt CO2/yr)"]
+             * p_share_CCS,
+             paste0('Carbon Management|Storage|Waste|+|Biomass (Mt CO2/yr)')),
+
+    setNames(
+             out[,,"Carbon Management|Carbon Capture|Waste|+|Synfuels (Mt CO2/yr)"]
+             * p_share_CCS,
+             paste0('Carbon Management|Storage|Waste|+|Synfuels (Mt CO2/yr)')),
+
     setNames(
         out[, , "Carbon Management|Carbon Capture|+|Industry Process (Mt CO2/yr)"]
       * p_share_CCS,
       "Carbon Management|Storage|+|Industry Process (Mt CO2/yr)"),
-
-    if (exists('vm_incinerationCCS'))
-    {
-      setNames(
-          out[,,'Carbon Management|Carbon Capture|+|Waste|Plastics Incineration (Mt CO2/yr)']
-        * p_share_CCS,
-        'Carbon Management|Storage|+|Waste|Plastics Incineration (Mt CO2/yr)')
-    },
 
     setNames(
         out[, , "Carbon Management|Carbon Capture|+|DAC (Mt CO2/yr)"]
