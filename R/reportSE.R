@@ -81,8 +81,8 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
     y <- getYears(vm_prodSe)
   }
 
-  vm_macBase <- readGDX(gdx, name = c("vm_macBase"), field = "l", restore_zeros = FALSE, format = "first_found") * pm_conv_TWa_EJ
-  vm_macBase <- vm_macBase[, y, ]
+  v_macBase <- readGDX(gdx, name = c("v_macBase", "vm_macBase"), field = "l", restore_zeros = FALSE, format = "first_found") * pm_conv_TWa_EJ
+  v_macBase <- v_macBase[, y, ]
   vm_emiMacSector <- readGDX(gdx, name = c("vm_emiMacSector"), field = "l", restore_zeros = FALSE, format = "first_found") * pm_conv_TWa_EJ
   vm_emiMacSector <-   vm_emiMacSector[, y, ]
   ####### set temporal resolution #####
@@ -229,14 +229,14 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
 
 
   ## Gases
-  if (!(is.null(vm_macBase) & is.null(vm_emiMacSector))) {
+  if (!(is.null(v_macBase) & is.null(vm_emiMacSector))) {
     ## exogenous variable for representing reused gas from waste landfills (accounted in the model as segabio)
     MtCH4_2_TWa <- readGDX(gdx, "sm_MtCH4_2_TWa", react = "silent")
     if (is.null(MtCH4_2_TWa)) {
       MtCH4_2_TWa <- 0.001638
     }
     tmp1 <- mbind(tmp1,
-      setNames(MtCH4_2_TWa * (vm_macBase[, , "ch4wstl"] - vm_emiMacSector[, , "ch4wstl"]), "SE|Gases|Biomass|Waste (EJ/yr)")
+      setNames(MtCH4_2_TWa * (v_macBase[, , "ch4wstl"] - vm_emiMacSector[, , "ch4wstl"]), "SE|Gases|Biomass|Waste (EJ/yr)")
     )
   } else {
     tmp1 <- mbind(tmp1,
