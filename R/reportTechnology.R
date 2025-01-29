@@ -411,16 +411,37 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
         setNames(v33_EW_onfield_tot_byClimateGrade[, , "2"] * 1000,  "CDR|Rocks weathering|+|temperate regions (Mt rocks)")
     )
 
-    ## add global values
+    ## add global and regional sums
     tmp2 <- mbind(tmp2, dimSums(tmp2, dim = 1))
 
     if (!is.null(regionSubsetList))
           tmp2 <- mbind(tmp2, calc_regionSubset_sums(tmp2, regionSubsetList))
 
-
-  # combine main reporting and EW ----
+    ## combine main reporting and EW ----
     tmp2 <- magclass::matchDim(tmp2, tmp, dim = c(1, 2))
     tmp <- mbind(tmp, tmp2)
+  
+# OAE reporting: add info on quicklime and slacked lime needed for OAE ----
+    tmp3 <- NULL
+    ## read data and calculate total across technologies
+    vm_emiCdrTeDetail_oae <- readGDX(gdx, "vm_emiCdrTeDetail", restore_zeros = FALSE, field = "l", format = "first_found")[, t,c("oae_ng","oae_el")] # [Gt C ocean uptake]
+    vm_emiCdrTeDetail_oae <- dimSums(vm_emiCdrTeDetail_oae, dim = 3)     # GtC ocean uptake summed over the two oae technologies  
+    
+    s33_OAE_efficiency <- readGDX(gdx, "s33_OAE_efficiency") # tC / tCaO
+   
+    tmp3 <- mbind(
+      setNames(-vm_emiCdrTeDetail_oae / s33_OAE_efficiency * 1000,  "CDR|OAE quicklime (Mt CaO/yr)")
+    )
+
+    ## add global and regional sums 
+    tmp3 <- mbind(tmp3, dimSums(tmp3, dim = 1))
+    
+    if (!is.null(regionSubsetList))
+          tmp3 <- mbind(tmp3, calc_regionSubset_sums(tmp3, regionSubsetList))
+
+    ## combine main reporting and OAE ----
+    tmp3 <- magclass::matchDim(tmp3, tmp, dim = c(1, 2))
+    tmp <- mbind(tmp, tmp3)
 
 
   getSets(tmp)[3] <- "variable"
