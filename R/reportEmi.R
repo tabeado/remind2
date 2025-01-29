@@ -291,16 +291,27 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   v37_emiChemicalsProcess <- readGDX(gdx, "v37_emiChemicalsProcess", field = "l",
                                      restore_zeros = F, react = "silent")[,t,]
 
+  v37_emiChemicalsProcess <- magclass::matchDim(v37_emiChemicalsProcess,
+                                                v37_plasticsCarbon, fill = 0, dim = 1)
+
   v37_emiNonFosNonIncineratedPlastics <- readGDX(gdx, "v37_emiNonFosNonIncineratedPlastics", field = "l",
                                                  restore_zeros = F, react = "silent")[,t,]
 
+  v37_emiNonFosNonIncineratedPlastics <- magclass::matchDim(v37_emiNonFosNonIncineratedPlastics,
+                                                            v37_plasticsCarbon, fill = 0, dim = 1)
+
   v37_emiNonPlasticWaste <- readGDX(gdx, "v37_emiNonPlasticWaste", field = "l",
                                     restore_zeros = F, react = "silent")[,t,]
+
+  v37_emiNonPlasticWaste <- magclass::matchDim(v37_emiNonPlasticWaste,
+                                               v37_plasticsCarbon, fill = 0, dim = 1)
 
   vm_incinerationEmi <- readGDX(gdx, c("vm_incinerationEmi","v37_incinerationEmi"),
                                 field = "l",
                                 restore_zeros = FALSE, spatial = 2,
                                 react = "silent")[,t,]
+
+  vm_incinerationEmi <- magclass::matchDim(vm_incinerationEmi, v37_plasticsCarbon, fill = 0)
 
 
   vm_incinerationCCS <- readGDX(gdx, 'vm_incinerationCCS', field = 'l',
@@ -337,8 +348,6 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
 
   # read in total feedstocks carbon
   v37_feedstocksCarbon <- readGDX(gdx,"v37_feedstocksCarbon", field = "l", restore_zeros = F, spatial = 2)
-  # read in total carbon in incinerated plastics
-  v37_incineratedPlastics <- readGDX(gdx, "v37_incineratedPlastics", field = "l", restore_zeros = F)
   # read in share of non-plastics carbon that gets emitted
   cm_nonPlasticFeedstockEmiShare <- readGDX(gdx, "cm_nonPlasticFeedstockEmiShare") %>%
     as.vector()
