@@ -36,7 +36,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   }
 
   # intialize varibles used in dplyr operations
-  all_enty2 <- all_te <- all_enty <- all_enty1 <- emi_sectors <- all_emiMkt <- all_in <- emiAll <- NULL
+  all_enty <- all_enty1 <- emi_sectors <- all_emiMkt <- NULL
 
   # Read Data from GDX ----
 
@@ -59,13 +59,11 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   cm_multigasscen <- readGDX(gdx, "cm_multigasscen")
 
   # sets required
-  emi2te <- readGDX(gdx, "emi2te") # conversions to emissions
   pe2se <- readGDX(gdx, "pe2se") # pe2se conversions
   se2fe <- readGDX(gdx, "se2fe") # se2fe conversions
   emiInd37_fuel <- readGDX(gdx, "emiInd37_fuel") # energy-related industry CCS categories (excl. co2 cement CCS)
   emiMac2sector <- readGDX(gdx, "emiMac2sector") # mapping of MAC sectors to emissions sectors and gases
   macSector2emiMkt <- readGDX(gdx, "macSector2emiMkt") # mapping of MAC sectors to emissions markets
-  fe2ppfEn <- readGDX(gdx, "fe2ppfEn") # mapping of FE to bottom-level CES tree nodes
   entyFe2Sector <- readGDX(gdx, "entyFe2Sector") %>%
     rename(all_enty1 = all_enty) # mapping of combination of FE to sectors which are actually used
   sector2emiMkt <- readGDX(gdx, "sector2emiMkt") # mapping from sectors to markets
@@ -111,8 +109,6 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   vm_emiTeMkt <- readGDX(gdx, c("vm_emiTeMkt","v_emiTeMkt"), field = "l", restore_zeros = F, format="first_found")[, t, ]
   # emissions from MAC curves (non-energy emissions)
   vm_emiMacSector <- readGDX(gdx, "vm_emiMacSector", field = "l", restore_zeros = F)[, t, ]
-  # exogenous emissions (SO2, BC, OC)
-  pm_emiExog <- readGDX(gdx, "pm_emiExog", field = "l", restore_zeros = F)
   # F-Gases
   vm_emiFgas <- readGDX(gdx, "vm_emiFgas", field = "l", restore_zeros = F)[, t, ]
   # Emissions from MACs (currently: all emissions outside of energy CO2 emissions)
@@ -287,12 +283,6 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   ## Read-in chemical feedstocks variables ----
   v37_plasticsCarbon <- readGDX(gdx, "v37_plasticsCarbon", field = "l", temporal = 1, spatial = 2,
                                 restore_zeros = FALSE, react = "silent")[,t,]
-
-  v37_emiChemicalsProcess <- readGDX(gdx, "v37_emiChemicalsProcess", field = "l",
-                                     restore_zeros = F, react = "silent")[,t,]
-
-  v37_emiChemicalsProcess <- magclass::matchDim(v37_emiChemicalsProcess,
-                                                v37_plasticsCarbon, fill = 0, dim = 1)
 
   v37_emiNonFosNonIncineratedPlastics <- readGDX(gdx, "v37_emiNonFosNonIncineratedPlastics", field = "l",
                                                  restore_zeros = F, react = "silent")[,t,]
@@ -614,24 +604,6 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   p_share_CCS[is.infinite(p_share_CCS)] <- 0
   p_share_CCS[is.na(p_share_CCS)] <- 0
 
-  sel_vm_emiTeDetailMkt_cco2 <- if(getSets(vm_emiTeDetailMkt)[[6]] == "emiAll"){
-    mselect(vm_emiTeDetailMkt, emiAll = "cco2")
-  } else {
-    mselect(vm_emiTeDetailMkt, all_enty2 = "cco2")
-  }
-
-
-  # supply and demand emissions of conversion technologies
-  if (names(emi2te)[4] == "emiAll") {
-    emi2te.pe2se.co2 <- emi2te %>%
-      filter(emiAll == "co2") %>%
-      filter(all_te %in% pe2se$all_te)
-  } else {
-    emi2te.pe2se.co2 <- emi2te %>%
-      filter(all_enty2 == "co2") %>%
-      filter(all_te %in% pe2se$all_te)
-  }
-
   sel_pm_emifac_pe2se <- if(getSets(pm_emifac)[[6]] == "emiAll"){
     mselect(pm_emifac, all_te = pe2se$all_te, emiAll = "co2")
   } else {
@@ -646,8 +618,6 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   pm_emifac.co2.pe <- dimSums(sel_pm_emifac_pe2se, dim = c(3.4))
   # co2 emissions factor of fe carriers
   pm_emifac.co2.fe <- dimSums(sel_pm_emifac_se2fe, dim = c(3.3,3.4))
-
-
 
   # only retain combinations of vm_demFeSector subdimensions which are in entyFe2Sector and sector2emiMkt
   emi.map.fe <- data.frame(all_enty = getItems(pm_emifac.co2.fe, dim = "all_enty",  full = T),
