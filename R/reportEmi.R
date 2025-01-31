@@ -28,6 +28,26 @@
 
 reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                       t = c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150)) {
+
+  # backwards compatibility ----
+  # check if an older REMIND version is used and switch to legacy emission reporting if necessary
+  # vm_wasteIncinerationEmiBalance was introduced with https://github.com/remindmodel/remind/pull/1829
+  # the absence of this variable indicates that fallback to emission reporting before
+  # https://github.com/pik-piam/remind2/pull/684 is necessary
+
+  # the legacy emission reporting will be removed from remind2 with Release 3.5.0
+  vm_wasteIncinerationEmiBalance <- readGDX(gdx, "vm_wasteIncinerationEmiBalance", field = "l",
+                                restore_zeros = FALSE, spatial = 2,
+                                react = "silent")
+
+  if (is.null(vm_wasteIncinerationEmiBalance)) {
+    message("running reportEmiLegacy...")
+    output <- reportEmiLegacy(gdx, output, regionSubsetList, t)
+    return(output)
+  }
+
+  # emission reporting ----
+
   # emissions calculation requires information from other reporting functions
   if (is.null(output)) {
     message("reportEmi executes reportFE")
