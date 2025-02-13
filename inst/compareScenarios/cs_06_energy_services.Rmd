@@ -1,9 +1,7 @@
 # Energy Services and Products
 
 ## Summary of affluence indicators 
-
-### Per capita indicators
-```{r plot per-capita indicators}
+```{r}
 indicators_general <- c(
   "GDP|PPP pCap",
   "Emi|CO2 pCap",
@@ -23,20 +21,31 @@ indicators_industry <- c(
   "Value Added|Industry|Chemicals|per-capita") # "Value Added|Industry|Other Industry|per-capita"
 
 indicators <- c(indicators_general, indicators_buildings, indicators_transport, indicators_industry)
+```
 
+### Time domain
+```{r, results = 'asis'}
 for (i in indicators) {
   cat("\n\n####", sub("(\\|per-capita)|( pCap)", "", i), "\n")
-  showLinePlots(data, i, scales = "fixed")
+  showLinePlots(data, i, scales = "free")
 }
 ```
 
-### Coupling to GDP
-```{r plot per-capita indicators over per-capita GDP, results = 'asis'}
+### GDP domain, grouped regions
+```{r}
+showMultiLinePlotsByVariable(dIea, indicators_general,   "GDP|PPP pCap")
+showMultiLinePlotsByVariable(dIea, indicators_buildings, "GDP|PPP pCap")
+showMultiLinePlotsByVariable(dIea, indicators_transport, "GDP|PPP pCap")
+showMultiLinePlotsByVariable(dIea, indicators_industry,  "GDP|PPP pCap")
+```
+
+### GDP domain, separated regions
+```{r, results = 'asis'}
 
 dPlot <- full_join(
   data %>%
     select(scenario, region, variable, unit, period, value) %>%
-    filter(variable %in% indicators),
+    filter(variable %in% indicators, scenario != "historical"),
 
   data %>%
     filter("GDP|per capita|PPP" == variable) %>%
@@ -50,11 +59,6 @@ xLab <- data %>%
   distinct(variable, unit) %>%
     mutate(label = paste0(variable, " [", unit, "]")) %>%
     pull(label)
-
-xLim <- data %>%
-  filter("GDP|per capita|PPP" == variable) %>%
-  pull(value) %>%
-  range()
 
 for (i in indicators) {
   cat("\n\n####", sub("(\\|per-capita)|( pCap)", "", i), "\n")

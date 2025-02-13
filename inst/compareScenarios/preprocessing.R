@@ -48,7 +48,7 @@ pCapVariables <- tribble(
   "UE|Buildings|Heating|Liquids", "GJ/yr/pCap", 1e9,
   "UE|Buildings|Heating|Solids", "GJ/yr/pCap", 1e9,
   "UE|Buildings|Heating", "GJ/yr/pCap", 1e9,
-  "ES|Buildings|Floor Space", "m2/pCap", 1e6,
+  "ES|Buildings|Floor Space", "m2/pCap", 1e9,
   "ES|Transport|Pass", "k pkm/yr/pCap", 1e6, # use kilo-passenger-kilometer to prevent too large numbers in the plots
   "ES|Transport|Pass|Road|LDV", "k pkm/yr/pCap", 1e6,
   "ES|Transport|Pass|non-LDV", "k pkm/yr/pCap", 1e6,
