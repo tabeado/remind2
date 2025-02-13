@@ -4,8 +4,9 @@
 ```{r}
 indicators_general <- c(
   "GDP|PPP pCap",
+  "FE pCap",
   "Emi|CO2 pCap",
-  "FE pCap"
+  "Emi|CO2|CDR pCap"
 )
 indicators_buildings <- c(
   "ES|Buildings|Floor Space pCap",
