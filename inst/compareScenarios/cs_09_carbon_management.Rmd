@@ -91,6 +91,23 @@ showLinePlots(data, "Carbon Management|Usage")
 showAreaAndBarPlotsPlus(data, "Carbon Management|Usage", scales = "fixed")
 ```
 
+## Expenses on CDR
+### FE shares
+```{r CDR FE shares - Line}
+items <- c("CDR|FE Electricity share",
+  "CDR|FE Gases share",
+  "CDR|FE Heat share",
+  "CDR|FE Hydrogen share",
+  "CDR|FE liquids share",
+  "CDR|FE total share")
+showLinePlots(data, items)
+walk(items, showLinePlots, data = data)
+```
+
+### Spending on NNE
+```{r NNE share of GDP - line}
+showLinePlots(data, "GDP|Share spent on NNE")
+```
 
 # Materials
 
