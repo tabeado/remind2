@@ -228,7 +228,21 @@ reportCrossVariables <- function(gdx, output = NULL, regionSubsetList = NULL,
         + dimSums(mselect(tmp, list(variable = 'SE|Electricity|Net Imports (EJ/yr)')),
                   dim = 3)
         ),
-      "Secondary Energy|Electricity|Share of renewables in gross demand|Estimation (%)"))
+      "Secondary Energy|Electricity|Share of renewables in gross demand|Estimation (%)"),
+      
+    setNames(100*(output[,,"FE|CDR (EJ/yr)"]/output[,,"FE (EJ/yr)"]), 
+      "CDR|FE total share"),
+    setNames(100*(output[,,"FE|CDR|Liquids (EJ/yr)"]/output[,,"FE|Liquids (EJ/yr)"]), 
+      "CDR|FE liquids share"),
+       setNames(100*(output[,,"FE|CDR|Electricity (EJ/yr)"]/output[,,"FE|Electricity (EJ/yr)"]), 
+      "CDR|FE Electricity share"),
+      setNames(100*(output[,,"FE|CDR|Gases (EJ/yr)"]/output[,,"FE|Gases (EJ/yr)"]), 
+      "CDR|FE Gases share"),
+       setNames(100*(output[,,"FE|CDR|Heat (EJ/yr)"]/output[,,"FE|Heat (EJ/yr)"]), 
+      "CDR|FE Heat share"),
+       setNames(100*(output[,,"FE|CDR|Hydrogen (EJ/yr)"]/output[,,"FE|Hydrogen (EJ/yr)"]), 
+      "CDR|FE Hydrogen share")
+  )
 
   # Energy expenditures
   tmp <- mbind(tmp,setNames(
