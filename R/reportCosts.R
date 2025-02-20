@@ -608,6 +608,30 @@ reportCosts <- function(gdx,output=NULL,regionSubsetList=NULL,t=c(seq(2005,2060,
   # cannot be summed for aggregation
   tmp[c("GLO", names(regionSubsetList)),,"Costs|Biomass|Adjfactor (unitless)"] <- NA
 
+  # add info on share of GDP for paying net negative emissions
+  v_NetNegEmi_expenses <- readGDX(gdx, "v_NetNegEmi_expenses", restore_zeros = TRUE, field = "l", format = "first_found")[, t, ]
+  if (!is.null(v_NetNegEmi_expenses)) {
+      v_NetNegEmi_expenses_GLO <- dimSums(v_NetNegEmi_expenses, dim = 1)
+      # add other region aggregations
+      if (!is.null(regionSubsetList))
+        v_NetNegEmi_expenses <- mbind(v_NetNegEmi_expenses, calc_regionSubset_sums(out, v_NetNegEmi_expenses))
+
+      v_NetNegEmi_expenses2 <- mbind(v_NetNegEmi_expenses, v_NetNegEmi_expenses_GLO)
+      v_NetNegEmi_expenses2[is.na(v_NetNegEmi_expenses2)] <- 0
+
+      gdp_orUnit <- vm_cesIO[, , "inco"]
+      gdp_orUnit_GLO <- dimSums(gdp_orUnit, dim = 1)
+      # add other region aggregations
+      if (!is.null(regionSubsetList))
+        gdp_orUnit <- mbind(gdp_orUnit, calc_regionSubset_sums(out, gdp_orUnit))
+      gdp_orUnit2 <- mbind(gdp_orUnit, gdp_orUnit_GLO)[, t, ]
+
+      tmp <- mbind(tmp,
+                  setNames(100 * v_NetNegEmi_expenses2 / gdp_orUnit2,   "GDP|Share spent on NNE (%)"),
+                  setNames(v_NetNegEmi_expenses2 * 1000,   "GDP|Expenses for NNE (billion US$2017/yr)"))
+  }
+
+
   getSets(tmp)[3] <- "variable"
   return(tmp)
 }
