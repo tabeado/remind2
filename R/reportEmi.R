@@ -1803,24 +1803,18 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                  + out[, , "Carbon Management|Carbon Capture|Energy|Industry|+|Biomass (Mt CO2/yr)"] 
                  + out[, , "Carbon Management|Carbon Capture|Energy|CDR Sector|+|Biomass (Mt CO2/yr)"] 
                  + out[, , "Carbon Management|Carbon Capture|Waste|+|Biomass (Mt CO2/yr)"], 
-                 "Carbon Management|Carbon Capture|++|Biomass (Mt CO2/yr)"),
+                 "Carbon Management|Carbon Capture|Biomass (Mt CO2/yr)"),
                setNames(
                  out[, , "Carbon Management|Carbon Capture|Energy|Pe2Se|+|Fossil (Mt CO2/yr)"] 
                  + out[, , "Carbon Management|Carbon Capture|Energy|Industry|+|Fossil (Mt CO2/yr)"] 
                  + out[, , "Carbon Management|Carbon Capture|Energy|CDR Sector|+|Fossil (Mt CO2/yr)"] 
                  + out[, , "Carbon Management|Carbon Capture|Waste|+|Fossil (Mt CO2/yr)"], 
-                 "Carbon Management|Carbon Capture|++|Fossil (Mt CO2/yr)"),
+                 "Carbon Management|Carbon Capture|Fossil (Mt CO2/yr)"),
                setNames(
                  out[, , "Carbon Management|Carbon Capture|Energy|Industry|+|Synfuel (Mt CO2/yr)"] 
                  + out[, , "Carbon Management|Carbon Capture|Energy|CDR Sector|+|Synfuel (Mt CO2/yr)"] 
                  + out[, , "Carbon Management|Carbon Capture|Waste|+|Synfuel (Mt CO2/yr)"], 
-                 "Carbon Management|Carbon Capture|++|Synfuel (Mt CO2/yr)"),
-               setNames(
-                 out[, , "Carbon Management|Carbon Capture|+|Ambient Air (Mt CO2/yr)"], 
-                 "Carbon Management|Carbon Capture|++|Ambient Air (Mt CO2/yr)"),
-               setNames(
-                 out[, , "Carbon Management|Carbon Capture|+|Industrial Processes (Mt CO2/yr)"], 
-                 "Carbon Management|Carbon Capture|++|Industrial Processes (Mt CO2/yr)"),
+                 "Carbon Management|Carbon Capture|Synfuel (Mt CO2/yr)"),
                setNames(
                  out[, , "Carbon Management|Carbon Capture|Energy|+|Industry (Mt CO2/yr)"]
                  + out[, , "Carbon Management|Carbon Capture|Energy|+|CDR Sector (Mt CO2/yr)"]
@@ -2042,7 +2036,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
     setNames(EmiCDR.LUC,
              "Emi|CO2|CDR|+|Land-Use Change (Mt CO2/yr)"),
     # total BECCS (pe2se + bio FE w CCS in industry and CDR demand sector + waste incineration BECCS)
-    setNames(-out[, , "Carbon Management|Carbon Capture|++|Biomass (Mt CO2/yr)"]
+    setNames(-out[, , "Carbon Management|Carbon Capture|Biomass (Mt CO2/yr)"]
              * p_share_CCS,
              #- out[, , "Carbon Management|Storage|Industry Energy|+|Biomass (Mt CO2/yr)"]
              #+ out[, , "Emi|CO2|CDR|BECCS|Industry|Waste Incineration (Mt CO2/yr)"]
