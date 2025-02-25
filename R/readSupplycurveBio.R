@@ -55,13 +55,6 @@ readSupplycurveBio <- function(outputdirs,
     names(gdx_path)[i] <- readGDX(gdx_path[i],"c_expname", format="first_found")
   }
 
-  names(gdx_path) <- make.unique(names(gdx_path), sep = "_")
-
-  # # if scenarios have the same name use folder names instead of scenario names
-  # if (any(duplicated(names(gdx_path)))) {
-  #   names(gdx_path) <- basename(outputdirs)
-  # }
-
   #########################################################################
   ############ Read in fit coefficients ###################################
   #########################################################################
