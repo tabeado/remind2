@@ -19,7 +19,7 @@ showAreaAndBarPlots(
                'Carbon Management|Carbon Capture|Fossil',
                'Carbon Management|Carbon Capture|Synfuel',
                'Carbon Management|Carbon Capture|Industrial Processes',
-               'Carbon Management|Carbon Capture|Ambient Air')),
+               'Carbon Management|Carbon Capture|DAC')),
   scales = 'fixed',
   orderVars = 'user')
 ```
@@ -57,7 +57,7 @@ showAreaAndBarPlots(
   data = data,
   vars = rev(c('Carbon Management|Carbon Capture|Energy|CDR Sector',
                'Carbon Management|Carbon Capture|Industrial Processes|CDR Sector|OAE',
-               'Carbon Management|Carbon Capture|Ambient Air|DAC')),
+               'Carbon Management|Carbon Capture|DAC')),
   scales = 'fixed',
   orderVars = 'user')
 ```

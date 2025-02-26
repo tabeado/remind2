@@ -1479,10 +1479,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
              "Carbon Management|Carbon Capture|Industrial Processes|CDR Sector|+|OAE (Mt CO2/yr)"),
     # total co2 captured from ambient air (as of now only DAC)
     setNames(-vm_emiCdrTeDetail[, , "dac"] * GtC_2_MtCO2,
-             "Carbon Management|Carbon Capture|+|Ambient Air (Mt CO2/yr)"),
-    # total co2 captured from ambient air (as of now only DAC)
-    setNames(-vm_emiCdrTeDetail[, , "dac"] * GtC_2_MtCO2,
-             "Carbon Management|Carbon Capture|Ambient Air|+|DAC (Mt CO2/yr)")
+             "Carbon Management|Carbon Capture|+|DAC (Mt CO2/yr)")
   )
 
   
@@ -1959,9 +1956,9 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
              "Carbon Management|Storage|+|Industrial Processes (Mt CO2/yr)"),    
     
     setNames(
-             out[, , "Carbon Management|Carbon Capture|+|Ambient Air (Mt CO2/yr)"]
+             out[, , "Carbon Management|Carbon Capture|+|DAC (Mt CO2/yr)"]
              * p_share_CCS,
-             "Carbon Management|Storage|+|Ambient Air (Mt CO2/yr)"),
+             "Carbon Management|Storage|+|DAC (Mt CO2/yr)"),
 
     setNames(
              out[, , "Carbon Management|Carbon Capture|Energy|+|CDR Sector (Mt CO2/yr)"]
@@ -2095,7 +2092,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
              "Emi|CO2|CDR|+|Materials (Mt CO2/yr)"),
 
     # total DACCS
-    setNames(-out[, , "Carbon Management|Carbon Capture|Ambient Air|+|DAC (Mt CO2/yr)"] * p_share_CCS,
+    setNames(-out[, , "Carbon Management|Storage|+|DAC (Mt CO2/yr)"],
              "Emi|CO2|CDR|+|DACCS (Mt CO2/yr)"),
 
     # total EW
