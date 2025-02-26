@@ -232,7 +232,7 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
     } else if (all(map %in% cdrmap)) {
       # CDR technologies need special mapping
       # for global avgs we use CO2 flows as weights
-      int2ext[[report_str("DAC", category, unit)]] <- report_str("DAC", unit = "Mt CO2/yr", predicate = "Carbon Management|Carbon Capture")
+      int2ext[[report_str("DAC", category, unit)]] <- report_str("DAC", unit = "Mt CO2/yr", predicate = "Carbon Management|Carbon Capture|Ambient Air")
       int2ext[[report_str("CO2 Storage", category, unit)]] <- report_str("Storage", unit = "Mt CO2/yr", predicate = "Carbon Management")
     }
     return(int2ext)
