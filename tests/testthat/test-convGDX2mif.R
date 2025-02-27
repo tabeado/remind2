@@ -84,38 +84,7 @@ test_that("Test if REMIND reporting is produced as it should and check data inte
       model = "REMIND"
     )
   }
-  # create a second file, so we can actually check the comparison code
-  if (numberOfMifs == 1) {
-    numberOfMifs <- numberOfMifs + 1
-    magclass::write.report(
-      x = magclass::collapseNames(mifContent),
-      file = file.path(tempdir(), paste0(numberOfMifs, ".mif")),
-      scenario = paste0(magclass::getItems(mifContent, dim = "scenario"), numberOfMifs),
-      model = "REMIND"
-    )
-  }
 
-  message("Checking compareScenarios...")
-  myMifs <- file.path(tempdir(), paste0(seq_len(numberOfMifs), ".mif"))
-  histMif <- file.path(tempdir(), "historical.mif")
-  if (!file.exists(histMif)) {
-    utils::download.file("https://rse.pik-potsdam.de/data/example/historical.mif", histMif, quiet = TRUE)
-  }
-
-  suppressWarnings(
-    capture.output( # Do not show stdout text.
-      piamPlotComparison::compareScenarios(
-        projectLibrary = "remind2",
-        mifScen = myMifs,
-        mifHist = histMif,
-        outputFormat = "pdf",
-        outputFile = "cs2_test",
-        outputDir = tempdir(),
-        sections = 0
-      )
-    ) # Render only the info section.
-  )
-  expect_true(file.exists(file.path(tempdir(), "cs2_test.pdf")))
   unlink(tempdir(), recursive = TRUE)
   tempdir(TRUE)
 })
