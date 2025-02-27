@@ -309,11 +309,11 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   ## Read-in chemical feedstocks variables ----
   v37_plasticsCarbon <- readGDX(gdx, "v37_plasticsCarbon", field = "l", temporal = 1, spatial = 2,
                                 restore_zeros = FALSE, react = "silent")[, t, ]
-
-  v37_emiNonFosNonIncineratedPlastics <- readGDX(gdx, "v37_emiNonFosNonIncineratedPlastics", field = "l",
+  
+  vm_emiNonFosNonIncineratedPlastics <- readGDX(gdx, c("v37_emiNonFosNonIncineratedPlastics","vm_emiNonFosNonIncineratedPlastics"), field = "l",
                                                  restore_zeros = FALSE, react = "silent")[, t, ]
 
-  v37_emiNonFosNonIncineratedPlastics <- magclass::matchDim(v37_emiNonFosNonIncineratedPlastics,
+  vm_emiNonFosNonIncineratedPlastics <- magclass::matchDim(vm_emiNonFosNonIncineratedPlastics,
                                                             v37_plasticsCarbon, fill = 0, dim = 1)
 
   v37_emiNonPlasticWaste <- readGDX(gdx, "v37_emiNonPlasticWaste", field = "l",
@@ -1241,7 +1241,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   # This includes waste incineration without energy recovery and negative emissions from
   # non-incinerated (non-fossil) plastics.
   out <- mbind(out,
-               setNames(dimSums(mselect(v37_emiNonFosNonIncineratedPlastics * GtC_2_MtCO2,
+               setNames(dimSums(mselect(vm_emiNonFosNonIncineratedPlastics * GtC_2_MtCO2,
                                         all_enty = "co2"), dim = 3),
                         "Emi|CO2|Waste|+|Non-Incinerated Plastic (Mt CO2/yr)"))
 
@@ -2853,7 +2853,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
     # + Waste CO2 emissions from non-plastics
     setNames(
              dimSums(mselect(EmiMACEq[, , "ES"], sector = "Waste"), dim = 3)
-             + dimSums(mselect(v37_emiNonFosNonIncineratedPlastics * GtC_2_MtCO2,
+             + dimSums(mselect(vm_emiNonFosNonIncineratedPlastics * GtC_2_MtCO2,
                                all_enty = "co2"), dim = 3)
              + dimSums(mselect(v37_emiNonPlasticWaste  * GtC_2_MtCO2,
                                all_enty = "co2"), dim = 3),
