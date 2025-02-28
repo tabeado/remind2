@@ -32,7 +32,7 @@ test_that("Test if REMIND reporting is produced as it should and check data inte
 
   checkPiamTemplates <- function(computedVariables) {
     # if you add a new template here, make sure to adjust the piamInterfaces version in the DESCRIPTION
-    templates <- c("AR6", "AR6_NGFS", "ELEVATE", "NAVIGATE", "SHAPE", "ARIADNE", "ECEMF")
+    templates <- c("AR6", "AR6_NGFS", "ELEVATE", "NAVIGATE", "SHAPE", "ARIADNE", "ECEMF","ScenarioMIP")
     for (template in templates) {
       templateVariables <- template %>%
         piamInterfaces::getREMINDTemplateVariables() %>%

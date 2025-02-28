@@ -59,7 +59,7 @@ Imports:
     madrat (>= 3.13.0),
     mip (>= 0.149.2),
     openxlsx,
-    piamInterfaces (>= 0.17.11),
+    piamInterfaces (>= 0.33.0),
     piamPlotComparison (>= 0.0.10),
     piamutils,
     plotly (>= 4.10.4),
