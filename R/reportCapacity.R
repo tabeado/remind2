@@ -15,7 +15,7 @@
 #' using time averaging.
 #'
 #' @return MAgPIE object - contains the capacity variables
-#' @author Lavinia Baumstark, Christoph Bertram
+#' @author Lavinia Baumstark, Christoph Bertram, Fabrice Lecuyer
 #' @seealso \code{\link{convGDX2MIF}}
 #' @examples
 #' \dontrun{
@@ -250,9 +250,7 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
   }
 
 
-  ####### calculate newly built capacity parameters ############
-  # Should all go into tmp2, so that this can be used for calculating cumulated values in tmp5 below
-
+  ####### calculate parameters for capacity and newly built capacity ############
   reported_cap <- capacity_reporting("Cap")
   reported_new <- capacity_reporting("New Cap")
 
