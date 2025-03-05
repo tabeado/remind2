@@ -1,9 +1,9 @@
 #' Read Emissions from GDX file
-#' 
+#'
 #' Read emission data from a GDX file into a magpie object. summs automatically
 #' over all kinds of enty and vm_emiengregi and vm_emiengregi
-#' 
-#' 
+#'
+#'
 #' @param gdx a GDX list as created by readGDX, or the file name of a gdx
 #' file(file name is recommended as this speeds up the code)
 #' @param emiengregi enty that is read in from vm_emiengregi, vector is
@@ -14,9 +14,9 @@
 #' vm_emiengregi use emiengregi=NULL
 #' @author Lavinia Baumstark
 #' @examples
-#' 
+#'
 #' \dontrun{emi <- readEmissions(gdx,emiengregi=c("n2o","co2"),eminegregi=NULL)}
-#' 
+#'
 #' @export
 #' @importFrom gdx readGDX
 #' @importFrom magclass setNames getNames<-
@@ -37,10 +37,10 @@ readEmissions <- function(gdx,emiengregi,eminegregi){
   }
   else if (is.null(emiengregi) && !is.null(eminegregi)){
     tmp <- tmp2
-  }  
+  }
   else if (is.null(emiengregi) && is.null(eminegregi)){
     stop("please choose at least one emisison type")
-  } 
+  }
   names_emiengregi <- paste(emiengregi,collapse="+")
   names_eminegregi <- paste(eminegregi,collapse="+")
   getNames(tmp) <- paste(names_emiengregi,names_eminegregi,sep="&")

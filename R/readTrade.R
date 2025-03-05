@@ -1,8 +1,8 @@
 #' Read Trade from GDX file
-#' 
+#'
 #' Read Exports or Imports of a commodity from a GDX file into a magpie object.
-#' 
-#' 
+#'
+#'
 #' @param gdx a GDX list as created by readGDX, or the file name of a gdx
 #' file(file name is recommended as this speeds up the code)
 #' @param type one of \code{"Imports"} or \code{"Exports"}
@@ -11,12 +11,12 @@
 #' @return Trade data as MAgPIE object
 #' @author Niklas Roming
 #' @examples
-#' 
+#'
 #'   \dontrun{
 #'     coal <- readTrade(gdx, "Exports", "pecoal") # Coal exports
 #'     gas <- readTrade(gdx, "Imports", "pegas") # Gas exports
 #'   }
-#' 
+#'
 #' @export
 #' @importFrom gdx readGDX
 #' @importFrom magclass getNames<-
