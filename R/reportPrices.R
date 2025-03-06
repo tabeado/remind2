@@ -87,7 +87,7 @@ reportPrices <- function(gdx, output = NULL, regionSubsetList = NULL,
   pric_emu       <- readGDX(gdx, name = "vm_pebiolc_price", field = "l", format = "first_found")[, t, ]
 
   ## equations
-  budget.m       <- readGDX(gdx, name = "qm_budget", types = "equations", field = "m", format = "first_found")[, t, ]
+  budget.m       <- readGDX(gdx, name = "qm_budget", types = "equations", field = "m", format = "first_found")[, t, ] # Alternative: calcPrice
   balcapture.m   <- readGDX(gdx, name = c("q_balcapture", "q12_balcapture"), field = "m", restore_zeros = FALSE)[, t, ]
   esm2macro.m    <- readGDX(gdx, name = "q35_esm2macro", types = "equations", field = "m", format = "first_found", react = "silent")[, t, ]
   cm_startyear   <- as.integer(readGDX(gdx, name = "cm_startyear", format = "simplest"))
