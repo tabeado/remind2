@@ -127,7 +127,7 @@ reportCosts <- function(gdx,output=NULL,regionSubsetList=NULL,t=c(seq(2005,2060,
   # Equations
   finenbal     <- readGDX(gdx,name=c("fe2ppfEn","finenbal"),  types="sets",format="first_found")
   pebal.m      <- readGDX(gdx,name=c("q_balPe","qm_pebal"),  types="equations",field="m",format="first_found")
-  budget.m     <- readGDX(gdx,name='qm_budget', types="equations",field="m",format="first_found") # alternative: calcPrice
+  budget.m     <- readGDX(gdx,name='qm_budget', types="equations",field="m",format="first_found")
   sebal.m      <- readGDX(gdx,name=c("q_balSe","q_sebal"),   types="equations",field="m",format="first_found")
   balfinen.m   <- readGDX(gdx,name=c("qm_balFeForCesAndEs","qm_balFeForCes","q_balFeForCes","q_balfinen"),types="equations",field="m",format="first_found", react = "silent")[finenbal]
 
