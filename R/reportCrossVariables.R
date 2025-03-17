@@ -348,7 +348,7 @@ reportCrossVariables <- function(gdx, output = NULL, regionSubsetList = NULL,
         # build magpie
         select('Region', 'Year', getSets(out, fulldim = FALSE)[3], 'Value') %>%
         `colnames<-`(c(getSets(out, fulldim = FALSE), 'Value')) %>%
-        as.magpie(spatial = 1, temporal = 2, data = 4)
+        as.magpie(spatial = 1, temporal = 2, datacol = 4)
     )
 
     # add per-GDP industry activity ----
@@ -390,7 +390,7 @@ reportCrossVariables <- function(gdx, output = NULL, regionSubsetList = NULL,
         # build magpie
         select('Region', 'Year', getSets(out, fulldim = FALSE)[3], 'Value') %>%
         `colnames<-`(c(getSets(out, fulldim = FALSE), 'Value')) %>%
-        as.magpie(spatial = 1, temporal = 2, data = 4)
+        as.magpie(spatial = 1, temporal = 2, datacol = 4)
     )
   }
 
