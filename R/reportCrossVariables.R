@@ -72,11 +72,11 @@ reportCrossVariables <- function(gdx, output = NULL, regionSubsetList = NULL,
   tmp <- mbind(tmp,setNames(
                    output[r,,"SE|Liquids|Biomass|Cellulosic (EJ/yr)"]
                  * output[r,,"PE|Biomass|Residues (EJ/yr)"]
-                 / dimSums(mselect(demPE,all_enty="pebiolc"),dim=3),    "SE|Liquids|Biomass|Cellulosic|+|Residues (EJ/yr)"))
+                 / dimSums(mselect(demPE,all_enty="pebiolc"),dim=3),    "SE|Liquids|Biomass|Cellulosic|++|Residues (EJ/yr)"))
   tmp <- mbind(tmp,setNames(
                    output[r,,"SE|Liquids|Biomass|Cellulosic (EJ/yr)"]
                  * output[r,,"PE|Biomass|Energy Crops (EJ/yr)"]
-                 / dimSums(mselect(demPE,all_enty="pebiolc"),dim=3),    "SE|Liquids|Biomass|Cellulosic|+|Energy Crops (EJ/yr)"))
+                 / dimSums(mselect(demPE,all_enty="pebiolc"),dim=3),    "SE|Liquids|Biomass|Cellulosic|++|Energy Crops (EJ/yr)"))
 
 
   tmp <- mbind(tmp,setNames(
