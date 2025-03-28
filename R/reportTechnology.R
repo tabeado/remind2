@@ -131,7 +131,7 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
     "gash2" = "Hydrogen|Gas|w/o CC",
     "bioftcrec" = "Liquids|Biomass|BioFTR|w/ CC",
     "bioftrec" = "Liquids|Biomass|BioFTR|w/o CC",
-    "bioethl" = "SE|Liquids|Biomass|Lignocellulosic Ethanol",
+    "bioethl" = "Liquids|Biomass|Lignocellulosic Ethanol",
     "bioeths" = "Liquids|Biomass|Conventional Ethanol",
     "biodiesel" = "Liquids|Biomass|Biodiesel",
     "coalftcrec" = "Liquids|Fossil|Coal|w/ CC",
