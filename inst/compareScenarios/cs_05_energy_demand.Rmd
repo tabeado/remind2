@@ -27,7 +27,7 @@ showAreaAndBarPlots(data, items, tot, orderVars = "user", fill = TRUE)
 
 ### FE Non-Electric Demand All Sectors - Bar 
 
-```{r Final Energy total}
+```{r FE Non-Electric Demand All Sectors - Bar}
 items <- c(
   "FE|Hydrogen",
   "FE|Heat",
@@ -36,10 +36,7 @@ items <- c(
   "FE|Solids",
   NULL
 )
-```
 
-
-```{r FE all sectors by carrier - Bar }
 showAreaAndBarPlots(data, items, orderVars = "user", scales = "fixed")
 ```
 
@@ -81,7 +78,7 @@ showAreaAndBarPlots(data, items, tot, orderVars = "user", fill = TRUE)
 
 ### FE Demand Non-Electric - Carrier and Sector - Bar 
 
-```{r Final Energy Non-Electricity Detail}
+```{r FE Demand Non-Electric - Carrier and Sector - Bar}
 items <- c(
   "FE|Transport|Hydrogen",
   "FE|Buildings|Hydrogen",
@@ -98,10 +95,7 @@ items <- c(
   "FE|Industry|Solids", 
   NULL
 )
-```
 
-
-```{r FE Non-Electricity all sectors by carrier - Bar }
 showAreaAndBarPlots(data, items, orderVars = "user", scales = "fixed")
 ```
 
