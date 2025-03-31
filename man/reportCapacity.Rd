@@ -8,7 +8,7 @@ reportCapacity(
   gdx,
   regionSubsetList = NULL,
   t = c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150),
-  gdx_ref = gdx_ref
+  gdx_ref = gdx
 )
 }
 \arguments{
@@ -41,5 +41,5 @@ reportCapacity(gdx)
 \code{\link{convGDX2MIF}}
 }
 \author{
-Lavinia Baumstark, Christoph Bertram
+Lavinia Baumstark, Christoph Bertram, Fabrice Lecuyer
 }
