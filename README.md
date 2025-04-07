@@ -49,17 +49,17 @@ In case of questions / problems please contact Renato Rodrigues <renato.rodrigue
 
 To cite package **remind2** in publications use:
 
-Rodrigues R, Baumstark L, Benke F, Dietrich J, Dirnaichner A, Dorndorf T, Duerrwaechter J, FÃ¼hrlich P, Giannousakis A, Hasse R, Hilaire J, Klein D, Koch J, Kowalczyk K, Levesque A, Malik A, Merfort A, Merfort L, Morena-Leiva S, Pehl M, Pietzcker R, Rauner S, Richters O, Rottoli M, SchÃ¶tz C, Schreyer F, Siala K, SÃ¶rgel B, Spahr M, Strefler J, Verpoort P, Weigmann P, RÃ¼ter T (2025). "remind2: The REMIND R package (2nd generation)." Version: 1.174.0, <https://github.com/pik-piam/remind2>.
+Rodrigues R, Baumstark L, Benke F, Dietrich J, Dirnaichner A, Dorndorf T, Duerrwaechter J, Führlich P, Giannousakis A, Hasse R, Hilaire J, Klein D, Koch J, Kowalczyk K, Levesque A, Malik A, Merfort A, Merfort L, Morena-Leiva S, Pehl M, Pietzcker R, Rauner S, Richters O, Rottoli M, Schötz C, Schreyer F, Siala K, Sörgel B, Spahr M, Strefler J, Verpoort P, Weigmann P, Rüter T (2025). "remind2: The REMIND R package (2nd generation)." Version: 1.173.1, <https://github.com/pik-piam/remind2>.
 
 A BibTeX entry for LaTeX users is
 
  ```latex
 @Misc{,
   title = {remind2: The REMIND R package (2nd generation)},
-  author = {Renato Rodrigues and Lavinia Baumstark and Falk Benke and Jan Philipp Dietrich and Alois Dirnaichner and Tabea Dorndorf and Jakob Duerrwaechter and Pascal FÃ¼hrlich and Anastasis Giannousakis and Robin Hasse and JÃ©rome Hilaire and David Klein and Johannes Koch and Katarzyna Kowalczyk and Antoine Levesque and Aman Malik and Anne Merfort and Leon Merfort and SimÃ³n Morena-Leiva and Michaja Pehl and Robert Pietzcker and Sebastian Rauner and Oliver Richters and Marianna Rottoli and Christof SchÃ¶tz and Felix Schreyer and Kais Siala and BjÃ¶rn SÃ¶rgel and Mike Spahr and Jessica Strefler and Philipp Verpoort and Pascal Weigmann and Tonn RÃ¼ter},
+  author = {Renato Rodrigues and Lavinia Baumstark and Falk Benke and Jan Philipp Dietrich and Alois Dirnaichner and Tabea Dorndorf and Jakob Duerrwaechter and Pascal Führlich and Anastasis Giannousakis and Robin Hasse and Jérome Hilaire and David Klein and Johannes Koch and Katarzyna Kowalczyk and Antoine Levesque and Aman Malik and Anne Merfort and Leon Merfort and Simón Morena-Leiva and Michaja Pehl and Robert Pietzcker and Sebastian Rauner and Oliver Richters and Marianna Rottoli and Christof Schötz and Felix Schreyer and Kais Siala and Björn Sörgel and Mike Spahr and Jessica Strefler and Philipp Verpoort and Pascal Weigmann and Tonn Rüter},
   date = {2025-04-07},
   year = {2025},
   url = {https://github.com/pik-piam/remind2},
-  note = {Version: 1.174.0},
+  note = {Version: 1.173.1},
 }
 ```
