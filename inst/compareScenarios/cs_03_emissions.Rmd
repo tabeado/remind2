@@ -2,8 +2,29 @@
 
 # Emissions
 
-## GHG - total
+## GHG - different totals
 
+### GHG total w/o Bunkers w/ national LULUCF accounting - should match UNFCCC
+```{r GHG total w/o Bunkers w/ national LULUCF accounting - should match UNFCCC}
+showLinePlots(data, "Emi|GHG|w/o Bunkers|LULUCF national accounting", histVars = "Emi|GHG")
+```
+
+### GHG total w/ Bunkers w/ national LULUCF accounting - should match UNFCCC
+```{r GHG total w/ Bunkers w/ national LULUCF accounting - should match UNFCCC}
+showLinePlots(data, "Emi|GHG|w/ Bunkers|LULUCF national accounting", histVars = "Emi|GHG|w/ Bunkers")
+```
+
+### GHG total w/o Bunkers
+```{r GHG total w/o Bunkers}
+showLinePlots(data, "Emi|GHG|w/o Bunkers", histVars = "Emi|GHG")
+```
+
+### GHG total w/ Bunkers
+```{r GHG total w/ Bunkers}
+showLinePlots(data, "Emi|GHG|w/ Bunkers")
+```
+
+### GHG - total
 ```{r GHG total}
 
 showLinePlots(
@@ -20,21 +41,19 @@ items <- c(
 showLinePlotsWithTarget(data, items)
 ```
 
-```{r GHG - total w/ Bunkers}
-showLinePlots(data, "Emi|GHG|w/ Bunkers")
-```
-
-```{r GHG - total with national LULUCF accounting - should match UNFCCC reporting}
-showLinePlots(data, "Emi|GHG|w/ Bunkers|LULUCF national accounting")
-```
-
 
 ##  GHG Sectors
 
-### GHG Energy
-```{r GHG Energy}
-showLinePlots(data, "Emi|GHG|Energy")
+### GHG Energy w/o Bunkers
+```{r GHG Energy w/o Bunkers}
+showLinePlots(data, "Emi|GHG|w/o Bunkers|Energy", histVars = "Emi|GHG|Energy")
 ```
+
+### GHG Energy w/ Bunkers
+```{r GHG Energy w/ Bunkers}
+showLinePlots(data, "Emi|GHG|w/ Bunkers|Energy")
+```
+
 
 ### GHG Industrial Processes
 ```{r GHG Industrial Processes}
@@ -99,26 +118,41 @@ showAreaAndBarPlots(data, items, tot, scales = "fixed")
 ```
 
 
-### Total CO2
+### CO2 total w/o Bunkers 
+```{r CO2 total w/o Bunkers}
+showLinePlots(data, "Emi|CO2|w/o Bunkers", histVars = "Emi|CO2")
+```
 
-```{r CO2 total}
+### CO2 total w/ Bunkers 
+```{r CO2 total w/ Bunkers}
+showLinePlots(data, "Emi|CO2|w/ Bunkers", histVars = "Emi|CO2||w/ Bunkers")
+```
+
+### Total CO2 (for comparison with old REMIND versions)
+```{r Total CO2 (for comparison with old REMIND versions)}
 showLinePlots(data, "Emi|CO2")
 ```
 
-
-### Energy and Industrial Processes - Net (incl BECCS)
-
-```{r CO2 Energy and Industry}
+### Energy and Industrial Processes w/o bunkers - Net (incl BECCS)
+```{r Energy and Industrial Processes w/o bunkers - Net (incl BECCS)}
 showLinePlots(
   data, 
-  vars = "Emi|CO2|Energy and Industrial Processes", 
-  histVars = "Emi|CO2|Fossil Fuels and Industry"
+  vars = "Emi|CO2|w/o Bunkers|Energy and Industrial Processes", 
+  histVars = "Emi|CO2|Energy and Industrial Processes"
+)
+```
+
+### Energy and Industrial Processes w/ bunkers - Net (incl BECCS)
+```{r Energy and Industrial Processes w/ bunkers - Net (incl BECCS)}
+showLinePlots(
+  data, 
+  vars = "Emi|CO2|w/ Bunkers|Energy and Industrial Processes", 
+  histVars = "Emi|CO2|w/ Bunkers|Energy and Industrial Processes"
 )
 ```
 
 
 ### Energy and Industrial Processes - Gross
-
 ```{r CO2 Energy and Industry Gross}
 showLinePlots(
   data, 
@@ -127,11 +161,16 @@ showLinePlots(
 )
 ```
 
+### Energy without bunkers
 
-### Energy
+```{r CO2 Energy w/o bunkers}
+showLinePlots(data, "Emi|CO2|w/o Bunkers|Energy", histVars = "Emi|CO2|Energy")
+```
 
-```{r CO2 Energy}
-showLinePlots(data, "Emi|CO2|Energy")
+### Energy with bunkers
+
+```{r CO2 Energy w/ bunkers}
+showLinePlots(data, "Emi|CO2|w/ Bunkers|Energy", histVars = "Emi|CO2|w/ Bunkers|Energy")
 ```
 
 
@@ -203,56 +242,17 @@ showLinePlots(
 showLinePlots(data, "Emi|CO2|Industry")
 ```
 
-### Waste Emissions
 
-#### Waste Emissions from Plastics-Incineration
-```{r CO2 waste plastics incineration}
-
-showLinePlots(data, "Emi|CO2|Energy|Waste|Plastics Incineration")
-```
-
-#### Waste Emissions Attributed to Electricity
-```{r CO2 waste attributed to electricity}
-
-showLinePlots(data, "Emi|CO2|Energy|Supply|Electricity|Waste")
-```
-
-#### Waste Emissions Attributed to Heat
-```{r CO2 waste attributed to heat}
-
-showLinePlots(data, "Emi|CO2|Energy|Supply|Heat|Waste")
-```
-
-#### Waste Emissions Attributed to Industry
-```{r CO2 waste attributed to industry}
-
-showLinePlots(data, "Emi|CO2|Energy|Demand|Industry|Waste")
-```
-
-#### Waste Emissions Attributed to Buildings
-```{r CO2 waste attributed to buildings}
-
-showLinePlots(data, "Emi|CO2|Energy|Demand|Buildings|Waste")
-```
-
-#### Negative Waste Emissions from Non-incinerated Non-fossil Plastics
-```{r CO2 waste non-incinerated plastics}
-
-showLinePlots(data, "Emi|CO2|Waste|Non-Incinerated Plastic")
-```
-
-
-#### Waste Emissions from Non-plastic Materials (without energy recovery)
-```{r CO2 waste non-plastic Materials}
-
-showLinePlots(data, "Emi|CO2|Waste|Non-plastic Waste")
-```
-
-
-### Transport
+### Transport without bunkers
 
 ```{r CO2 Transport}
-showLinePlots(data, "Emi|CO2|Energy|Demand|Transport")
+showLinePlots(data, "Emi|CO2|w/o Bunkers|Energy|Demand|Transport", histVars = "Emi|CO2|Energy|Demand|Transport")
+```
+
+### Transport with bunkers
+
+```{r CO2 Transport}
+showLinePlots(data, "Emi|CO2|w/ Bunkers|Energy|Demand|Transport", histVars = "Emi|CO2|w/ Bunkers|Energy|Demand|Transport")
 ```
 
 
@@ -300,6 +300,51 @@ showLinePlots(data, "Emi|CO2|Industrial Processes|Industry|Chemicals")
 
 ```{r}
 showLinePlots(data, "Emi|CO2|Industrial Processes|Industry|Metals")
+```
+
+### Waste Emissions
+
+#### Waste Emissions from Plastics-Incineration
+```{r CO2 waste plastics incineration}
+
+showLinePlots(data, "Emi|CO2|Energy|Waste|Plastics Incineration")
+```
+
+#### Waste Emissions Attributed to Electricity
+```{r CO2 waste attributed to electricity}
+
+showLinePlots(data, "Emi|CO2|Energy|Supply|Electricity|Waste")
+```
+
+#### Waste Emissions Attributed to Heat
+```{r CO2 waste attributed to heat}
+
+showLinePlots(data, "Emi|CO2|Energy|Supply|Heat|Waste")
+```
+
+#### Waste Emissions Attributed to Industry
+```{r CO2 waste attributed to industry}
+
+showLinePlots(data, "Emi|CO2|Energy|Demand|Industry|Waste")
+```
+
+#### Waste Emissions Attributed to Buildings
+```{r CO2 waste attributed to buildings}
+
+showLinePlots(data, "Emi|CO2|Energy|Demand|Buildings|Waste")
+```
+
+#### Negative Waste Emissions from Non-incinerated Non-fossil Plastics
+```{r CO2 waste non-incinerated plastics}
+
+showLinePlots(data, "Emi|CO2|Waste|Non-Incinerated Plastic")
+```
+
+
+#### Waste Emissions from Non-plastic Materials (without energy recovery)
+```{r CO2 waste non-plastic Materials}
+
+showLinePlots(data, "Emi|CO2|Waste|Non-plastic Waste")
 ```
 
 ### Land-Use Change
