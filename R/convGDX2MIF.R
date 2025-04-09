@@ -14,6 +14,8 @@
 #' t=c(seq(2005,2060,5),seq(2070,2110,10),2130,2150)
 #' @param gdx_refpolicycost reference-gdx for policy costs, a GDX as created by readGDX, or the file name of a gdx
 #' @param testthat boolean whether called by tests, turns some messages into warnings
+#' @param extraData optional path to extra data files to be used in the reporting
+#'
 #' @author Lavinia Baumstark
 #' @examples
 #' \dontrun{
@@ -30,7 +32,10 @@
 
 convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
                         t = c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150),
-                        gdx_refpolicycost = gdx_ref, testthat = FALSE) {
+                        gdx_refpolicycost = gdx_ref, testthat = FALSE, extraData = NULL) {
+
+  # TODO: can we remove "testthat" argument?
+
   # Define region subsets ----
   regionSubsetList <- toolRegionSubsets(gdx)
   # ADD EU-27 region aggregation if possible
@@ -93,7 +98,7 @@ convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
   # cross variables ----
   # needs variables from different other report* functions
   message("running reportCrossVariables...")
-  output <- mbind(output, reportCrossVariables(gdx, output, regionSubsetList, t)[, t, ])
+  output <- mbind(output, reportCrossVariables(gdx, output, regionSubsetList, t, extraData)[, t, ])
 
   # policy costs, if possible and sensible ----
   if (is.null(gdx_refpolicycost)) {
@@ -148,6 +153,9 @@ convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
   checkVarNames(getNames(output, dim = 3))
 
   ## summation checks ----
+
+  # TODO: consider moving somewhere else
+
   # known issues:
   # https://github.com/remindmodel/development_issues/issues/544
   # https://github.com/remindmodel/development_issues/issues/545

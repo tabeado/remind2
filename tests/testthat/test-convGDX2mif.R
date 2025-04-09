@@ -27,6 +27,7 @@ test_that("Test if REMIND reporting is produced as it should and check data inte
     gdxPaths <- c(gdxPaths, to)
   }
 
+  # TODO move outside?
   checkPiamTemplates <- function(computedVariables) {
     # if you add a new template here, make sure to adjust the piamInterfaces version in the DESCRIPTION
     templates <- c("AR6", "AR6_NGFS", "ELEVATE", "NAVIGATE", "SHAPE", "ARIADNE", "ECEMF", "ScenarioMIP")
@@ -57,12 +58,14 @@ test_that("Test if REMIND reporting is produced as it should and check data inte
 
   numberOfMifs <- 0
 
+  # TODO: add extraData to tests?
+
   for (gdxPath in gdxPaths) {
     numberOfMifs <- numberOfMifs + 1
 
     message("Running convGDX2MIF(", gdxPath, ")...")
     refpolicycost <- if (gdxPath == gdxPaths[[1]]) gdxPath else NULL
-    mifContent <- convGDX2MIF(gdxPath, gdx_refpolicycost = refpolicycost, testthat = TRUE)
+    mifContent <- convGDX2MIF(gdxPath, gdx_refpolicycost = refpolicycost, testthat = TRUE, extraData = "~/dev/remind/input")
 
     expect_no_warning(piamInterfaces::checkVarNames(getNames(mifContent, dim = 3)))
 
