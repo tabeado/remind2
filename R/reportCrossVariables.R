@@ -123,12 +123,24 @@ reportCrossVariables <- function(gdx, output = NULL, regionSubsetList = NULL,
   for (var in names(varWeights)) {
     tmp["GLO",,var] <- toolAggregate(tmp[map$region,,var], rel = map, weight = output[map$region,,varWeights[[var]]])
   }
+
+
   # correct region aggregated values for intensive variables (prices, LCOES, Capacity factors)
-  if (!is.null(regionSubsetList)){
-    for (region in names(regionSubsetList)){
-      map <- data.frame(region=regionSubsetList[[region]],parentRegion=region,stringsAsFactors=FALSE)
+  if (!is.null(regionSubsetList)) {
+    for (region in names(regionSubsetList)) {
+      map <- data.frame(
+        region = regionSubsetList[[region]],
+        parentRegion = region,
+        stringsAsFactors = FALSE
+      )
+
       for (var in names(varWeights)) {
-        tmp[region,,var] <- toolAggregate(tmp[regionSubsetList[[region]],,var], rel = map, weight = output[regionSubsetList[[region]],,varWeights[[var]]])
+        tmp[region, , var] <- toolAggregate(
+          tmp[regionSubsetList[[region]], , var],
+          rel = map,
+          weight = output[regionSubsetList[[region]], , varWeights[[var]]],
+          zeroWeight = "setNA"
+        )
       }
     }
   }
