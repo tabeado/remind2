@@ -58,14 +58,12 @@ test_that("Test if REMIND reporting is produced as it should and check data inte
 
   numberOfMifs <- 0
 
-  # TODO: add extraData to tests?
-
   for (gdxPath in gdxPaths) {
     numberOfMifs <- numberOfMifs + 1
 
     message("Running convGDX2MIF(", gdxPath, ")...")
     refpolicycost <- if (gdxPath == gdxPaths[[1]]) gdxPath else NULL
-    mifContent <- convGDX2MIF(gdxPath, gdx_refpolicycost = refpolicycost, testthat = TRUE, extraData = "~/dev/remind/input")
+    mifContent <- convGDX2MIF(gdxPath, gdx_refpolicycost = refpolicycost, testthat = TRUE, extraData = "~/dev/remind/output/testOneRegi/reporting/")
 
     expect_no_warning(piamInterfaces::checkVarNames(getNames(mifContent, dim = 3)))
 

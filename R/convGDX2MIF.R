@@ -14,7 +14,7 @@
 #' t=c(seq(2005,2060,5),seq(2070,2110,10),2130,2150)
 #' @param gdx_refpolicycost reference-gdx for policy costs, a GDX as created by readGDX, or the file name of a gdx
 #' @param testthat boolean whether called by tests, turns some messages into warnings
-#' @param extraData optional path to extra data files to be used in the reporting
+#' @param extraData path to extra data files to be used in the reporting
 #'
 #' @author Lavinia Baumstark
 #' @examples
@@ -32,7 +32,11 @@
 
 convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
                         t = c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150),
-                        gdx_refpolicycost = gdx_ref, testthat = FALSE, extraData = NULL) {
+                        gdx_refpolicycost = gdx_ref, testthat = FALSE, extraData) {
+
+  if (is.null(extraData)) {
+    # TODO: download the right folder and set extraData as fallback
+  }
 
   # TODO: can we remove "testthat" argument?
 
@@ -78,7 +82,7 @@ convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
 
   # reporting of variables that need variables from different other report functions
   message("running reportEmi...") # needs output from reportFE
-  output <- mbind(output, reportEmi(gdx, output, regionSubsetList, t)[, t, ])
+  output <- mbind(output, reportEmi(gdx, output, regionSubsetList, t, extraData)[, t, ])
 
   message("running reportTechnology...")
   # needs output from reportSE
