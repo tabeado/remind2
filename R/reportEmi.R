@@ -1850,8 +1850,18 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   )
 
 
-  # calculate carbon storage variables
-  tmp <- out[ , ,"Carbon Management|Carbon Capture|", pmatch = T] * p_share_CCS
+  # calculate carbon storage variables from selected Carbon Management|Carbon Capture variables
+  vars <- getItems(out, dim = 3)
+  # Select all "Carbon Management|Carbon Capture|" variables
+  include <- grepl("Carbon Management\\|Carbon Capture\\|", vars)
+  # Exclude the high-detail industry subsector variables containing "Steel", 
+  # "Chemicals", or "Cement" to not blow up the mif file
+  exclude <- grepl("Steel|Chemicals|Cement", vars)
+  
+  # Carbon Management|Carbon Capture variables for which respective Storage variable is calculated
+  CarMaStorage_vars <- vars[include & !exclude]
+  
+  tmp <- out[, , CarMaStorage_vars] * p_share_CCS
   getNames(tmp) <- gsub( "Carbon Management\\|Carbon Capture", "Carbon Management\\|Storage", getNames(tmp))
   out <- mbind(out, tmp)
 
