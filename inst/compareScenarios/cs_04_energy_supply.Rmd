@@ -243,7 +243,7 @@ showLinePlots(data, "PE|Production|Biomass|Lignocellulosic|+|Energy Crops")
 ```
 
 ### PE Biomass Production - Residues
-```{r PE Biomass - Energy Crops}
+```{r PE Biomass - Residues
 showLinePlots(data, "PE|Production|Biomass|Lignocellulosic|+|Residues")
 ```
 
