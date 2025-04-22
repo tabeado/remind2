@@ -84,6 +84,9 @@ convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
   message("running reportEmi...") # needs output from reportFE
   output <- mbind(output, reportEmi(gdx, output, regionSubsetList, t, extraData)[, t, ])
 
+  message("running reportEmiForClimateAssessment...") # minimal and specific set of emissions for CA
+  output <- mbind(output, reportEmiForClimateAssessment(gdx, output, regionSubsetList, t)[, t, ])
+
   message("running reportTechnology...")
   # needs output from reportSE
   output <- mbind(output, reportTechnology(gdx, output, regionSubsetList, t)[, t, ])
