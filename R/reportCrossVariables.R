@@ -420,6 +420,10 @@ reportCrossVariables <- function(gdx, output = NULL, regionSubsetList = NULL,
       sep = ",", skip = 4, header = FALSE
     ) %>% as.magpie(temporal = 1, spatial = 2)
 
+    if (!is.null(regionSubsetList)) {
+      projections <- mbind(projections, calc_regionSubset_sums(projections, regionSubsetList))
+    }
+
   } else {
 
     if (!file.exists(file.path(extraData, "se_otherfoss.cs4r"))) {
@@ -431,6 +435,10 @@ reportCrossVariables <- function(gdx, output = NULL, regionSubsetList = NULL,
       file.path(extraData, "se_otherfoss.cs4r"),
       sep = ",", skip = 4, header = FALSE
     ) %>% as.magpie(temporal = 1, spatial = 2)
+
+    if (!is.null(regionSubsetList)) {
+      projections <- mbind(projections, calc_regionSubset_sums(projections, regionSubsetList))
+    }
 
     # check if regional resolution matches
     if (length(setdiff(getItems(out, dim = 1), getItems(projections, dim = 1))) != 0 ||

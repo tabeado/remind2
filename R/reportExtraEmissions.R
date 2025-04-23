@@ -19,7 +19,7 @@ reportExtraEmissions <- function(mif, extraData) {
     "FE|Buildings|Solids"
   )
 
-  report <- read.quitte(mif, check.duplicates = FALSE) %>%
+  report <- quitte::read.quitte(mif, check.duplicates = FALSE) %>%
     deletePlus()
 
   model <- unique(report$model)[grepl("REMIND", unique(report$model))][1] # Deals with REMIND-MAgPIE mifs

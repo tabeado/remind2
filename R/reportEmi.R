@@ -408,6 +408,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
 
   # TODO: deprecated fallback, will be removed eventually
   if (is.null(extraData)) {
+
     regionHash <- digest::digest(sort(readGDX(gdx, "all_regi")), "xxhash32")
 
     wasteSharesFile <- switch(regionHash,
