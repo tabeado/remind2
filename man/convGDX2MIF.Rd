@@ -33,7 +33,7 @@ t=c(seq(2005,2060,5),seq(2070,2110,10),2130,2150)}
 
 \item{testthat}{boolean whether called by tests, turns some messages into warnings}
 
-\item{extraData}{optional path to extra data files to be used in the reporting}
+\item{extraData}{path to extra data files to be used in the reporting}
 }
 \description{
 Read in all information from GDX file and create
