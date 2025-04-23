@@ -140,9 +140,10 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
     "coalhp" = "Heat|Coal",
     "geohe"  = "Heat|Electricity|Heat Pump",
     "biohp"  = "Heat|Biomass",
+    "biopyrOnly" = "Biochar|biopyrOnly",
+    "biopyrElec" = "Biochar|biopyrElec",
     "biopyrHeat" = "Biochar|biopyrHeat",
     "biopyrCHP" = "Biochar|biopyrCHP",
-    "biopyrCHP850" = "Biochar|biopyrCHP850",
     "biopyrFuel" = "Biochar|biopyrFuel"
   )
 
