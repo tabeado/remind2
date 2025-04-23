@@ -150,7 +150,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
 
   ### Carbon management variables
   # total captured CO2
-  vm_co2capture <- readGDX(gdx, "vm_co2capture", field = "l", restore_zeros = F)[, t, ]
+  vm_co2capture <- readGDX(gdx, c("v_co2capture","vm_co2capture"), field = "l", restore_zeros = F)[, t, ]
   vm_emiCdr_co2 <- readGDX(gdx, "vm_emiCdr", field = "l", restore_zeros = F)[, t, "co2"]
   vm_emiCdrTeDetail <- readGDX(gdx, c("vm_emiCdrTeDetail","v33_emi"), field = "l", restore_zeros = F, react = "silent")[, t, ]
 
@@ -675,7 +675,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   # a) for power generating technologies technologies with heat as a coupled product, rescale with halfed heat emissions
     # this splits electricity and heat emissions in a chp plant roughly as if both products were produced by 2 seperate plants (Finnish Method)
     # where the heat plant has about double the efficiency of the power plant
-  mselect(p_weights_cp, all_enty1 = "seel", all_enty2 = "sehe") <- 0.5 * mselect(vm_prodSe_coupleProd, all_enty1 = "seel", all_enty2 = "sehe") / (mselect(vm_prodSe[, , getNames(pm_prodCouple.prod, dim = 3)], all_enty1 = "seel") + 0.5 * mselect(vm_prodSe_coupleProd, all_enty1 = "seel", all_enty2 = "sehe"))
+  mselect(p_weights_cp, all_enty1 = "seel", all_enty2 = "sehe") <- 0.5 * mselect(vm_prodSe_coupleProd, all_enty1 = "seel", all_enty2 = "sehe") / (mselect(vm_prodSe[, , getNames(mselect(p_weights_cp, all_enty1 = "seel", all_enty2 = "sehe"), dim=3)], all_enty1 = "seel") + 0.5 * mselect(vm_prodSe_coupleProd, all_enty1 = "seel", all_enty2 = "sehe"))
 
   # pe2se emissions technologies with coupled production
   emi.te.cp  <- intersect(paste(getItems(p_weights_cp, dim = "all_enty",  full = T),
@@ -685,10 +685,9 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
 
   # b) for biochar producing technologies, assign all negative emissions to biochar. 
       # reasoning: The stored co2 is directly associated with the biochar produced. 
-      # In practice, it will for example for monitoring reasons be assigned to biochar,
-      # and the biogas co-product will be considered a zero-emissions tech.
-  mselect(p_weights_cp, all_enty1 = "sebiochar", all_enty2 = c("seel","sehe")) <- 0
-
+      # In practice, it will be assigned to biochar, for example for monitoring reasons.
+      # The energy co-products will be considered zero-emissions.
+  mselect(p_weights_cp, all_enty1 = "sebiochar", all_enty2 = c("seel","sehe","seliqbio")) <- 0
 
   # pe2se emissions technologies without coupled production
   emi.te.nocp <- setdiff(getNames(EmiPe2Se), emi.te.cp)
@@ -1225,7 +1224,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   # for power generating technologies technologies with heat as a coupled product, rescale with halfed heat emissions
   # this splits electricity and heat emissions in a chp plant roughly as if both products were produced by 2 seperate plants (Finnish Method)
   # where the heat plant has about double the efficiency of the power plant
-  mselect(p_weights_cp_cco2, all_enty1 = "seel", all_enty2 = "sehe") <- 0.5 * mselect(vm_prodSe_coupleProd, all_enty1 = "seel", all_enty2 = "sehe") / (mselect(vm_prodSe[, , getNames(pm_prodCouple.prod, dim = 3)], all_enty1 = "seel") + 0.5 * mselect(vm_prodSe_coupleProd, all_enty1 = "seel", all_enty2 = "sehe"))
+  mselect(p_weights_cp_cco2, all_enty1 = "seel", all_enty2 = "sehe") <- 0.5 * mselect(vm_prodSe_coupleProd, all_enty1 = "seel", all_enty2 = "sehe")  / (mselect(vm_prodSe[, , getNames(mselect(p_weights_cp_cco2, all_enty1 = "seel", all_enty2 = "sehe") ,dim=3)], all_enty1 = "seel") +   0.5 * mselect(vm_prodSe_coupleProd, all_enty1 = "seel", all_enty2 = "sehe"))
 
   # pe2se emissions technologies with coupled production
   cco2.te.cp <- intersect(paste(getItems(p_weights_cp_cco2, dim = 3, split = T, full = T)$all_enty,
@@ -1845,13 +1844,14 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                         "Emi|CO2|Gross|Energy|Supply|+|Gases (Mt CO2/yr)"),
                 setNames(out[, , "Emi|CO2|Energy|Supply|+|Biochar w/ couple prod (Mt CO2/yr)"]
                         - out[, , "Emi|CO2|Energy|Supply|+|Biochar w/ couple prod (Mt CO2/yr)"], # subtract because it is negative
-                        "Emi|CO2|Gross|Energy|Supply|+|Biochar (Mt CO2/yr)"), # gross emissions of biochar are zero. Check whether important for summations
+                        "Emi|CO2|Gross|Energy|Supply|+|Biochar (Mt CO2/yr)"), # gross emissions of biochar are zero. 
 
                # total gross supply emissions
                setNames(out[, , "Emi|CO2|Energy|+|Supply (Mt CO2/yr)"]
                         + out[, , "Carbon Management|Storage|+|Biomass|Pe2Se (Mt CO2/yr)"]
-                        - out[, , "Emi|CO2|CDR|Biochar (Mt CO2/yr)"] # subtract because negative variable. Because biochar CDR is fully accounted towards biochar and not to the co-product, it is not necessary to subtract it above.
-  ))
+                        - out[, , "Emi|CO2|CDR|Biochar (Mt CO2/yr)"], # subtract because negative variable. Biochar CDR is fully accounted towards biochar and not to the co-product.
+                        "Emi|CO2|Gross|Energy|+|Supply (Mt CO2/yr)") 
+  )
 
   # calculate gross emissions in energy demand sectors
   # also add emissions accounted in other sectors via CCU
@@ -1859,7 +1859,6 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                setNames(out[, , "Emi|CO2|Energy|Demand|+|Industry (Mt CO2/yr)"]
                         - out[, , "Emi|CO2|CDR|Industry CCS|Synthetic Fuels (Mt CO2/yr)"]
                         - out[, , "Emi|CO2|CDR|BECCS|Industry (Mt CO2/yr)"]
-                        - out[, , "Emi|CO2|CDR|Biochar (Mt CO2/yr)"] 
                         - out[, , "Emi|CO2|CDR|Materials|+|Plastics (Mt CO2/yr)"]
                         - out[, , "Emi|CO2|Accounted in Other Sectors via CCU|Energy|Industry (Mt CO2/yr)"],
                         "Emi|CO2|Gross|Energy|Demand|+|Industry (Mt CO2/yr)"),
