@@ -64,6 +64,9 @@ reportPrices <- function(gdx, output=NULL, regionSubsetList=NULL,
   s_twa2mwh <- readGDX(gdx, "sm_TWa_2_MWh", format = "first_found", reacht = "silent")
   tdptwyr2dpgj <- 31.71   #TerraDollar per TWyear to Dollar per GJ
   p80_subset   <- c("perm", "good", "peur", "peoil", "pegas", "pecoal", "pebiolc") #TODO: read in from gdx as sets trade
+  s_tBC_2_TWa <- readGDX(gdx,name="s_tBC_2_TWa",format="first_found",react="silent")
+  sm_trillion_2_non <- readGDX(gdx,"sm_trillion_2_non",format="first_found",react="silent")
+
   ####### read in needed data #########
 
   #---- Functions
@@ -91,10 +94,11 @@ reportPrices <- function(gdx, output=NULL, regionSubsetList=NULL,
   pm_taxemiMkt   <- readGDX(gdx,name="pm_taxemiMkt",format="first_found",react="silent")[, t,]
   p47_taxCO2eq_AggFE <- readGDX(gdx,name="p47_taxCO2eq_AggFE",format="first_found",react="silent")[, t,]
   p47_taxCO2eq_SectorAggFE <- readGDX(gdx,name="p47_taxCO2eq_SectorAggFE",format="first_found",react="silent")[, t,]
+
   ## variables
   pric_emu       <- readGDX(gdx,name="vm_pebiolc_price",field="l",format="first_found")[, t,]
   specificPrices <- readGDX(gdx, "v_priceOfSpecificGoods",field="l",format="first_found")[,t,]
-  
+    
   ## equations
   budget.m       <- readGDX(gdx,name='qm_budget',types = "equations",field = "m",format = "first_found")[, t,] # Alternative: calcPrice
   balcapture.m   <- readGDX(gdx,name=c("q_balcapture", "q12_balcapture"), field = "m", restore_zeros = F)[, t,]
@@ -175,11 +179,10 @@ reportPrices <- function(gdx, output=NULL, regionSubsetList=NULL,
   out <- NULL
 
   # "Specific goods" Prices
-  pm_trilUSDpTWaBC_to_USDptBC <- 919.584 * 1.2 #   [USD/t BC] / [TrilUSD/TWa BC]
   out <- mbind(
       out,
-      setNames(mselect(specificPrices, all_te = "biochar4soil") * pm_trilUSDpTWaBC_to_USDptBC,
-              "Price|Biochar (US$2015/t Biochar)")
+      setNames(mselect(specificPrices, all_te = "biochar4soil") * s_tBC_2_TWa * sm_trillion_2_non ,    #   [USD/t BC] / [TrilUSD/TWa BC]
+              "Price|Biochar (US$2017/t Biochar)")
       )
       
   ## calculate prices as weighted average prices across markets
