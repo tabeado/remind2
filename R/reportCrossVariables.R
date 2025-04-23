@@ -401,22 +401,43 @@ reportCrossVariables <- function(gdx, output = NULL, regionSubsetList = NULL,
   }
 
   # add adjusted electricity from coal and other fossils ----
+  # TODO: deprecated fallback, will be removed eventually
+  if (is.null(extraData)) {
 
-  if (!file.exists(file.path(extraData, "se_otherfoss.cs4r"))) {
-    stop("Auxiliary file 'se_otherfoss.cs4r' not found")
-  }
+    regionHash <- digest::digest(sort(readGDX(gdx, "all_regi")), "xxhash32")
 
-  # read in projected electricity from waste and other fossils using energy demands from IEA Energy Balances.
-  projections <- read.csv(
-    file.path(extraData, "se_otherfoss.cs4r"),
-    sep = ",", skip = 4, header = FALSE
-  ) %>% as.magpie(temporal = 1, spatial = 2)
+    otherFossilsFile <- switch(regionHash,
+                              "69585993" = "se_otherfoss_h12.cs4r",
+                              "8c818b67" = "se_otherfoss_eu21.cs4r"
+    )
 
-  # check if regional resolution matches
-  if (length(setdiff(getItems(out, dim = 1), getItems(projections, dim = 1))) != 0 ||
-      length(setdiff(getItems(projections, dim = 1), getItems(out, dim = 1))) != 0
-  ) {
-    stop("Regional resolution in 'se_otherfoss.cs4r' does not match.")
+    if (is.null(otherFossilsFile)) {
+      stop("No file 'se_otherfoss.cs4r' found for regions in .gdx file.")
+    }
+
+    projections <- read.csv(
+      system.file("extdata", otherFossilsFile, package = "remind2"),
+      sep = ",", skip = 4, header = FALSE
+    ) %>% as.magpie(temporal = 1, spatial = 2)
+
+  } else {
+
+    if (!file.exists(file.path(extraData, "se_otherfoss.cs4r"))) {
+      stop("Auxiliary file 'se_otherfoss.cs4r' not found")
+    }
+
+    # read in projected electricity from waste and other fossils using energy demands from IEA Energy Balances.
+    projections <- read.csv(
+      file.path(extraData, "se_otherfoss.cs4r"),
+      sep = ",", skip = 4, header = FALSE
+    ) %>% as.magpie(temporal = 1, spatial = 2)
+
+    # check if regional resolution matches
+    if (length(setdiff(getItems(out, dim = 1), getItems(projections, dim = 1))) != 0 ||
+        length(setdiff(getItems(projections, dim = 1), getItems(out, dim = 1))) != 0
+    ) {
+      stop("Regional resolution in 'se_otherfoss.cs4r' does not match.")
+    }
   }
 
   y <- intersect(getYears(projections), getYears(out))

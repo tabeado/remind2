@@ -27,7 +27,7 @@
 #' @importFrom piamutils deletePlus
 reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                       t = c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150),
-                      extraData) {
+                      extraData = NULL) {
 
   # emissions calculation requires information from other reporting functions
   if (is.null(output)) {
@@ -400,31 +400,53 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   # Be aware that this sectoral splitting is a post-processing as there are so far no waste incineration technologies or waste energy flows in the model.
 
   # These emissions are added to all emissions variables below Emi|CO2|Energy
-  # as these variables are calculated bottom-up, while for variable above they are contained in REMIND emissios variables,
+  # as these variables are calculated bottom-up, while for variable above they are contained in REMIND emissions variables,
   # on which those variables are based.
 
 
   # read historical shares of waste energy use derived from IEA energy balances
 
-  if (!file.exists(file.path(extraData, "emi_waste_shares.cs4r"))) {
-    stop("Auxiliary file 'emi_waste_shares.cs4r' not found")
-  }
+  # TODO: deprecated fallback, will be removed eventually
+  if (is.null(extraData)) {
+    regionHash <- digest::digest(sort(readGDX(gdx, "all_regi")), "xxhash32")
 
-  WasteShares <- read.csv(
-    file.path(extraData, "emi_waste_shares.cs4r"),
-    sep = ",", skip = 4, header = FALSE
-  ) %>% as.magpie(temporal = 1, spatial = 2)
+    wasteSharesFile <- switch(regionHash,
+      "69585993" = "emi_waste_shares_h12.cs4r",
+      "8c818b67" = "emi_waste_shares_eu21.cs4r"
+    )
 
-  # check if regional resolution matches
-  all_regi <- readGDX(gdx, "all_regi")
-  if (length(setdiff(all_regi, getItems(WasteShares, dim = 1))) != 0 ||
+    if (is.null(wasteSharesFile)) {
+      stop("No file 'emi_waste_shares.cs4r' found for regions in .gdx file.")
+    }
+
+    WasteShares <- read.csv(
+      system.file("extdata", wasteSharesFile, package = "remind2"),
+      sep = ",", skip = 4, header = FALSE
+    ) %>%
+      as.magpie(temporal = 1, spatial = 2)
+
+    WasteShares <- magclass::collapseDim(WasteShares[, "y2019", ])
+  } else {
+    if (!file.exists(file.path(extraData, "emi_waste_shares.cs4r"))) {
+      stop("Auxiliary file 'emi_waste_shares.cs4r' not found")
+    }
+
+    WasteShares <- read.csv(
+      file.path(extraData, "emi_waste_shares.cs4r"),
+      sep = ",", skip = 4, header = FALSE
+    ) %>% as.magpie(temporal = 1, spatial = 2)
+
+    # check if regional resolution matches
+    all_regi <- readGDX(gdx, "all_regi")
+    if (length(setdiff(all_regi, getItems(WasteShares, dim = 1))) != 0 ||
       length(setdiff(getItems(WasteShares, dim = 1), all_regi)) != 0
-  ) {
-    stop("Regional resolution in 'emi_waste_shares.cs4r' and gdx do not match.")
-  }
+    ) {
+      stop("Regional resolution in 'emi_waste_shares.cs4r' and gdx do not match.")
+    }
 
-  # take shares from 2019 to distribute waste incineration emissions over sectors for all years
-  WasteShares <- magclass::collapseDim(WasteShares[, "y2019", ])
+    # take shares from 2019 to distribute waste incineration emissions over sectors for all years
+    WasteShares <- magclass::collapseDim(WasteShares[, "y2019", ])
+  }
 
   # in some regions of the Global South waste data was not available, take shares from OAS region here
   Regi.WasteShares.NA <- WasteShares %>%
@@ -1853,13 +1875,13 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   vars <- getItems(out, dim = 3)
   # Select all "Carbon Management|Carbon Capture|" variables
   include <- grepl("Carbon Management\\|Carbon Capture\\|", vars)
-  # Exclude the high-detail industry subsector variables containing "Steel", 
+  # Exclude the high-detail industry subsector variables containing "Steel",
   # "Chemicals", or "Cement" to not blow up the mif file
   exclude <- grepl("Steel|Chemicals|Cement", vars)
-  
+
   # Carbon Management|Carbon Capture variables for which respective Storage variable is calculated
   CarMaStorage_vars <- vars[include & !exclude]
-  
+
   tmp <- out[, , CarMaStorage_vars] * p_share_CCS
   getNames(tmp) <- gsub( "Carbon Management\\|Carbon Capture", "Carbon Management\\|Storage", getNames(tmp))
   out <- mbind(out, tmp)

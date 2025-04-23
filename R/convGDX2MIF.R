@@ -32,13 +32,7 @@
 
 convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
                         t = c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150),
-                        gdx_refpolicycost = gdx_ref, testthat = FALSE, extraData) {
-
-  if (is.null(extraData)) {
-    # TODO: download the right folder and set extraData as fallback
-  }
-
-  # TODO: can we remove "testthat" argument?
+                        gdx_refpolicycost = gdx_ref, testthat = FALSE, extraData = NULL) {
 
   # Define region subsets ----
   regionSubsetList <- toolRegionSubsets(gdx)
@@ -160,8 +154,6 @@ convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
   checkVarNames(getNames(output, dim = 3))
 
   ## summation checks ----
-
-  # TODO: consider moving somewhere else
 
   # known issues:
   # https://github.com/remindmodel/development_issues/issues/544
