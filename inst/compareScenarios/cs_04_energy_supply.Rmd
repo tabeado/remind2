@@ -239,7 +239,22 @@ showAreaAndBarPlots(data, items, orderVars = "user", scales = "fixed")
 
 ### PE Biomass Production - Energy Crops
 ```{r PE Biomass - Energy Crops}
-showLinePlots(data, "Primary Energy Production|Biomass|Energy Crops")
+showLinePlots(data, "PE|Production|Biomass|Lignocellulosic|Energy Crops")
+```
+
+### PE Biomass Production - Residues
+```{r PE Biomass - Residues}
+showLinePlots(data, "PE|Production|Biomass|Lignocellulosic|Residues")
+```
+
+### PE Biomass Production - SugarAndStarch
+```{r PE Biomass - Sugar and Starch Crops}
+showLinePlots(data, "PE|Production|Biomass|1st Generation|SugarAndStarch")
+```
+
+### PE Biomass Production - Sunflowers_PalmOil_others
+```{r PE Biomass - Oil Crops}
+showLinePlots(data, "PE|Production|Biomass|1st Generation|Sunflowers_PalmOil_others")
 ```
 
 
@@ -326,6 +341,23 @@ showLinePlots(data, "PE|Geothermal")
 
 
 ## SE Mix
+
+### SE Totals 
+
+```{r SE Totals}
+
+tot <- "SE"
+
+items <- c(
+  "SE|Electricity",
+  "SE|Heat",
+  "SE|Hydrogen",
+  "SE|Gases",
+  "SE|Liquids",
+  "SE|Solids",
+  NULL)
+showAreaAndBarPlots(data, items, tot, orderVars="user", scales = "fixed")
+```
 
 ### SE Electricity
 ```{r SE Electricity}

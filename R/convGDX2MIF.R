@@ -57,7 +57,8 @@ convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
   output <- mbind(output, reportExtraction(gdx, regionSubsetList, t)[, t, ])
   message("running reportCapacity...")
   output <- mbind(output, reportCapacity(gdx, regionSubsetList, t, gdx_ref = gdx_ref)[, t, ])
-  # output <- mbind(output,reportLCOE(gdx)[,t,])     now moved to additional LCOE.mif file because many variables
+  # now moved to additional LCOE.mif file because many variables
+  # output <- mbind(output,reportLCOE(gdx)[,t,])
   message("running reportCapitalStock...")
   output <- mbind(output, reportCapitalStock(gdx, regionSubsetList, t, gdx_ref = gdx_ref)[, t, ])
   message("running reportEnergyInvestment...")
@@ -73,6 +74,9 @@ convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
   # reporting of variables that need variables from different other report functions
   message("running reportEmi...") # needs output from reportFE
   output <- mbind(output, reportEmi(gdx, output, regionSubsetList, t)[, t, ])
+
+  message("running reportEmiForClimateAssessment...") # minimal and specific set of emissions for CA
+  output <- mbind(output, reportEmiForClimateAssessment(gdx, output, regionSubsetList, t)[, t, ])
 
   message("running reportTechnology...")
   # needs output from reportSE
@@ -147,6 +151,11 @@ convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
   checkVarNames(getNames(output, dim = 3))
 
   ## summation checks ----
+  # known issues:
+  # https://github.com/remindmodel/development_issues/issues/544
+  # https://github.com/remindmodel/development_issues/issues/545
+  # https://github.com/remindmodel/development_issues/issues/546
+
   .reportSummationErrors <- function(msg, testthat) {
     if (!any(grepl("All summation checks were fine", msg))) {
       msgtext <- paste(msg, collapse = "\n")
