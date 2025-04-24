@@ -122,7 +122,7 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
       get_cap(c("igcc", "pc", "coalchp", "igccc"), "|Electricity|+|Coal"),
       get_cap("dot",                               "|Electricity|+|Oil"),
       get_cap(c("ngcc", "ngt", "gaschp", "ngccc"), "|Electricity|+|Gas"),
-      get_cap(c("bioigccc", "biochp", "bioigcc"),  "|Electricity|+|Biomass"),
+      get_cap(c("bioigccc", "biochp", "bioigcc", "biopyrCHP", "biopyrElec"),  "|Electricity|+|Biomass"),
       get_cap(c("tnrs", "fnrs"),                   "|Electricity|+|Nuclear")
     )
   
@@ -152,8 +152,9 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
       get_cap("gaschp",                         "|Electricity|Gas|CHP"),
       get_cap("ngt",                            "|Electricity|Gas|GT"),
       get_cap(c("bioigccc"),                    "|Electricity|Biomass|w/ CC"),
-      get_cap(c("biochp", "bioigcc"),           "|Electricity|Biomass|w/o CC"),
+      get_cap(c("biochp", "bioigcc", "biopyrCHP", "biopyrElec"),           "|Electricity|Biomass|w/o CC"),
       get_cap("biochp",                         "|Electricity|Biomass|CHP"),
+      get_cap(c("biopyrCHP", "biopyrElec"),     "|Electricity|Biomass|Pyrolysis"),
       get_cap(c("biochp", "gaschp", "coalchp"), "|Electricity|CHP"),
       get_cap("spv",                            "|Electricity|Solar|+|PV"),
       get_cap("csp",                            "|Electricity|Solar|+|CSP"),
@@ -199,6 +200,7 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
       get_cap("geohe", "|Heat|+|Electricity|Heat Pump"),
       setNames(dimSums(gms_data[, , c("coalhp")], dim = 3)
             + dimSums(gms_data[, , c("coalchp")] * dataoc[, , "pecoal.seel.coalchp.sehe"], dim = 3, na.rm = TRUE), full_name("|Heat|+|Coal")),
+      # NEED TO ADD BIOCHAR
       setNames(dimSums(gms_data[, , c("biohp")], dim = 3)
             + dimSums(gms_data[, , c("biochp")] * dataoc[, , "pebiolc.seel.biochp.sehe"], dim = 3, na.rm = TRUE),  full_name("|Heat|+|Biomass")),
       setNames(dimSums(gms_data[, , c("gashp")], dim = 3)
@@ -220,7 +222,7 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
       get_cap(c("coalftrec", "coalftcrec"),                                  "|Liquids|+|Coal"),
       get_cap(c("refliq"),                                                   "|Liquids|+|Oil"),
       get_cap(c("gasftrec", "gasftcrec"),                                    "|Liquids|+|Gas"),
-      get_cap(c("bioftrec", "bioftcrec", "biodiesel", "bioeths", "bioethl"), "|Liquids|+|Biomass"),
+      get_cap(c("bioftrec", "bioftcrec", "biodiesel", "bioeths", "bioethl", "biopyrFuel"), "|Liquids|+|Biomass"),
       get_cap(c("MeOH"),                                                     "|Liquids|+|Hydrogen")
     )
     cap_liquids <- mbind(cap_liquids, setNames(dimSums(cap_liquids, dim = 3), full_name("|Liquids"))) # sum of the above
