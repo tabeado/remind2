@@ -45,6 +45,7 @@ reportEnergyInvestment <- function(gdx, regionSubsetList = NULL,
   se_Liq    <- intersect(c("seliqfos", "seliqbio", "seliqsyn", "seliq", "sepet", "sedie"), sety)
   se_Gas    <- intersect(c("segafos", "segabio", "segasyn", "sega"), sety)
   se_Solids <- intersect(c("sesofos", "sesobio", "seso"), sety)
+  se_biochar <- intersect(c("sebiochar"),sety)
 
   all_te  <- readGDX(gdx, name = c("all_te"), format = "first_found")
   tenotransform  <- readGDX(gdx, c("teNoTransform", "tenotransform"), format = "first_found")
@@ -241,6 +242,14 @@ reportEnergyInvestment <- function(gdx, regionSubsetList = NULL,
   tmp <- mbind(tmp, setNames(inv_se(ie = pebio, oe = "sehe", pe2se, adjte, v_directteinv, v_adjustteinv), "Energy Investments|Heat|+|Biomass (billion US$2017/yr)"))
   tmp <- mbind(tmp, setNames(inv_se(ie = NULL, oe = NULL, c("tdhes"), adjte, v_directteinv, v_adjustteinv, te = all_te), "Energy Investments|Heat|+|Grid (billion US$2017/yr)"))
 
+  # Biochar
+  tmp <- mbind(tmp, setNames(inv_se(ie = pe2se$all_enty, oe = "sebiochar", pe2se, adjte, v_directteinv, v_adjustteinv),  "Energy Investments|Pyrolysis (billion US$2017/yr)"))
+  tmp <- mbind(tmp, setNames(inv_se(ie = "pebio", te = "biopyrOnly", oe = "sebiochar", pe2se, adjte, v_directteinv, v_adjustteinv), "Energy Investments|Pyrolysis|+|biopyrOnly (billion US$2017/yr)"))
+  tmp <- mbind(tmp, setNames(inv_se(ie = "pebio", te = "biopyrHeat", oe = "sebiochar", pe2se, adjte, v_directteinv, v_adjustteinv), "Energy Investments|Pyrolysis|+|biopyrHeat (billion US$2017/yr)"))
+  tmp <- mbind(tmp, setNames(inv_se(ie = "pebio", te = "biopyrElec", oe = "sebiochar", pe2se, adjte, v_directteinv, v_adjustteinv), "Energy Investments|Pyrolysis|+|biopyrElec (billion US$2017/yr)"))
+  tmp <- mbind(tmp, setNames(inv_se(ie = "pebio", te = "biopyrCHP", oe = "sebiochar", pe2se, adjte, v_directteinv, v_adjustteinv), "Energy Investments|Pyrolysis|+|biopyrCHP (billion US$2017/yr)"))
+  tmp <- mbind(tmp, setNames(inv_se(ie = "pebio", te = "biopyrFuel", oe = "sebiochar", pe2se, adjte, v_directteinv, v_adjustteinv), "Energy Investments|Pyrolysis|+|biopyrFuel (billion US$2017/yr)"))
+
   tmp <- mbind(tmp, setNames((tmp[, , "Energy Investments|Supply (billion US$2017/yr)"]
   - tmp[, , "Energy Investments|Electricity (billion US$2017/yr)"]
     - tmp[, , "Energy Investments|Hydrogen (billion US$2017/yr)"]
@@ -248,7 +257,8 @@ reportEnergyInvestment <- function(gdx, regionSubsetList = NULL,
     - tmp[, , "Energy Investments|Heat (billion US$2017/yr)"]
     - tmp[, , "Energy Investments|Gases (billion US$2017/yr)"]
     - tmp[, , "Energy Investments|Solids (billion US$2017/yr)"]
-    - tmp[, , "Energy Investments|CO2 Trans&Stor (billion US$2017/yr)"]),
+    - tmp[, , "Energy Investments|CO2 Trans&Stor (billion US$2017/yr)"]
+    - tmp[, , "Energy Investments|Pyrolysis (billion US$2017/yr)"]), # NEED TO CHECK WHETHER IT IS ALREADY ACCOUNTED FOR!
   "Energy Investments|Other (billion US$2017/yr)"))
 
   # add global values
