@@ -128,14 +128,14 @@ showAreaAndBarPlots(data,
                         tot = "Carbon Management|Materials")
 ```
 
+## Plastics production
 
-
-## Total plastics production
+### Total plastics production
 ```{r }
 showLinePlots(data, "Carbon Management|Materials|Plastics")
 ```
 
-## Plastics production by origin
+### Plastics production by origin
 ```{r }
 showAreaAndBarPlots(data,
                         vars = c("Carbon Management|Materials|Plastics|Fossil",
@@ -144,7 +144,7 @@ showAreaAndBarPlots(data,
                         scales = "fixed")
 ```
 
-## Plastic waste by fate
+### Plastic waste by fate
 ```{r }
 showAreaAndBarPlots(data,
                         vars = c("Carbon Management|Materials|Plastics|Waste|Incineration",
@@ -171,4 +171,23 @@ showAreaAndBarPlots(data,
                              "Carbon Management|Feedstocks|Stored|Biomass",
                              "Carbon Management|Feedstocks|Stored|Synthetic"),
                     tot = "Carbon Management|Feedstocks")
+```
+
+# Biochar production 
+```{r Biochar Total Line Plot Only}
+showLinePlots(data, "SE|Biochar Mt")
+```
+
+```{r Biochar area by type}
+showAreaAndBarPlots(
+  data = data,
+  vars = rev(c('SE|Biochar Mt|KonTiki (Mt/yr)', 
+                'SE|Biochar Mt|biopyrOnly (Mt/yr)',
+                'SE|Biochar Mt|biopyrHeat (Mt/yr)', 
+                'SE|Biochar Mt|biopyrCHP (Mt/yr)',  
+                'SE|Biochar Mt|biopyrCHP850 (Mt/yr)',
+                'SE|Biochar Mt|biopyrFuel (Mt/yr)')),
+  tot = 'SE|Biochar Mt (Mt/yr)',
+  scales = 'fixed',
+  orderVars = 'user')
 ```
