@@ -2099,8 +2099,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
     setNames(out[, , "Emi|CO2|Energy|+|Demand (Mt CO2/yr)"]
              - out[, , "Emi|CO2|CDR|Synthetic Fuels CCS|+|Industry (Mt CO2/yr)"]
              - out[, , "Emi|CO2|CDR|Synthetic Fuels CCS|+|CDR Sector (Mt CO2/yr)"]
-             - out[, , "Emi|CO2|CDR|BECCS|+|Demand Side (Mt CO2/yr)"]
-             - out[, , "Emi|CO2|CDR|+|Biochar (Mt CO2/yr)"],
+             - out[, , "Emi|CO2|CDR|BECCS|+|Demand Side (Mt CO2/yr)"],
              "Emi|CO2|Gross|Energy|+|Demand (Mt CO2/yr)")
   )
 
@@ -2117,7 +2116,8 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
     # total gross energy emissions
     setNames(out[, , "Emi|CO2|+|Energy (Mt CO2/yr)"]
              - out[, , "Emi|CO2|CDR|+|Synthetic Fuels CCS (Mt CO2/yr)"]
-             - out[, , "Emi|CO2|CDR|+|BECCS (Mt CO2/yr)"],
+             - out[, , "Emi|CO2|CDR|+|BECCS (Mt CO2/yr)"]
+             - out[, , "Emi|CO2|CDR|+|Biochar (Mt CO2/yr)"],
              "Emi|CO2|Gross|Energy (Mt CO2/yr)"),
 
     # total gross energy and industrial process emissions
@@ -2973,7 +2973,8 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
     tmp <- new.magpie(getRegions(var), getYears(var), magclass::getNames(var), fill = 0)
     for (t in 2:length(getYears(var))) {
       tmp[, t, ] <-  setYears(
-                              dimSums(na.rm = TRUE, x = var[, which(getYears(var) < getYears(var)[t]), ] * ts[, which(getYears(var) < getYears(var)[t]), ], dim = 2)
+                              dimSums(na.rm = TRUE, x = var[, which(getYears(var) < getYears(var)[t]), ] 
+                              * ts[, which(getYears(var) < getYears(var)[t]), ], dim = 2)
                               - setYears(var[, 2005, ] * ts[, 2005, ], NULL) / 2   # half of 2005 time step
                               + setYears(var[, t, ] * ts[, t, ], NULL) / 2   # half of last time step
                               , NULL)
@@ -3006,6 +3007,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
     "Emi|CO2|CDR|BECCS|+|Pe2Se (Mt CO2/yr)",
     "Emi|CO2|CDR|BECCS|+|Demand Side (Mt CO2/yr)",
     "Emi|CO2|CDR|+|Synthetic Fuels CCS (Mt CO2/yr)",
+    "Emi|CO2|CDR|+|Biochar (Mt CO2/yr)",
     "Emi|CO2|CDR|+|DACCS (Mt CO2/yr)",
     "Emi|CO2|CDR|+|EW (Mt CO2/yr)",
     "Emi|CO2|CDR|+|OAE (Mt CO2/yr)",
