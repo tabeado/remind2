@@ -5,9 +5,20 @@
 #'
 #' @param mif a mif file with reported variables from remind2 and EDGE-Transport
 #' @param extraData path to extra data files to be used in the reporting
-#' @author Gabriel Abrahão
+#' @param gdx a GDX as created by readGDX, or the file name of a gdx, needed to define region subsets
+#' @author Gabriel Abrahão, Falk Benke
 #' @export
-reportExtraEmissions <- function(mif, extraData) {
+reportExtraEmissions <- function(mif, extraData, gdx) {
+
+  # Define region subsets ----
+  regionSubsetList <- toolRegionSubsets(gdx)
+
+  # ADD EU-27 region aggregation if possible
+  if ("EUR" %in% names(regionSubsetList)) {
+    regionSubsetList <- c(regionSubsetList, list(
+      "EU27" = c("ENC", "EWN", "ECS", "ESC", "ECE", "FRA", "DEU", "ESW")
+    ))
+  }
 
   # Read in selected mif variables ----
   reportVars <- c(
@@ -30,6 +41,7 @@ reportExtraEmissions <- function(mif, extraData) {
     as.magpie() %>%
     collapseDim()
 
+
   # Read in additional reporting files ----
 
   if (!file.exists(file.path(extraData, "p_emissions4ReportExtraCEDS.cs4r"))) {
@@ -42,6 +54,11 @@ reportExtraEmissions <- function(mif, extraData) {
 
   cedsceds <- read.magpie(file.path(extraData, "p_emissions4ReportExtraCEDS.cs4r"))
   cedsiamc <- read.magpie(file.path(extraData, "p_emissions4ReportExtraIAMC.cs4r"))
+
+  if (!is.null(regionSubsetList)) {
+    cedsceds <- mbind(cedsceds, calc_regionSubset_sums(cedsceds, regionSubsetList))
+    cedsiamc <- mbind(cedsiamc, calc_regionSubset_sums(cedsiamc, regionSubsetList))
+  }
 
   # check if regional resolution matches
   if (length(setdiff(getItems(report, dim = 1), getItems(cedsceds, dim = 1))) != 0 ||
