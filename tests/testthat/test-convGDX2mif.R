@@ -62,7 +62,7 @@ test_that("Test if REMIND reporting is produced as it should and check data inte
 
     message("Running convGDX2MIF(", gdxPath, ")...")
     refpolicycost <- if (gdxPath == gdxPaths[[1]]) gdxPath else NULL
-    mifContent <- convGDX2MIF(gdxPath, gdx_refpolicycost = refpolicycost, testthat = TRUE)
+    mifContent <- convGDX2MIF(gdxPath, gdx_refpolicycost = refpolicycost, testthat = TRUE, extraData = NULL)
 
     expect_no_warning(piamInterfaces::checkVarNames(getNames(mifContent, dim = 3)))
 
