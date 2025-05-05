@@ -33,6 +33,7 @@ indicators_transport <- c(
   "ES|Transport|Freight|Rail pCap",
   "ES|Transport|Freight|Domestic Shipping pCap",
   "ES|Transport|Bunkers|Freight|International Shipping pCap",
+  "Stock|Transport|Pass|Road|LDV|Four Wheelers pCap",
   "Stock|Transport|Pass|Road|LDV pCap",
   "ES|Transport|Freight pCap")
 indicators_industry <- c(
@@ -382,19 +383,6 @@ showAreaAndBarPlots(data, items, tot, orderVars = "user", scales = "fixed")
 #### LDV 4Wheelers (Car) Stock by tech - carrier share - Bar 
 ```{r LDV 4Wheelers (Car) Stock by tech - carrier share - Bar }
 showAreaAndBarPlots(data, items, tot, orderVars = "user", fill = TRUE)
-```
-
-#### LDV Vehicles Stock - perCap - EDGE-T
-```{r LDV Vehicles Stock - perCap - EDGE-T}
-tot <- "Stock|Transport|Pass|Road|LDV pCap"
-items <- c(
-  "Stock|Transport|Pass|Road|LDV|BEV pCap",
-  "Stock|Transport|Pass|Road|LDV|Hybrid electric pCap",
-  "Stock|Transport|Pass|Road|LDV|FCEV pCap",
-  "Stock|Transport|Pass|Road|LDV|Gases pCap",
-  "Stock|Transport|Pass|Road|LDV|Liquids pCap",
-  NULL)
-showAreaAndBarPlots(data, items, tot, orderVars = "user", scales = "fixed")
 ```
 
 #### LDV Sales by tech - Bar
