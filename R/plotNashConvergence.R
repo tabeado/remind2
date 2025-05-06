@@ -240,7 +240,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
         linewidth = aestethics$line$size
       )) +
       theme_minimal() +
-      ggtitle("Tradable goods surplus") +
+      #ggtitle("Tradable goods surplus") +
       facet_grid(type ~ period, scales = "free_y") +
       scale_color_manual(values = surplusColor) +
       scale_fill_manual(values = booleanColor) +
@@ -316,10 +316,14 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
         "converged" = ifelse(.data$value > 0.1 * maxTolerance, "no", "yes"),
         "tooltip" = ifelse(.data$value > 0.1 * maxTolerance,
           paste0(
+            "Iteration: ", .data$iteration, "<br>",
             "Not converged<br>Price Anticipation deviation is not low enough<br>",
             round(.data$value, 5), " > ", 0.1 * maxTolerance
           ),
-          "Converged"
+          paste0(
+            "Iteration: ", .data$iteration, "<br>",
+            "Converged"
+          )
         ),
       )
 
@@ -349,18 +353,20 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
         readGDX(gdx, name = "pm_emiMktTarget_dev_iter", react = "silent", restore_zeros = FALSE)
       )
 
-      cmEmiMktTargetTolerance <- as.vector(readGDX(gdx, name = "cm_emiMktTarget_tolerance", react = "error"))
+      pm_emiMktTarget_tolerance <- mip::getPlotData("pm_emiMktTarget_tolerance", gdx)
+      emiMktTarget_tolerance <- setNames(pm_emiMktTarget_tolerance$pm_emiMktTarget_tolerance,pm_emiMktTarget_tolerance$ext_regi)
+      #cmEmiMktTargetTolerance <- as.vector(readGDX(gdx, name = "cm_emiMktTarget_tolerance", react = "error"))
 
       pmEmiMktTargetDevIter <- pmEmiMktTargetDevIter %>%
         as.quitte() %>%
         filter(!is.na(.data$value)) %>% # remove unwanted combinations introduced by readGDX
         select("period", "iteration", "ext_regi", "emiMktExt", "value") %>%
-        mutate("converged" = .data$value <= cmEmiMktTargetTolerance)
+        mutate("converged" = .data$value <= emiMktTarget_tolerance[ext_regi])
 
       data <- pmEmiMktTargetDevIter %>%
         group_by(.data$iteration) %>%
         summarise(converged = ifelse(any(.data$converged == FALSE), "no", "yes")) %>%
-        mutate("tooltip" = "Converged")
+        mutate("tooltip" = paste0("Iteration: ", .data$iteration, "<br>","Converged"))
 
       for (i in unique(pmEmiMktTargetDevIter$iteration)) {
         if (data[data$iteration == i, "converged"] == "no") {
@@ -371,8 +377,8 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
 
           if (nrow(tmp) > 10) {
             data[data$iteration == i, "tooltip"] <- paste0(
-              "Iteration ", i, " ",
-              "not converged:<br>",
+              "Iteration ", i, "<br>",
+              "Not converged:<br>",
               paste0(unique(tmp$ext_regi), collapse = ", "),
               "<br>",
               paste0(unique(tmp$period), collapse = ", "),
@@ -381,8 +387,8 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
             )
           } else {
             data[data$iteration == i, "tooltip"] <- paste0(
-              "Iteration ", i, " ",
-              "not converged:<br>",
+              "Iteration ", i, "<br>",
+              "Not converged:<br>",
               paste0(unique(tmp$item), collapse = ", ")
             )
           }
@@ -440,7 +446,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
       data <- p80ImplicitQttyTargetDevIter %>%
         group_by(.data$iteration) %>%
         summarise(converged = ifelse(any(.data$failed == TRUE), "no", "yes")) %>%
-        mutate("tooltip" = ifelse(.data$converged == "yes", "Converged", "Not converged"))
+        mutate("tooltip" = ifelse(.data$converged == "yes", paste0("Iteration: ", .data$iteration, "<br>","Converged"), paste0("Iteration: ", .data$iteration, "<br>","Not converged")))
 
       qttyTarget <- suppressWarnings(ggplot(data, aes_(
         x = ~iteration, y = "Implicit Quantity\nTarget",
@@ -469,7 +475,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
     data <- p80GlobalBudgetDevIter %>%
       mutate(
         "converged" = ifelse(.data$failed == TRUE, "no", "yes"),
-        "tooltip" = ifelse(.data$failed, "Not converged", "Converged")
+        "tooltip" = ifelse(.data$failed, paste0("Iteration: ", .data$iteration, "<br>","Not converged"), paste0("Iteration: ", .data$iteration, "<br>","Converged"))
       )
 
     globalBuget <- suppressWarnings(ggplot(data, aes_(
@@ -511,7 +517,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
         mutate(
           "converged" = ifelse(.data$p80SccConvergenceMaxDeviationIter > cmSccConvergence |
                                  .data$p80GmtConvIter >  cmTempConvergence, "no", "yes"),
-          "tooltip" = ifelse(.data$converged == "no", "Not converged", "Converged")
+          "tooltip" = ifelse(.data$converged == "no", paste0("Iteration: ", .data$iteration, "<br>","Not converged"), paste0("Iteration: ", .data$iteration, "<br>","Converged"))
         )
 
       damageInternalization <- suppressWarnings(ggplot(data, aes_(
@@ -541,7 +547,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
     data <- p80ConvNashTaxrevIter %>%
       group_by(.data$iteration) %>%
       summarise(converged = ifelse(any(.data$failed == TRUE), "no", "yes")) %>%
-      mutate("tooltip" = "Converged")
+      mutate("tooltip" = paste0("Iteration: ", .data$iteration, "<br>","Converged"))
 
     for (i in unique(p80ConvNashTaxrevIter$iteration)) {
       if (data[data$iteration == i, "converged"] == "no") {
@@ -552,16 +558,16 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
 
         if (nrow(tmp) > 10) {
           data[data$iteration == i, "tooltip"] <- paste0(
-            "Iteration ", i, " ",
-            "not converged:<br>",
+            "Iteration ", i, "<br>",
+            "Not converged:<br>",
             paste0(unique(tmp$region), collapse = ", "),
             "<br>",
             paste0(unique(tmp$period), collapse = ", ")
           )
         } else {
           data[data$iteration == i, "tooltip"] <- paste0(
-            "Iteration ", i, " ",
-            "not converged:<br>",
+            "Iteration ", i, "<br>",
+            "Not converged:<br>",
             paste0(unique(tmp$item), collapse = ", ")
           )
         }
@@ -599,15 +605,20 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
         "tooltip" = ifelse(
           .data$converged == "yes",
           paste0(
+            "Iteration: ", .data$iteration, "<br>",
             "Converged<br>Price Anticipation fade out is low enough<br>",
             round(.data$fadeoutPriceAnticip, 5), " <= ", cmMaxFadeoutPriceAnticip
           ),
           paste0(
+            "Iteration: ", .data$iteration, "<br>",
             "Not converged<br>Price Anticipation fade out is not low enough<br>",
             round(.data$fadeoutPriceAnticip, 5), " > ", cmMaxFadeoutPriceAnticip
           )
         )
       )
+
+    iterationsXaxis <- unique(c(1,data$iteration[(data$iteration %% 5) == 0],max(data$iteration)))
+    iterationsXaxis <- iterationsXaxis[iterationsXaxis != max(data$iteration)-1]
 
     priceAnticipation <- ggplot(data, aes_(x = ~iteration)) +
       geom_line(aes_(y = ~fadeoutPriceAnticip), alpha = 0.3, linewidth = aestethics$line$size) +
@@ -619,7 +630,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
       theme_minimal() +
       scale_fill_manual(values = booleanColor) +
       scale_y_continuous(breaks = c(0.0001), labels = c("Price\nAnticipation (inactive)")) +
-      scale_x_continuous(breaks = c(data$iteration)) +
+      scale_x_continuous(breaks = iterationsXaxis) +
       labs(x = NULL, y = NULL) +
       coord_cartesian(ylim = c(-0.2, 1))
 
