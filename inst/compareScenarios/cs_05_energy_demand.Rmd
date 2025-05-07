@@ -558,7 +558,16 @@ items <- c(
 showAreaAndBarPlots(data, items, tot, orderVars = "user", scales = "fixed")
 ```
 
-### FE Transport w/o Bunkers by mode - Line
+### FE Transport w/ Bunkers by mode - Line
+#### FE Transport w/ Bunkers - Line
+```{r Transport w/ Bunkers}
+showLinePlots(data, "FE|Transport")
+```
+
+#### Road
+```{r Road}
+showLinePlots(data, "FE|Transport|Road")
+```
 
 #### Pass International Aviation 
 ```{r Pass International Aviation}
@@ -573,6 +582,16 @@ showLinePlots(data, "FE|Transport|Pass|Domestic Aviation")
 #### Pass Road LDV
 ```{r Pass Road LDV}
 showLinePlots(data, "FE|Transport|Pass|Road|LDV")
+```
+
+#### Pass Road LDV 4wheeler (Car)
+```{r Pass Road LDV 4wheeler Car}
+showLinePlots(data, "FE|Transport|Pass|Road|LDV|Four Wheelers")
+```
+
+#### Pass Road LDV 2wheeler
+```{r Pass Road LDV 2wheeler}
+showLinePlots(data, "FE|Transport|Pass|Road|LDV|Two Wheelers")
 ```
 
 #### Pass Road Bus
