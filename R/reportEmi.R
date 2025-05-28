@@ -393,6 +393,11 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
 
 
 
+  # compute share of stored carbon from total captured carbon
+  p_share_CCS <- dimSums(vm_co2CCS, dim = 3, na.rm = TRUE) / dimSums(vm_co2capture, dim = 3)
+  p_share_CCS[is.infinite(p_share_CCS)] <- 0
+  p_share_CCS[is.na(p_share_CCS)] <- 0
+
   ## Waste Incineration Emissions ----
 
   # This distributes energy-related waste incineration emissions ex-post to sectors. The emissions are
@@ -496,7 +501,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
 
     if (exists("vm_incinerationCCS")) {
       # calculate captured waste carbon used for CCU (not stored but released)
-      WasteCCU <- dimSums(vm_incinerationCCS, dim = c(3.2, 3.3)) * (1 - dimSums(vm_co2CCS, dim = 3) / dimSums(vm_co2capture, dim = 3))
+      WasteCCU <- dimSums(vm_incinerationCCS, dim = c(3.2, 3.3)) * (1 - p_share_CCS)
       WasteCCU[is.na(WasteCCU)] <- 0
     } else {
       # set to zero for GDXs where no waste carbon capture implemented
@@ -628,11 +633,6 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   # pe2se,extraction,CCU -> supply-side
   # se2fe,industryCCS -> demand-side
 
-
-  # compute share of stored carbon from total captured carbon
-  p_share_CCS <- dimSums(vm_co2CCS, dim = 3, na.rm = TRUE) / dimSums(vm_co2capture, dim = 3)
-  p_share_CCS[is.infinite(p_share_CCS)] <- 0
-  p_share_CCS[is.na(p_share_CCS)] <- 0
 
   sel_pm_emifac_pe2se <- if (getSets(pm_emifac)[[6]] == "emiAll") {
     mselect(pm_emifac, all_te = pe2se$all_te, emiAll = "co2")
