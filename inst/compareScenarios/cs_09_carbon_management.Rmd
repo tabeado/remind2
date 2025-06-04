@@ -1,61 +1,134 @@
 # Carbon Management
 
 ## Carbon Capture
-
-```{r carbon capture}
+### Capture Total - Line
+```{r Capture Total - Line}
 showLinePlots(data, "Carbon Management|Carbon Capture")
+```
+
+### Capture by sector - Bar
+```{r Capture by sector - Bar}
 showAreaAndBarPlotsPlus(data, "Carbon Management|Carbon Capture", scales = "fixed")
-showAreaAndBarPlotsPlus(data, "Carbon Management|Carbon Capture|Biomass|Pe2Se", scales = "fixed")
-showAreaAndBarPlotsPlus(data, "Carbon Management|Carbon Capture|Fossil|Pe2Se", scales = "fixed")
+```
 
-# industry ----
-showAreaAndBarPlotsPlus(data,
-                        "Carbon Management|Carbon Capture|Industry Energy",
-                        scales = "fixed")
-
+### Capture by CO2 origin - Bar
+```{r Capture by CO2 origin - Bar}
 showAreaAndBarPlots(
   data = data,
-  vars = rev(c('Carbon Management|Carbon Capture|Industry Energy|Cement',
-               'Carbon Management|Carbon Capture|Industry Process|Cement',
-               'Carbon Management|Carbon Capture|Industry Energy|Chemicals',
-               'Carbon Management|Carbon Capture|Industry Energy|Steel')),
+  vars = rev(c('Carbon Management|Carbon Capture|Biomass',
+               'Carbon Management|Carbon Capture|Fossil',
+               'Carbon Management|Carbon Capture|Synfuel',
+               'Carbon Management|Carbon Capture|Industrial Processes',
+               'Carbon Management|Carbon Capture|DAC')),
   scales = 'fixed',
   orderVars = 'user')
 ```
 
-## Storage
-
-```{r carbon management storage}
-showLinePlots(data, "Carbon Management|Storage")
-showAreaAndBarPlotsPlus(data, "Carbon Management|Storage", scales = "fixed")
-showAreaAndBarPlotsPlus(data, "Carbon Management|Storage|Industry Energy", scales = "fixed")
-showLinePlots(data, "Carbon Management|Storage|Share of annual potential used")
-showAreaAndBarPlots(data,
-                    vars = c("Carbon Management|Storage"),
-                    tot = "Carbon Management|Storage|Maximum annual CO2 storage potential")
+### Bio PE2SE Capture by carrier - Bar
+```{r Bio PE2SE Capture by carrier - Bar}
+showAreaAndBarPlotsPlus(data, "Carbon Management|Carbon Capture|Energy|Pe2Se|Biomass", scales = "fixed")
 ```
 
-## Usage
-
-```{r carbon management usage}
-showLinePlots(data, "Carbon Management|Usage")
-showAreaAndBarPlotsPlus(data, "Carbon Management|Usage", scales = "fixed")
+### Fossil PE2SE Capture by carrier - Bar
+```{r Fossil PE2SE Capture by carrier - Bar}
+showAreaAndBarPlotsPlus(data, "Carbon Management|Carbon Capture|Energy|Pe2Se|Fossil", scales = "fixed")
 ```
 
-## Share
+### Industry Energy Capture by PE - Bar
+```{r Industry Energy Capture by PE - Bar}
+showAreaAndBarPlotsPlus(data, "Carbon Management|Carbon Capture|Energy|Industry", scales = "fixed")
+```
 
-```{r carbon management share}
+### Carbon Capture from Industry Sector - Bar
+```{r Carbon Capture from Industry Sector - Bar}
+showAreaAndBarPlots(
+  data = data,
+  vars = rev(c('Carbon Management|Carbon Capture|Energy|Industry|Cement',
+               'Carbon Management|Carbon Capture|Industrial Processes|Cement',
+               'Carbon Management|Carbon Capture|Energy|Industry|Chemicals',
+               'Carbon Management|Carbon Capture|Energy|Industry|Steel')),
+  scales = 'fixed',
+  orderVars = 'user')
+```
+
+### Carbon Capture from CDR Sector - Bar
+```{r Carbon Capture from CDR Sector - Bar}
+showAreaAndBarPlots(
+  data = data,
+  vars = rev(c('Carbon Management|Carbon Capture|Energy|CDR Sector',
+               'Carbon Management|Carbon Capture|Industrial Processes|CDR Sector|OAE',
+               'Carbon Management|Carbon Capture|DAC')),
+  scales = 'fixed',
+  orderVars = 'user')
+```
+
+## Split Usage / Storage
+### Share of Storage in Capture - Line
+```{r Share of Storage in Capture}
 showLinePlots(data, "Carbon Management|Share of Stored CO2 from Captured CO2")
 ```
 
-```{r}
+### Use of captured carbon - Bar
+```{r Use of captured carbon - Bar}
 showAreaAndBarPlots(data, 
                     vars = c('Carbon Management|Storage',
                              'Carbon Management|Usage'),
                     tot = 'Carbon Management|Carbon Capture')
 ```
 
+## Carbon Storage
+### Storage Total - Line
+```{r Storage Total - Line}
+showLinePlots(data, "Carbon Management|Storage")
+```
+
+### Storage by source type - Bar
+```{r Storage by source type - Bar}
+showAreaAndBarPlotsPlus(data, "Carbon Management|Storage", scales = "fixed")
+```
+
+### Storage from Industry Energy by PE - Bar
+```{r Storage from Industry Energy by PE - Bar}
+showAreaAndBarPlotsPlus(data, "Carbon Management|Storage|Energy|Industry", scales = "fixed")
+```
+
+### Share of storage potential used
+```{r Share of storage potential used}
+showLinePlots(data, "Carbon Management|Storage|Share of annual potential used")
+```
+
+### Maximum annual storage
+```{r Maximum annual storage}
+showAreaAndBarPlots(data,
+                    vars = c("Carbon Management|Storage"),
+                    tot = "Carbon Management|Storage|Maximum annual CO2 storage potential")
+```
+
+## Carbon Usage
+### Usage Total - Line
+```{r Usage Total - Line}
+showLinePlots(data, "Carbon Management|Usage")
+```
+
+### Usage for carrier - Bar
+```{r Usage for carrier - Bar}
+showAreaAndBarPlotsPlus(data, "Carbon Management|Usage", scales = "fixed")
+```
+
+
 # Materials
+
+
+## Total (carbonaceous) materials production
+
+```{r}
+showAreaAndBarPlots(data,
+                        vars = c("Carbon Management|Materials|Plastics",
+                                 "Carbon Management|Materials|Non-Plastics"),
+                        tot = "Carbon Management|Materials")
+```
+
+
 
 ## Total plastics production
 ```{r }
@@ -64,7 +137,7 @@ showLinePlots(data, "Carbon Management|Materials|Plastics")
 
 ## Plastics production by origin
 ```{r }
-showAreaAndBarPlots(data, 
+showAreaAndBarPlots(data,
                         vars = c("Carbon Management|Materials|Plastics|Fossil",
                                  "Carbon Management|Materials|Plastics|Biomass",
                                  "Carbon Management|Materials|Plastics|Synfuels"), 
@@ -73,8 +146,29 @@ showAreaAndBarPlots(data,
 
 ## Plastic waste by fate
 ```{r }
-showAreaAndBarPlots(data, 
+showAreaAndBarPlots(data,
                         vars = c("Carbon Management|Materials|Plastics|Waste|Incineration",
-                                 "Carbon Management|Materials|Plastics|Waste|Other destination"), 
+                                 "Carbon Management|Materials|Plastics|Waste|Other destination"),
                         scales = "fixed")
+```
+
+## Non-plastic waste by fate
+```{r }
+showAreaAndBarPlots(data,
+                        vars = c("Carbon Management|Materials|Non-Plastics|Incineration",
+                                 "Carbon Management|Materials|Non-Plastics|Other destination"),
+                        scales = "fixed")
+```
+
+## Feedstock Carbon by SE carrier and fate
+
+```{r}
+showAreaAndBarPlots(data,
+                    vars = c("Carbon Management|Feedstocks|Emitted|Fossil",
+                             "Carbon Management|Feedstocks|Emitted|Biomass",
+                             "Carbon Management|Feedstocks|Emitted|Synthetic",
+                             "Carbon Management|Feedstocks|Stored|Fossil",
+                             "Carbon Management|Feedstocks|Stored|Biomass",
+                             "Carbon Management|Feedstocks|Stored|Synthetic"),
+                    tot = "Carbon Management|Feedstocks")
 ```

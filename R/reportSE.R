@@ -25,14 +25,9 @@
 #' @importFrom rlang sym
 
 reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150)) {
-
   ####### get realisations #########
   module2realisation <- readGDX(gdx, "module2realisation")
   rownames(module2realisation) <- module2realisation$modules
-
-  ####### get power realisations #########
-  realisation <- readGDX(gdx, "module2realisation")
-  power_realisation <- if ("power" %in% realisation[, 1]) realisation[which(realisation[, 1] == "power"), 2]
 
   ####### conversion factors ##########
   pm_conv_TWa_EJ <- 31.536
@@ -40,13 +35,11 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   ## sets
   pe2se    <- readGDX(gdx, "pe2se")
   se2se    <- readGDX(gdx, "se2se")
-  all_te   <- readGDX(gdx, "all_te")
   te       <- readGDX(gdx, "te")
-  tefosccs <- readGDX(gdx, c("teFosCCS", "tefosccs"), format = "first_found")
   teccs    <- readGDX(gdx, c("teCCS", "teccs"), format = "first_found")
   tenoccs  <- readGDX(gdx, c("teNoCCS", "tenoccs"), format = "first_found")
   techp    <- readGDX(gdx, c("teChp", "techp"), format = "first_found")
-  terenew_nobio <- readGDX(gdx, c("teReNoBio", "terenew_nobio"), format = "first_found")
+  teReNoBio <- readGDX(gdx, c("teReNoBio", "terenew_nobio"), format = "first_found")
   pebio    <- readGDX(gdx, c("peBio", "pebio"), format = "first_found")
   entySe   <- readGDX(gdx, c("entySe", "sety"), format = "first_found")
   entyPe   <- readGDX(gdx, c("entyPe", "pety"), format = "first_found")
@@ -66,24 +59,18 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   pm_prodCouple <- mbind(pm_prodCouple, pm_prodCoupleEmi)
   pm_prodCouple[is.na(pm_prodCouple)] <- 0
 
-  p_macBase <- readGDX(gdx, c("p_macBaseMagpie", "pm_macBaseMagpie","p_macBase"), format = "first_found")
+  p_macBase <- readGDX(gdx, c("p_macBaseMagpie", "pm_macBaseMagpie", "p_macBase"), format = "first_found")
   #  p_macEmi  <- readGDX(gdx,"p_macEmi")
   ## variables
   vm_prodSe <- readGDX(gdx, name = c("vm_prodSe", "v_seprod"), field = "l", restore_zeros = FALSE, format = "first_found") * pm_conv_TWa_EJ
   vm_prodSe <- mselect(vm_prodSe, all_enty1 = entySe)
 
-  #  storloss only exist for versions previous to the power module creation and for the IntC and DTcoup power module realisation
-  if (power_realisation %in% c("IntC", "DTcoup")) {
-    storLoss <- readGDX(gdx, name = c("v32_storloss", "v_storloss"), field = "l", restore_zeros = TRUE, format = "first_found") * pm_conv_TWa_EJ
-    # calculate minimal temporal resolution #####
-    y <- Reduce(intersect, list(getYears(vm_prodSe), getYears(storLoss)))
-  } else { # RLDC power module
-    storLoss <- NULL
-    y <- getYears(vm_prodSe)
-  }
+  storLoss <- readGDX(gdx, name = c("v32_storloss", "v_storloss"), field = "l", restore_zeros = TRUE, format = "first_found") * pm_conv_TWa_EJ
+  # calculate minimal temporal resolution #####
+  y <- Reduce(intersect, list(getYears(vm_prodSe), getYears(storLoss)))
 
-  vm_macBase <- readGDX(gdx, name = c("vm_macBase"), field = "l", restore_zeros = FALSE, format = "first_found") * pm_conv_TWa_EJ
-  vm_macBase <- vm_macBase[, y, ]
+  v_macBase <- readGDX(gdx, name = c("v_macBase", "vm_macBase"), field = "l", restore_zeros = FALSE, format = "first_found") * pm_conv_TWa_EJ
+  v_macBase <- v_macBase[, y, ]
   vm_emiMacSector <- readGDX(gdx, name = c("vm_emiMacSector"), field = "l", restore_zeros = FALSE, format = "first_found") * pm_conv_TWa_EJ
   vm_emiMacSector <-   vm_emiMacSector[, y, ]
   ####### set temporal resolution #####
@@ -103,7 +90,7 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   ####### internal function for reporting ###########
 
   se.prod <- function(vm_prodSe, dataoc, oc2te, entySe, enty.input, se.output, te = te_pese2se,
-                      name = NULL, storageLoss = storLoss, all_pety = entyPe, storageLossOnly = F) {
+                      name = NULL, storageLoss = storLoss, all_pety = entyPe, storageLossOnly = FALSE) {
 
     if (storageLossOnly && is.null(storageLoss)) {
       return(NULL)
@@ -118,13 +105,13 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
       warning(paste("se.output ", setdiff(se.output, abind::abind(all_pety, entySe)), " is not element of entyPe or entySe"))
     }
 
-    if (storageLossOnly == F) {
+    if (storageLossOnly == FALSE) {
       ## secondary energy production with secarrier as a main product
-      x1 <- dimSums(mselect(vm_prodSe, all_enty = enty.input, all_enty1 = se.output, all_te = te), dim = 3, na.rm = T)
+      x1 <- dimSums(mselect(vm_prodSe, all_enty = enty.input, all_enty1 = se.output, all_te = te), dim = 3, na.rm = TRUE)
       ## secondary energy production with secarrier as a couple product
       ## identify all oc techs with secarrier as a couple product
       sub_oc2te <- oc2te[(oc2te$all_enty %in% enty.input) & (oc2te$all_enty1 %in% entySe) & (oc2te$all_enty2 %in% se.output) & (oc2te$all_te %in% te), ]
-      x2 <- dimSums(vm_prodSe[sub_oc2te] * dataoc[sub_oc2te], dim = 3, na.rm = T)
+      x2 <- dimSums(vm_prodSe[sub_oc2te] * dataoc[sub_oc2te], dim = 3, na.rm = TRUE)
     }
 
     ## storage losses
@@ -132,7 +119,7 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
     if ((nrow(input.pe2se) == 0) || (is.null(storageLoss))) {
       x3 <- 0
     } else {
-      x3 <- dimSums(storageLoss[input.pe2se], dim = 3, na.rm = T)
+      x3 <- dimSums(storageLoss[input.pe2se], dim = 3, na.rm = TRUE)
     }
 
     if (storageLossOnly) {
@@ -147,7 +134,7 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
 
   se.prodLoss <- function(vm_prodSe, dataoc, oc2te, entySe, enty.input, se.output, te = te_pese2se,
                           name = NULL, storageLoss = storLoss, all_pety = entyPe) {
-    return(se.prod(vm_prodSe, dataoc, oc2te, entySe, enty.input, se.output, te, name, storageLoss, all_pety, storageLossOnly = T))
+    return(se.prod(vm_prodSe, dataoc, oc2te, entySe, enty.input, se.output, te, name, storageLoss, all_pety, storageLossOnly = TRUE))
   }
 
   ## reporting should adhere to the following logic:
@@ -159,6 +146,9 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   tmp1 <- mbind(tmp1,
     se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, entySe, name = "SE|Biomass (EJ/yr)")
   )
+
+
+  windonStr <- ifelse ("windon" %in% te, "windon", "wind")
 
   ## Electricity
   tmp1 <- mbind(tmp1,
@@ -198,8 +188,7 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
     se.prod(vm_prodSe, dataoc, oc2te, entySe, "peoil", "seel", te = tenoccs,    name = "SE|Electricity|Oil|w/o CC (EJ/yr)"),
     se.prod(vm_prodSe, dataoc, oc2te, entySe, "peoil", "seel", te = "dot",      name = "SE|Electricity|Oil|DOT (EJ/yr)"),
 
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, entyPe, "seel", te = terenew_nobio,
-                                                                                name = "SE|Electricity|Non-Biomass Renewables (EJ/yr)"),
+    se.prod(vm_prodSe, dataoc, oc2te, entySe, entyPe, "seel", te = teReNoBio,   name = "SE|Electricity|Non-Biomass Renewables (EJ/yr)"),
 
     se.prod(vm_prodSe, dataoc, oc2te, entySe, "peur", "seel",                   name = "SE|Electricity|+|Nuclear (EJ/yr)"),
 
@@ -207,46 +196,35 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
 
     se.prod(vm_prodSe, dataoc, oc2te, entySe, "pehyd", "seel",                  name = "SE|Electricity|+|Hydro (EJ/yr)"),
 
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pesol", "seel",                  name = "SE|Electricity|+|Solar (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pesol", "seel", te = "csp",      name = "SE|Electricity|Solar|+|CSP (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pesol", "seel", te = "spv",      name = "SE|Electricity|Solar|+|PV (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, c("pewin", "pesol"), "seel",      name = "SE|Electricity|WindSolar (EJ/yr)"),
+    se.prod(    vm_prodSe, dataoc, oc2te, entySe, c("pewin", "pesol"), "seel",  name = "SE|Electricity|WindSolar (EJ/yr)"),
+    se.prod(    vm_prodSe, dataoc, oc2te, entySe, "pesol", "seel",              name = "SE|Electricity|+|Solar (EJ/yr)"),
+    se.prod(    vm_prodSe, dataoc, oc2te, entySe, "pesol", "seel", te = "csp",  name = "SE|Electricity|Solar|+|CSP (EJ/yr)"),
+    se.prod(    vm_prodSe, dataoc, oc2te, entySe, "pesol", "seel", te = "spv",  name = "SE|Electricity|Solar|+|PV (EJ/yr)"),
 
     se.prodLoss(vm_prodSe, dataoc, oc2te, entySe, c("pewin", "pesol"), "seel",  name = "SE|Electricity|Curtailment (EJ/yr)"),
     se.prodLoss(vm_prodSe, dataoc, oc2te, entySe, "pesol", "seel",              name = "SE|Electricity|Curtailment|+|Solar (EJ/yr)"),
     se.prodLoss(vm_prodSe, dataoc, oc2te, entySe, "pesol", "seel", te = "csp",  name = "SE|Electricity|Curtailment|Solar|+|CSP (EJ/yr)"),
-    se.prodLoss(vm_prodSe, dataoc, oc2te, entySe, "pesol", "seel", te = "spv",  name = "SE|Electricity|Curtailment|Solar|+|PV (EJ/yr)")
+    se.prodLoss(vm_prodSe, dataoc, oc2te, entySe, "pesol", "seel", te = "spv",  name = "SE|Electricity|Curtailment|Solar|+|PV (EJ/yr)"),
+
+    se.prod(    vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = c(windonStr, "windoff"), name = "SE|Electricity|+|Wind (EJ/yr)"),
+    se.prod(    vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = windonStr,               name = "SE|Electricity|Wind|+|Onshore (EJ/yr)"),
+    se.prod(    vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = "windoff",               name = "SE|Electricity|Wind|+|Offshore (EJ/yr)"),
+
+    se.prodLoss(vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = c(windonStr, "windoff"), name = "SE|Electricity|Curtailment|+|Wind (EJ/yr)"),
+    se.prodLoss(vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = windonStr,               name = "SE|Electricity|Curtailment|Wind|+|Onshore (EJ/yr)"),
+    se.prodLoss(vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = "windoff",               name = "SE|Electricity|Curtailment|Wind|+|Offshore (EJ/yr)")
   )
 
-  if ("windoff" %in% te) {
-    tmp1 <- mbind(tmp1,
-      se.prod(vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = "wind",       name = "SE|Electricity|Wind|+|Onshore (EJ/yr)"),
-      se.prodLoss(vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = "wind",   name = "SE|Electricity|Curtailment|Wind|+|Onshore (EJ/yr)"),
-      se.prod(vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = "windoff",    name = "SE|Electricity|Wind|+|Offshore (EJ/yr)"),
-      se.prodLoss(vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = "windoff",
-                                                                                    name = "SE|Electricity|Curtailment|Wind|+|Offshore (EJ/yr)"),
-      se.prod(vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = c("wind","windoff"),
-                                                                                    name = "SE|Electricity|+|Wind (EJ/yr)"),
-      se.prodLoss(vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = c("wind","windoff"),
-                                                                                    name = "SE|Electricity|Curtailment|+|Wind (EJ/yr)")
-    )
-  } else {
-    tmp1 <- mbind(tmp1,
-      se.prod(vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = "wind",       name = "SE|Electricity|+|Wind (EJ/yr)"),
-      se.prod(vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = "wind",       name = "SE|Electricity|Wind|+|Onshore (EJ/yr)"),
-      se.prodLoss(vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = "wind",   name = "SE|Electricity|Curtailment|+|Wind (EJ/yr)")
-    )
-  }
 
   ## Gases
-  if (!(is.null(vm_macBase) & is.null(vm_emiMacSector))) {
+  if (!(is.null(v_macBase) & is.null(vm_emiMacSector))) {
     ## exogenous variable for representing reused gas from waste landfills (accounted in the model as segabio)
     MtCH4_2_TWa <- readGDX(gdx, "sm_MtCH4_2_TWa", react = "silent")
     if (is.null(MtCH4_2_TWa)) {
       MtCH4_2_TWa <- 0.001638
     }
     tmp1 <- mbind(tmp1,
-      setNames(MtCH4_2_TWa * (vm_macBase[, , "ch4wstl"] - vm_emiMacSector[, , "ch4wstl"]), "SE|Gases|Biomass|Waste (EJ/yr)")
+      setNames(MtCH4_2_TWa * (v_macBase[, , "ch4wstl"] - vm_emiMacSector[, , "ch4wstl"]), "SE|Gases|Biomass|Waste (EJ/yr)")
     )
   } else {
     tmp1 <- mbind(tmp1,
@@ -315,10 +293,14 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
     se.prod(vm_prodSe, dataoc, oc2te, entySe, "pebiolc", se_Liq, teccs,         name = "SE|Liquids|Biomass|Cellulosic|+|w/ CC (EJ/yr)"),
     se.prod(vm_prodSe, dataoc, oc2te, entySe, "pebiolc", se_Liq, tenoccs,       name = "SE|Liquids|Biomass|Cellulosic|+|w/o CC (EJ/yr)"),
     se.prod(vm_prodSe, dataoc, oc2te, entySe, c("pebioil", "pebios"), se_Liq,   name = "SE|Liquids|Biomass|++|Non-Cellulosic (EJ/yr)"),
+    se.prod(vm_prodSe, dataoc, oc2te, entySe, c("pebioil", "pebios"), se_Liq,   name = "SE|Liquids|Biomass|1st Generation (EJ/yr)"),
     se.prod(vm_prodSe, dataoc, oc2te, entySe, "pebios", se_Liq,                 name = "SE|Liquids|Biomass|Conventional Ethanol (EJ/yr)"),
     se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, se_Liq, "bioftcrec",       name = "SE|Liquids|Biomass|BioFTR|w/ CC (EJ/yr)"),
     se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, se_Liq, "bioftrec",        name = "SE|Liquids|Biomass|BioFTR|w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, se_Liq, "biodiesel",       name = "SE|Liquids|Biomass|Biodiesel|w/o CC (EJ/yr)"),
+    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, se_Liq, "biodiesel",       name = "SE|Liquids|Biomass|Biodiesel (EJ/yr)"),
+    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, se_Liq, "bioethl",         name = "SE|Liquids|Biomass|Lignocellulosic Ethanol (EJ/yr)"),
+    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pebioil", se_Liq,                name = "SE|Liquids|Biomass|Non-Cellulosic|+|Oil-based (EJ/yr)"),
+    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pebios", se_Liq,                 name = "SE|Liquids|Biomass|Non-Cellulosic|+|Sugar and Starch (EJ/yr)"),
     se.prod(vm_prodSe, dataoc, oc2te, entySe, "seh2", se_Liq,                   name = "SE|Liquids|+|Hydrogen (EJ/yr)"),
     se.prod(vm_prodSe, dataoc, oc2te, entySe, c("pegas", "pecoal", "peoil"), se_Liq,
                                                                                 name = "SE|Liquids|+|Fossil (EJ/yr)"),
@@ -350,8 +332,8 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   ## Trade
   if (module2realisation["trade", 2] == "se_trade") {
 
-    vm_Mport <- readGDX(gdx, "vm_Mport", field = "l", restore_zeros = F)[, t, ]
-    vm_Xport <- readGDX(gdx, "vm_Xport", field = "l", restore_zeros = F)[, t, ]
+    vm_Mport <- readGDX(gdx, "vm_Mport", field = "l", restore_zeros = FALSE)[, t, ]
+    vm_Xport <- readGDX(gdx, "vm_Xport", field = "l", restore_zeros = FALSE)[, t, ]
 
     tmp1 <- mbind(tmp1,
       setNames(mselect(vm_Mport - vm_Xport, all_enty = "seh2") * pm_conv_TWa_EJ,
@@ -364,18 +346,19 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
         "SE|Gases|Hydrogen|Net Imports (EJ/yr)"))
   }
 
-  # SE Demand Flows ----
+  ## SE Demand Flows ----
   # SE|Input|X|Y variables denote the demand of energy carrier X
   # flowing into sector/production of Y.
 
-  vm_demFeSector <- readGDX(gdx, "vm_demFeSector", field = "l", restore_zeros = F)[, y, ] * pm_conv_TWa_EJ
+  vm_demFeSector <- readGDX(gdx, "vm_demFeSector", field = "l", restore_zeros = FALSE)[, y, ] * pm_conv_TWa_EJ
   vm_demFeSector[is.na(vm_demFeSector)] <- 0
+
   # SE demand
-  vm_demSe <- readGDX(gdx, "vm_demSe", field = "l", restore_zeros = F)[, y, ] * pm_conv_TWa_EJ
+  vm_demSe <- readGDX(gdx, "vm_demSe", field = "l", restore_zeros = FALSE)[, y, ] * pm_conv_TWa_EJ
   # SE demand of specific energy system technologies
-  vm_demSeOth <- readGDX(gdx, "vm_demSeOth", field = "l", restore_zeros = F)[, y, ] * pm_conv_TWa_EJ
+  v_demSeOth <- readGDX(gdx, c("v_demSeOth", "vm_demSeOth"), field = "l", restore_zeros = FALSE)[, y, ] * pm_conv_TWa_EJ
   # conversion efficiency
-  pm_eta_conv <- readGDX(gdx, "pm_eta_conv", field = "l", restore_zeros = F)[, y, ]
+  pm_eta_conv <- readGDX(gdx, "pm_eta_conv", field = "l", restore_zeros = FALSE)[, y, ]
 
   # hydrogen used for electricity production via H2 turbines
   tmp1 <- mbind(tmp1,
@@ -390,34 +373,35 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
       setNames(dimSums(mselect(vm_demSe, all_enty = "seh2", all_enty1 = "seliqsyn", all_te = "MeOH"), dim = 3), "SE|Input|Hydrogen|Synthetic Fuels|+|Liquids (EJ/yr)"),
       setNames(dimSums(mselect(vm_demSe, all_enty = "seh2", all_enty1 = "segasyn", all_te = "h22ch4"), dim = 3), "SE|Input|Hydrogen|Synthetic Fuels|+|Gases (EJ/yr)")
   )
-  # hydrogen used for other energy system technologies subsumed in vm_demSeOth
-  # e.g. co-firing of h2 in csp
-      tmp1 <- mbind(tmp1,
-                    setNames(dimSums(mselect(vm_demSeOth, all_enty = "seh2"), dim = 3),
-                    "SE|Input|Hydrogen|Other Energy System Consumption (EJ/yr)"))
 
+  # hydrogen used for other energy system technologies subsumed in v_demSeOth
+  # e.g. co-firing of h2 in csp
+  seh2 <- setNames(dimSums(mselect(v_demSeOth, all_enty = "seh2"), dim = 3),
+                   "SE|Input|Hydrogen|Other Energy System Consumption (EJ/yr)")
+  seh2 <- magclass::matchDim(seh2, tmp1, dim = 1, fill = NA)
+  tmp1 <- mbind(tmp1, seh2)
 
   # SE electricity use
 
   ### calculation of electricity use for own consumption of energy system
-  vm_prodFe <- readGDX(gdx, "vm_prodFe", field = "l", restore_zeros = F)
-  vm_co2CCS <- readGDX(gdx, "vm_co2CCS", field = "l", restore_zeros = F)
+  vm_prodFe <- readGDX(gdx, "vm_prodFe", field = "l", restore_zeros = FALSE) * pm_conv_TWa_EJ  # all energy values are first converted to EJ
+  vm_co2CCS <- readGDX(gdx, "vm_co2CCS", field = "l", restore_zeros = FALSE)
 
   # filter for coupled production coefficents which consume seel
   # (have all_enty2=seel and are negative)
   teprodCoupleSeel <- getNames(mselect(pm_prodCouple, all_enty2 = "seel"), dim = 3)
   CoeffOwnConsSeel <- pm_prodCouple[, , teprodCoupleSeel]
   CoeffOwnConsSeel[CoeffOwnConsSeel > 0] <- 0
-  CoeffOwnConsSeel_woCCS <- CoeffOwnConsSeel[, , "ccsinje", invert = T]
+  CoeffOwnConsSeel_woCCS <- CoeffOwnConsSeel[, , "ccsinje", invert = TRUE]
 
   # FE and SE production that has own consumption of electricity
   # calculate vm_prodSe back to TWa (was in EJ before), but prod couple coefficient is defined in TWa(input)/Twa(output)
-  prodOwnCons <- mbind(vm_prodFe, vm_prodSe / pm_conv_TWa_EJ)[, , getNames(CoeffOwnConsSeel_woCCS, dim = 3)]
+  prodOwnCons <- mbind(vm_prodFe / pm_conv_TWa_EJ, vm_prodSe / pm_conv_TWa_EJ)[, , getNames(CoeffOwnConsSeel_woCCS, dim = 3)]
 
   tmp1 <- mbind(tmp1, setNames(
     -pm_conv_TWa_EJ *
-      (dimSums(CoeffOwnConsSeel_woCCS * prodOwnCons[, , getNames(CoeffOwnConsSeel_woCCS, dim = 3)], dim = 3, na.rm = T) +
-        dimSums(CoeffOwnConsSeel[, , "ccsinje"] * vm_co2CCS[, , "ccsinje"], dim = 3,  na.rm = T)),
+      (dimSums(CoeffOwnConsSeel_woCCS * prodOwnCons[, , getNames(CoeffOwnConsSeel_woCCS, dim = 3)], dim = 3, na.rm = TRUE) +
+        dimSums(CoeffOwnConsSeel[, , "ccsinje"] * vm_co2CCS[, , "ccsinje"], dim = 3,  na.rm = TRUE)),
     "SE|Input|Electricity|Self Consumption Energy System (EJ/yr)"))
 
   # electricity for central ground heat pumps
@@ -429,13 +413,10 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   # electricity for fuel extraction, e.g. electricity used for oil and gas extraction
 
   # read in with restore_zero = F first, to get non-zero third dimension
-  pm_fuExtrOwnCons_reduced <- readGDX(gdx, "pm_fuExtrOwnCons", restore_zeros = F)
+  pm_fuExtrOwnCons_reduced <- readGDX(gdx, "pm_fuExtrOwnCons", restore_zeros = FALSE)
   # read in again with restore_zero = T to get all regions in case the parameter is zero for some regions
-  pm_fuExtrOwnCons <- readGDX(gdx, "pm_fuExtrOwnCons", restore_zeros = T)[,,getNames(pm_fuExtrOwnCons_reduced)]
-  vm_fuExtr <- readGDX(gdx, "vm_fuExtr", field = "l", restore_zeros = F)[,y,]
-  pe2rlf <- readGDX(gdx, "pe2rlf")
-  pe2rlfemi <- pe2rlf %>% filter(!!sym("all_enty") %in% getNames(pm_fuExtrOwnCons, dim=2))
-
+  pm_fuExtrOwnCons <- readGDX(gdx, "pm_fuExtrOwnCons", restore_zeros = TRUE)[, , getNames(pm_fuExtrOwnCons_reduced)]
+  vm_fuExtr <- readGDX(gdx, "vm_fuExtr", field = "l", restore_zeros = FALSE)[, y, ]
 
   # calculate electricity for fuel extraction as in q32_balSe
   # by multiplying fuel consumption of extraction with extraction quantities
@@ -444,14 +425,14 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
                   # sum over all PE carriers and extraction grades
                   dimSums(
                     # sum over pm_fuExtrOwnCons to reduce all_enty dimensions
-                    dimSums(mselect( pm_fuExtrOwnCons, all_enty = "seel"), dim = 3.1)
-                    * vm_fuExtr[,,getNames(pm_fuExtrOwnCons, dim=2)], dim=3)
+                    dimSums(mselect(pm_fuExtrOwnCons, all_enty = "seel"), dim = 3.1)
+                    * vm_fuExtr[, , getNames(pm_fuExtrOwnCons, dim = 2)], dim = 3)
                     * pm_conv_TWa_EJ,
                   "SE|Input|Electricity|PE Production (EJ/yr)"))
 
   # set to zero in 2005 as the fuel production electricity demand is not included in the SE balance equation in this year
   # due to incompatibilities with the InitialCap module
-  tmp1[,"y2005","SE|Input|Electricity|PE Production (EJ/yr)"] <- 0
+  tmp1[, "y2005", "SE|Input|Electricity|PE Production (EJ/yr)"] <- 0
 
   # share of electrolysis H2 in total H2
   p_shareElec_H2 <- collapseNames(tmp1[, , "SE|Hydrogen|+|Electricity (EJ/yr)"] / tmp1[, , "SE|Hydrogen (EJ/yr)"])
@@ -484,7 +465,13 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
     setNames(dimSums(mselect(vm_demSe, all_enty = "seel", all_enty1 = "seh2", all_te = "elh2"), dim = 3),
       "SE|Input|Electricity|Hydrogen|+|Standard Electrolysis (EJ/yr)"),
     setNames(dimSums(mselect(vm_demSe, all_enty = "seel", all_enty1 = "seh2", all_te = "elh2VRE"), dim = 3),
-      "SE|Input|Electricity|Hydrogen|+|VRE Storage (EJ/yr)")
+      "SE|Input|Electricity|Hydrogen|+|VRE Storage (EJ/yr)"),
+    setNames(dimSums(vm_demSe[,,"feels"] + vm_demSe[,,"feelt"], dim = 3) -
+               dimSums(vm_prodFe[,,"feels"] + vm_prodFe[,,"feelt"], dim = 3),
+             "SE|Input|Electricity|T&D losses (EJ/yr)"),
+    setNames(dimSums(vm_demSe[,,"feels"] * (1 - pm_eta_conv[,,"tdels"]) , dim = 3) +
+               dimSums(vm_demSe[,,"feelt"] * (1 - pm_eta_conv[,,"tdelt"]) , dim = 3),
+             "SE|Electricity|Transmission Losses (EJ/yr)")  # this variable name was used before and might still be needed by some templates
   )
 
   # electricity for specific H2 usages
@@ -516,11 +503,20 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
         p_shareElec_H2 / mselect(pm_eta_conv, all_te = "elh2"),
       "SE|Input|Electricity|Hydrogen|Synthetic Fuels|+|Gases (EJ/yr)"))
 
-
-  # transmission losses from se2fe conversion of electricity
+  # other t&d losses
   tmp1 <- mbind(tmp1,
-    setNames(dimSums(vm_demSe[, , "tdels"] * (1 - pm_eta_conv[, , "tdels"]), dim = 3),
-      "SE|Electricity|Transmission Losses (EJ/yr)"))
+      setNames(dimSums(vm_demSe[,,"fegas"] + vm_demSe[,,"fegat"] - vm_prodFe[,,"fegas"] - vm_prodFe[,,"fegat"], dim = 3),
+           "SE|Input|Gases|T&D losses (EJ/yr)"),
+      setNames(dimSums(vm_demSe[,,"fehes"] - vm_prodFe[,,"fehes"], dim = 3),
+               "SE|Input|Heat|T&D losses (EJ/yr)"),
+      setNames(dimSums(vm_demSe[,,"fehos"] + vm_demSe[,,"fepet"] + vm_demSe[,,"fedie"]
+                     - vm_prodFe[,,"fehos"] - vm_prodFe[,,"fepet"] - vm_prodFe[,,"fedie"], dim = 3),
+               "SE|Input|Liquids|T&D losses (EJ/yr)"),
+      setNames(dimSums(vm_demSe[,,"feh2s"] + vm_demSe[,,"feh2t"] - vm_prodFe[,,"feh2s"] - vm_prodFe[,,"feh2t"], dim = 3),
+               "SE|Input|Hydrogen|T&D losses (EJ/yr)"),
+      setNames(dimSums(vm_demSe[,,"fesos"] - vm_prodFe[,,"fesos"], dim = 3),
+               "SE|Input|Solids|T&D losses (EJ/yr)")
+  )
 
   # add global values
   out <- mbind(tmp1, dimSums(tmp1, dim = 1))

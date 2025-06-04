@@ -6,7 +6,7 @@
 \usage{
 loadModeltest(
   envir = globalenv(),
-  namePattern = "^SSP2EU-.*-AMT$",
+  namePattern = "^SSP2-.*-AMT$",
   folder = tempdir()
 )
 }
@@ -20,7 +20,7 @@ modeltest run names.}
 }
 \description{
 The newest model tests are collected from the cluster and copied into a
-temporary folder (by default). Then the \link[=compareScenarios]{compareScenarios()}
+temporary folder (by default). Then the \link[piamPlotComparison]{compareScenarios}
 data loading procedure is used to load this data into the users environment.
 }
 \examples{
@@ -30,7 +30,7 @@ loadModeltest()
 ssp1 <- new.env()
 ssp2eu <- new.env()
 loadModeltest(ssp1, "^SSP1-AMT-")
-loadModeltest(ssp2eu, "^SSP2EU-.*-AMT$")
+loadModeltest(ssp2eu, "^SSP2-.*-AMT$")
 ssp1$data
 ssp2eu$data
 }

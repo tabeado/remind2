@@ -1,15 +1,19 @@
 #' take two REMIND scenario-config*.csv files and print the difference,
 #' comparing it to a default.cfg
+#' Can also be used for piamInterfaces mapping files with row.names=NULL and expanddata=FALSE.
 #'
 #' @param fileList vector containing one csv file paths or two paths as c(oldfile, newfile)
 #' If one, searches same filename in defaultPath. If NULL, user can select
-#' @param remindPath path to REMIND directory containing main.gms
-#' @param row.names column in csv used for row.names. Use NULL for mapping files
-#' @param renamedCols vector with old and new column names such as c("old1" = "new1", "old2" = "new2"))
+#' @param remindPath path to REMIND directory containing main.gms. Used for extracting the
+#'        default configuration and find a file for comparison if only one config file is supplied in fileList
+#' @param row.names column in csv used for row.names. Defaults to 1.
+#'        Use NULL for mapping files which either picks the 'variable' column or uses the first two columns.
+#' @param renamedCols vector with old and new column names such as c("old1" = "new1", "old2" = "new2")).
+#'        Use TRUE as vector element to try to guess automatically: cm_switch <-> c_switch
 #' @param renamedRows vector with old and new row names such as c("old3" = "new3", "old3" = "new4", "old5" = "new5"))
 #'        the "old" name can also remain in the new file, if you generated a variant
 #' @param printit boolean switch (default: TRUE) whether function prints its output
-#' @param expanddata fill empty cells with default values
+#' @param expanddata fill empty cells with default values. Use FALSE for mapping files
 #' @author Oliver Richters
 #' @examples
 #'
@@ -24,7 +28,7 @@
 #' @importFrom gms getLine
 #' @export
 compareScenConf <- function(fileList = NULL, remindPath = "/p/projects/rd3mod/github/repos/remindmodel/remind/develop",
-                            row.names = 1, renamedCols = NULL, renamedRows = NULL, printit = TRUE, expanddata = TRUE) {
+                            row.names = 1, renamedCols = TRUE, renamedRows = NULL, printit = TRUE, expanddata = TRUE) {
   m <- c()
   folder <- getwd()
   # if one file supplied, compare to the same file in remindPath
@@ -59,29 +63,30 @@ compareScenConf <- function(fileList = NULL, remindPath = "/p/projects/rd3mod/gi
   if (! is.null(remindPath)) {
     cfg <- gms::readDefaultConfig(remindPath)
     # enable script to match default data not in gms
-    try(cfg$gms[["output"]] <- paste0(cfg$output, collapse = ","))
-    try(cfg$gms[["model"]] <- cfg$model)
-    try(cfg$gms[["regionmapping"]] <- cfg$regionmapping)
-    try(cfg$gms[["inputRevision"]] <- cfg$inputRevision)
+    cfg$gms[["output"]] <- paste0(cfg$output, collapse = ",")
+    for (switch in setdiff(names(cfg), c("output", "gms"))) {
+      cfg$gms[[switch]] <- cfg[[switch]]
+    }
   }
 
-  readCheckScenarioConfig <- function(csvFile, ...) {
-    return(read.csv2(csvFile, stringsAsFactors = FALSE, row.names = row.names,
-                            comment.char = "#", na.strings = "", dec = "."))
-  }
   if (expanddata) {
-    message("Loading R helper functions from remindmodel.") # overwrite readCheckScenarioConfig
+    message("Loading R helper functions from ", remindPath, ".") # overwrite readCheckScenarioConfig
     remindRscripts <- list.files(file.path(remindPath, "scripts", "start"), pattern = "\\.R$", full.names = TRUE)
-    invisible(sapply(remindRscripts, source, local = TRUE))
+    invisible(sapply(remindRscripts, source))
+  } else {
+    readCheckScenarioConfig <- function(csvFile, ...) {
+      return(read.csv2(csvFile, stringsAsFactors = FALSE, row.names = row.names,
+                            comment.char = "#", na.strings = "", dec = "."))
+    }
   }
   settings1 <- readCheckScenarioConfig(fileList[[1]], remindPath = remindPath, fillWithDefault = TRUE, testmode = TRUE)
   settings2 <- readCheckScenarioConfig(fileList[[2]], remindPath = remindPath, fillWithDefault = TRUE, testmode = TRUE)
 
-  # for mapping files use "Variable" if exists, else combine first two columns
+  # for mapping files use "variable" if exists, else combine first two columns
   if (is.null(row.names)) {
-    if ("Variable" %in% intersect(colnames(settings1), colnames(settings2))) {
-      rownames(settings1) <- make.unique(settings1[, "Variable"])
-      rownames(settings2) <- make.unique(settings2[, "Variable"])
+    if ("variable" %in% intersect(colnames(settings1), colnames(settings2))) {
+      rownames(settings1) <- make.unique(settings1[, "variable"], sep = " ")
+      rownames(settings2) <- make.unique(settings2[, "variable"], sep = " ")
     } else {
       rownames(settings1) <- make.unique(paste0(settings1[, 1], ": ", settings1[, 2]))
       rownames(settings2) <- make.unique(paste0(settings2[, 1], ": ", settings2[, 2]))
@@ -89,9 +94,13 @@ compareScenConf <- function(fileList = NULL, remindPath = "/p/projects/rd3mod/gi
   }
 
   # rename columns and rows in old file to new names after some checks
+  if (TRUE %in% renamedCols) {
+    renamedCols <- c(renamedCols[! renamedCols %in% TRUE], findRenamedCols(settings1, settings2))
+  }
   allwarnings <- checkRowsCols(settings1, settings2, renamedCols, renamedRows)
-  for (colname in intersect(names(settings1), names(renamedCols)))
+  for (colname in intersect(names(settings1), names(renamedCols))) {
     names(settings1)[names(settings1) == colname] <- renamedCols[colname]
+  }
 
   # print comparison
   scenarios <- unique(c(rownames(settings2), rownames(settings1)))
@@ -109,7 +118,7 @@ compareScenConf <- function(fileList = NULL, remindPath = "/p/projects/rd3mod/gi
     settings1[, c] <- if (is.null(cfg$gms[[c]])) NA else cfg$gms[[c]]
   }
   jointCols <- intersect(names(settings1), names(settings2))
-  m <- c(m, "", "Changes in the scenarios:")
+  m <- c(m, "", "Changes in the rows:")
   for (s in scenarios) {
     if (s %in% intersect(c(rownames(settings1), renamedRows), rownames(settings2))) {
       # scenario name, oldname -> newname if renamed
@@ -119,9 +128,11 @@ compareScenConf <- function(fileList = NULL, remindPath = "/p/projects/rd3mod/gi
         for (c in jointCols) {
           # print only if different, if description was changed print only this fact
           if (! identical(toString(settings1[sold, c]), toString(settings2[s, c]))) {
+            defaultinfo <- if (c %in% names(cfg$gms)) paste0(" (default: ", cfg$gms[[c]], ")")
             m <- c(m, paste0("    ", ifelse(c %in% renamedCols, paste(names(which(renamedCols == c)), "-> "), ""), c,
-                   ": ", ifelse(c == "description", "was changed", paste0(settings1[sold, c], " -> ", settings2[s, c])),
-                   ifelse(is.null(remindPath) || is.null(cfg$gms[[c]]), "", paste0(" (default: ", cfg$gms[[c]], ")"))))
+                   ": ", ifelse(c == "description", "was changed",
+                                paste0(ifelse(c %in% addedCols, "NA", settings1[sold, c]), " -> ", settings2[s, c])),
+                   defaultinfo))
           }
         }
       }
@@ -169,4 +180,16 @@ checkRowsCols <- function(settings1, settings2, renamedCols, renamedRows) {
       "New row name(s) also present in first file: ", setdiff(renamedRows, rownames(settings1))))
   }
   return(allwarnings)
+}
+
+findRenamedCols <- function(settings1, settings2) {
+  only1 <- setdiff(names(settings1), names(settings2))
+  only2 <- setdiff(names(settings2), names(settings1))
+  shorten <- function(i) gsub("^cm_", "c_", i)
+  shortname <- intersect(shorten(only1), shorten(only2))
+  renamedCols <- NULL
+  for (s in shortname) {
+    renamedCols <- c(renamedCols, setNames(only2[shorten(only2) == s], only1[shorten(only1) == s]))
+  }
+  return(renamedCols)
 }

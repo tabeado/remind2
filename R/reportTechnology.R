@@ -26,7 +26,8 @@
 #' @importFrom madrat toolAggregate
 #'
 
-reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150)) {
+reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL,
+                             t = c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150)) {
 
   if (is.null(output)) {
     output <- mbind(
@@ -94,7 +95,7 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
 
   v_adjustteinv_avg <- collapseNames(readGDX(gdx, name = c("o_avgAdjCostInv"), field = "l", format = "first_found")[, y, ])
   if (is.null(v_adjustteinv_avg)) {
-    v_adjustteinv_avg <- v_investcost[,,]*0
+    v_adjustteinv_avg <- v_investcost[, , ] * 0
   }
 
   # build reporting ----
@@ -117,7 +118,7 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
     "tnrs" = "Electricity|Nuclear",
     "spv" = "Electricity|Solar|PV",
     "csp" = "Electricity|Solar|CSP",
-	  "h2turb" = "Electricity|Hydrogen",
+    "h2turb" = "Electricity|Hydrogen",
     "storspv" = "Electricity|Storage|Battery|For PV",
     "storcsp" = "Electricity|Storage|Battery|For CSP",
     "biogas" = "Gases|Biomass|w/o CC",
@@ -131,9 +132,9 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
     "gash2" = "Hydrogen|Gas|w/o CC",
     "bioftcrec" = "Liquids|Biomass|BioFTR|w/ CC",
     "bioftrec" = "Liquids|Biomass|BioFTR|w/o CC",
-    "bioethl" = "Liquids|Biomass|Cellulosic|w/o CC",
+    "bioethl" = "Liquids|Biomass|Lignocellulosic Ethanol",
     "bioeths" = "Liquids|Biomass|Conventional Ethanol",
-    "biodiesel" = "Liquids|Biomass|Biodiesel|w/o CC",
+    "biodiesel" = "Liquids|Biomass|Biodiesel",
     "coalftcrec" = "Liquids|Fossil|Coal|w/ CC",
     "coalftrec" = "Liquids|Fossil|Coal|w/o CC",
     "gashp"  = "Heat|Gas",
@@ -144,9 +145,9 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
 
   if (tran_mod == "complex") {
     carmap <- c(
-      "apCarPeT" = "Transport|Pass|Road|LDV|ICE",
-      "apCarElT" = "Transport|Pass|Road|LDV|EV",
-      "apCarH2T" = "Transport|Pass|Road|LDV|H2")
+                "apCarPeT" = "Transport|Pass|Road|LDV|ICE",
+                "apCarElT" = "Transport|Pass|Road|LDV|EV",
+                "apCarH2T" = "Transport|Pass|Road|LDV|H2")
   } else {
     carmap <- c()
   }
@@ -157,7 +158,7 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
 
   if (CDR_mod != "off") {
     cdrmap <- c("dac" = "DAC",
-      "ccsinje" = "CO2 Storage")
+                "ccsinje" = "CO2 Storage")
   } else {
     cdrmap <- c()
   }
@@ -168,14 +169,16 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
     techmap[["refdip"]] <- "Liquids|Fossil|Oil"
   }
 
-  if ("windoff" %in% te) {
+  if ("windon" %in% te) {
+    techmap <- append(techmap, c("windon" = "Electricity|Wind|Onshore",
+                                 "storwindon" = "Electricity|Storage|Battery|For Wind Onshore",
+                                 "windoff" = "Electricity|Wind|Offshore",
+                                 "storwindoff" = "Electricity|Storage|Battery|For Wind Offshore"))
+  } else {
     techmap <- append(techmap, c("wind" = "Electricity|Wind|Onshore",
                                  "storwind" = "Electricity|Storage|Battery|For Wind Onshore",
                                  "windoff" = "Electricity|Wind|Offshore",
                                  "storwindoff" = "Electricity|Storage|Battery|For Wind Offshore"))
-  }  else {
-    techmap <- append(techmap, c("wind" = "Electricity|Wind",
-                                 "storwind" = "Electricity|Storage|Battery|For Wind"))
   }
 
   bar_and <- function(str) {
@@ -218,12 +221,8 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
       int2ext[[report_str("Electricity|Storage|Battery|For PV", category, unit)]] <- report_str("Electricity|Solar|PV", unit = "EJ/yr", predicate = "SE")
       int2ext[[report_str("Electricity|Storage|Battery|For CSP", category, unit)]] <- report_str("Electricity|Solar|CSP", unit = "EJ/yr", predicate = "SE")
 
-      if ("windoff" %in% te) {
-        int2ext[[report_str("Electricity|Storage|Battery|For Wind Onshore", category, unit)]] <- report_str("Electricity|Wind|Onshore", unit = "EJ/yr", predicate = "SE")
-        int2ext[[report_str("Electricity|Storage|Battery|For Wind Offshore", category, unit)]] <- report_str("Electricity|Wind|Offshore", unit = "EJ/yr", predicate = "SE")
-      } else {
-        int2ext[[report_str("Electricity|Storage|Battery|For Wind", category, unit)]] <- report_str("Electricity|Wind", unit = "EJ/yr", predicate = "SE")
-      }
+      int2ext[[report_str("Electricity|Storage|Battery|For Wind Onshore", category, unit)]] <- report_str("Electricity|Wind|Onshore", unit = "EJ/yr", predicate = "SE")
+      int2ext[[report_str("Electricity|Storage|Battery|For Wind Offshore", category, unit)]] <- report_str("Electricity|Wind|Offshore", unit = "EJ/yr", predicate = "SE")
 
     } else if (all(map %in% carmap)) {
       ## cars need a special mapping, too
@@ -245,14 +244,14 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
   ## capital costs ----
 
   category <- "Capital Costs"
-  unit <- "US$2005/kW"
+  unit <- "US$2017/kW"
   factor <- 1000.
 
   tmp <- bind_category(tmp, v_investcost, category, unit, factor, techmap)
   int2ext <- get_global_mapping(category, unit, techmap)
-  
+
   if (CDR_mod != "off") {
-    unit <- "US$2005/tCO2 yr"
+    unit <- "US$2017/t CO2/yr"
     factor <- 1000 / 3.6
     tmp <- bind_category(tmp, v_investcost, category, unit, factor, cdrmap)
     int2ext <- c(int2ext, get_global_mapping(category, unit, cdrmap))
@@ -261,7 +260,7 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
   ### Capital cost including adjustment cost ----
   if (!is.null(v_adjustteinv_avg)) {
     category <- "Capital Costs|w/ Adj Costs"
-    unit <- "US$2005/kW"
+    unit <- "US$2017/kW"
     factor <- 1000.
 
     tmp <- bind_category(tmp, v_investcost + v_adjustteinv_avg, category, unit, factor, techmap)
@@ -269,13 +268,13 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
   }
 
   if (tran_mod == "complex") {
-    unit <- "US$2005/veh"
+    unit <- "US$2017/veh"
     tmp <- bind_category(tmp, v_investcost + v_adjustteinv_avg, category, unit, factor, carmap)
     int2ext <- c(int2ext, get_global_mapping(category, unit, carmap))
   }
 
   if (CDR_mod != "off") {
-    unit <- "US$2005/tCO2 yr"
+    unit <- "US$2017/t CO2/yr"
     factor <- 1000 / 3.6
     tmp <- bind_category(tmp, v_investcost + v_adjustteinv_avg, category, unit, factor, cdrmap)
     int2ext <- c(int2ext, get_global_mapping(category, unit, cdrmap))
@@ -291,7 +290,7 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
 
   in_dataeta <- c("bioigccc", "bioigcc", "igccc", "igcc", "pc", "ngccc", "ngcc", "ngt")
 
-  tech_exclude <- techmap[setdiff(names(techmap), 'tnrs')]   # exclude nuclear
+  tech_exclude <- techmap[setdiff(names(techmap), "tnrs")]   # exclude nuclear
 
   for (key in names(tech_exclude)) {
     if (key %in% in_dataeta) {
@@ -324,14 +323,14 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
 
   ## o&m fix costs ----
   category <- "OM Cost|fixed"
-  unit <- "US$2005/kW/yr"
+  unit <- "US$2017/kW/yr"
   tmp <- bind_category(tmp, omf * v_investcost, category, unit, 1000.)
   int2ext <- c(int2ext, get_global_mapping(category, unit, techmap))
 
   if (tran_mod == "complex") {
     ## op costs for cars ###
     category <- "Op Costs"
-    unit <- "US$2005/veh/yr"
+    unit <- "US$2017/veh/yr"
     tmp <- bind_category(tmp, omf * v_investcost, category, unit, 1000., carmap)
     int2ext <- c(int2ext, get_global_mapping(category, unit, carmap))
   }
@@ -339,14 +338,14 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
   if (CDR_mod != "off") {
     ## op costs for CDR technologies ###
     category <- "OM Cost|fixed"
-    unit <- "US$2005/tCO2 yr"
+    unit <- "US$2017/t CO2/yr"
     tmp <- bind_category(tmp, omf * v_investcost, category, unit, 1000 / 3.66, cdrmap)
     int2ext <- c(int2ext, get_global_mapping(category, unit, cdrmap))
   }
 
   ## o&m variable costs ----
   category <- "OM Cost|variable"
-  unit <- "US$2005/GJ"
+  unit <- "US$2017/GJ"
   tmp <- bind_category(tmp, omv, category, unit, 1000. / 31.7098)
   int2ext <- c(int2ext, get_global_mapping(category, unit, techmap))
 
@@ -354,10 +353,10 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
   # write to output ----
   ## substitute NA by 1E-30 to avoid that if in 2005, 2010, 2015, 2130, 2150,
   ## output is 0 in each region, the sum is returned by toolAggregate
-  output[is.na(output) | output == 0] <- 1E-30
+  output[is.na(output) | output <= 0] <- 1E-30
+
   ## delete "+" and "++" from variable names
   output <- deletePlus(output)
-
 
   # add global values ----
   map <- data.frame(region = getRegions(tmp), world = "GLO", stringsAsFactors = FALSE)
@@ -366,7 +365,7 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
   tmp_GLO <- new.magpie("GLO", getYears(tmp), magclass::getNames(tmp), fill = 0)
 
   for (i2e in names(int2ext)) {
-    tmp_GLO["GLO", , i2e] <- toolAggregate(tmp[, , i2e], rel= map, weight = output[map$region, , int2ext[[i2e]]])
+    tmp_GLO["GLO", , i2e] <- toolAggregate(tmp[, , i2e], rel = map, weight = output[map$region, , int2ext[[i2e]]])
   }
   tmp <- mbind(tmp, tmp_GLO)
 
@@ -392,6 +391,67 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL, t = c(
 
   tmp[is.na(tmp)] <- 0  # tmp is NA if weight is zero for all regions within the GLO or the specific region aggregation. Therefore, we replace all NAs with zeros.
 
+
+  # EW reporting: add info on rocks for enhanced weathering ----
+  tmp2 <- NULL
+  ## calculate totals of rocks spread
+  v33_EW_onfield <- readGDX(gdx, "v33_EW_onfield", restore_zeros = FALSE, field = "l", format = "first_found")[, t, ] # [Gt rock]
+  v33_EW_onfield_total <- dimSums(v33_EW_onfield, dim = 3)             # aggregate total rocks spread [Gt rock]
+  v33_EW_onfield_byClimateGrade <- dimSums(v33_EW_onfield, dim = 3.2)  # rocks spread by climate grade, aggregated across transportation grades [Gt rock]
+
+  ## calculate totals of rocks weathering on fields in each period
+  v33_EW_onfield_tot <- readGDX(gdx, "v33_EW_onfield_tot", restore_zeros = FALSE, field = "l", format = "first_found")[, t, ] # [Gt rock]
+  v33_EW_onfield_tot_total <- dimSums(v33_EW_onfield_tot, dim = 3)            # total of rocks weathering on fields  [Gt rock]
+  v33_EW_onfield_tot_byClimateGrade <- dimSums(v33_EW_onfield_tot, dim = 3.2) # rocks weathering on field by climate grade, aggregated across transportation grades [Gt rock]
+
+  tmp2 <- mbind(
+    setNames(v33_EW_onfield_total                 * 1000,  "CDR|Rocks spread (Mt rocks/yr)"),
+    setNames(v33_EW_onfield_byClimateGrade[, , "1"] * 1000,  "CDR|Rocks spread|+|warm regions (Mt rocks/yr)"),
+    setNames(v33_EW_onfield_byClimateGrade[, , "2"] * 1000,  "CDR|Rocks spread|+|temperate regions (Mt rocks/yr)"),
+    setNames(v33_EW_onfield_tot_total             * 1000,  "CDR|Rocks weathering (Mt rocks)"),
+    setNames(v33_EW_onfield_tot_byClimateGrade[, , "1"] * 1000,  "CDR|Rocks weathering|+|warm regions (Mt rocks)"),
+    setNames(v33_EW_onfield_tot_byClimateGrade[, , "2"] * 1000,  "CDR|Rocks weathering|+|temperate regions (Mt rocks)")
+  )
+
+  ## add global and regional sums
+  tmp2 <- mbind(tmp2, dimSums(tmp2, dim = 1))
+
+  if (!is.null(regionSubsetList))
+    tmp2 <- mbind(tmp2, calc_regionSubset_sums(tmp2, regionSubsetList))
+
+  ## combine main reporting and EW ----
+  tmp2 <- magclass::matchDim(tmp2, tmp, dim = c(1, 2))
+  tmp <- mbind(tmp, tmp2)
+
+  # OAE reporting: add info on quicklime and slacked lime needed for OAE ----
+  tmp3 <- NULL
+  te_oae33 <- readGDX(gdx, "te_oae33", react = "silent")
+
+  if (!is.null(te_oae33)) {
+   ## read data and calculate total across technologies
+  vm_emiCdrTeDetail_oae <- readGDX(gdx, "vm_emiCdrTeDetail", restore_zeros = FALSE, field = "l", format = "first_found")[, t, te_oae33] # [Gt C ocean uptake]
+  vm_emiCdrTeDetail_oae <- dimSums(vm_emiCdrTeDetail_oae, dim = 3)     # GtC ocean uptake summed over the two oae technologies
+
+  s33_OAE_efficiency <- readGDX(gdx, "s33_OAE_efficiency") # tC / tCaO
+
+  tmp3 <- mbind(
+    setNames(-vm_emiCdrTeDetail_oae / s33_OAE_efficiency * 1000,  "CDR|OAE quicklime (Mt CaO/yr)")
+  )
+  ## add global and regional sums
+  tmp3 <- mbind(tmp3, dimSums(tmp3, dim = 1))
+
+  if (!is.null(regionSubsetList))
+    tmp3 <- mbind(tmp3, calc_regionSubset_sums(tmp3, regionSubsetList))
+  } else {
+    tmp3 <- new.magpie(getRegions(tmp), getYears(tmp), "CDR|OAE quicklime (Mt CaO/yr)", fill = 0)
+  }
+
+  ## combine main reporting and OAE ----
+  tmp3 <- magclass::matchDim(tmp3, tmp, dim = c(1, 2))
+  tmp <- mbind(tmp, tmp3)
+
+
   getSets(tmp)[3] <- "variable"
+
   return(tmp)
 }

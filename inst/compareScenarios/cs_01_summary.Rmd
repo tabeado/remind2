@@ -10,14 +10,15 @@ items <- c(
   "Emi|CO2|Energy",
   "Emi|CO2|Industrial Processes",
   "Emi|CO2|Land-Use Change",
+  "Emi|CO2|Waste",
+  "Emi|CO2|non-ES CDR",  
   "Emi|GHG|CH4",
   "Emi|GHG|N2O",
-  "Emi|GHG|F-Gases",
-  "Emi|CO2|non-BECCS CDR")
+  "Emi|GHG|F-Gases")
 showAreaAndBarPlots(data, items, tot, scales = "fixed")
 ```
 
-## GHG by sector
+### GHG by sector
 
 ```{r GHG by sector (w/ gross emissions, excl. negative emissions from CCS of non-fossil carbon)}
 tot <- "Emi|GHG"
@@ -27,14 +28,16 @@ items <- c(
   "Emi|GHG|Energy|Demand|Transport",
   "Emi|GHG|Energy|Demand|Buildings",
   "Emi|GHG|Gross|Energy|Demand|Industry",
-  "Emi|GHG|Energy|Demand|CDR",
+  "Emi|GHG|Gross|Energy|Demand|CDR Sector",
   "Emi|GHG|Industrial Processes",
   "Emi|GHG|Agriculture",
   "Emi|GHG|Land-Use Change",
-  "Emi|GHG|Waste",
+  "Emi|GHG|Gross|Waste",
   "Emi|CO2|CDR|BECCS",
-  "Emi|CO2|CDR|Industry CCS|Synthetic Fuels",
+  "Emi|CO2|CDR|Synthetic Fuels CCS",
+  "Emi|CO2|CDR|Materials",
   "Emi|CO2|CDR|DACCS",
+  "Emi|CO2|CDR|OAE",
   "Emi|CO2|CDR|EW")
 showAreaAndBarPlots(data, items, tot, scales = "fixed")
 ```
@@ -51,16 +54,20 @@ showAreaAndBarPlots(data, paste(items, "pCap"), paste(tot, "pCap"), scales = "fi
 tot <- "Emi|CO2"
 items <- c(
   "Emi|CO2|Land-Use Change",
-  "Emi|CO2|Industrial Processes",
+  "Emi|CO2|Industrial Processes|Industry",
+  "Emi|CO2|Industrial Processes|CDR Sector",
+  "Emi|CO2|Gross|Waste",
   "Emi|CO2|Energy|Demand|Transport",
   "Emi|CO2|Gross|Energy|Demand|Industry",
   "Emi|CO2|Energy|Demand|Buildings",
-  "Emi|CO2|Energy|Demand|CDR",
+  "Emi|CO2|Gross|Energy|Demand|CDR Sector",
   "Emi|CO2|Gross|Energy|Supply|Non-electric",
   "Emi|CO2|Gross|Energy|Supply|Electricity",
   "Emi|CO2|CDR|BECCS",
-  "Emi|CO2|CDR|Industry CCS|Synthetic Fuels",
+  "Emi|CO2|CDR|Synthetic Fuels CCS",
+  "Emi|CO2|CDR|Materials",
   "Emi|CO2|CDR|DACCS",
+  "Emi|CO2|CDR|OAE",
   "Emi|CO2|CDR|EW")
 showAreaAndBarPlots(data, items, tot, scales = "fixed")
 ```
@@ -79,15 +86,18 @@ tot <- "Emi|CO2|Cumulated"
 items <- c(
   "Emi|CO2|Cumulated|Land-Use Change",
   "Emi|CO2|Cumulated|Industrial Processes",
+  "Emi|CO2|Cumulated|Gross|Waste",
   "Emi|CO2|Cumulated|Energy|Demand|Transport",
   "Emi|CO2|Cumulated|Gross|Energy|Demand|Industry",
   "Emi|CO2|Cumulated|Energy|Demand|Buildings",
-  "Emi|CO2|Cumulated|Energy|Demand|CDR",
+  "Emi|CO2|Cumulated|Gross|Energy|Demand|CDR Sector",
   "Emi|CO2|Cumulated|Gross|Energy|Supply|Non-electric",
   "Emi|CO2|Cumulated|Gross|Energy|Supply|Electricity",
   "Emi|CO2|Cumulated|CDR|BECCS",
-  "Emi|CO2|Cumulated|CDR|Industry CCS|Synthetic Fuels",
+  "Emi|CO2|Cumulated|CDR|Synthetic Fuel CCS",
+  "Emi|CO2|Cumulated|CDR|Materials",
   "Emi|CO2|Cumulated|CDR|DACCS",
+  "Emi|CO2|Cumulated|CDR|OAE",
   "Emi|CO2|Cumulated|CDR|EW")
 showAreaAndBarPlots(data, items, tot, scales = "fixed")
 ```
@@ -104,7 +114,7 @@ items <- c(
 showAreaAndBarPlots(data, items, scales = "fixed")
 ```
 
-## FE per capita (by sector, time domain, area plot)
+### FE per capita - area plot, time domain
 
 ```{r FE per capita (by sector, time domain, area plot)}
 items <- c(
@@ -115,7 +125,7 @@ items <- c(
 showAreaAndBarPlots(data, items, tot = "FE pCap", scales = "fixed")
 ```
 
-## FE per capita (by sector, time domain, line graph)
+### FE per capita - line graph, time domain
 
 ```{r FE per capita (by sector, time domain, line graph)}
 dIea <- data %>%
@@ -129,7 +139,7 @@ items <- c(
 showMultiLinePlots(dIea, items, scales = "fixed")
 ```
 
-## FE per capita (by sector, GDP)
+### FE per capita - line graph, GDP domain
 
 ```{r FE per capita (by sector, GDP)}
 dIea <- data %>%
@@ -159,7 +169,7 @@ items <- c(
 showAreaAndBarPlots(data, items, orderVars = "user", scales = "fixed")
 ```
 
-## FE by carrier (detailed)
+### FE by carrier (detailed)
 
 ```{r FE by carrier (detailed)}
 items <- c(
@@ -184,7 +194,7 @@ items <- c(
 showAreaAndBarPlots(data, items, orderVars = "user", scales = "fixed")
 ```
 
-## FE Industry by carrier (incl. non-energy use)
+### FE Industry by carrier (incl. non-energy use)
 
 ```{r FE Industry by carrier (incl. non-energy use)}
 items <- c(
@@ -199,7 +209,7 @@ items <- c(
 showAreaAndBarPlots(data, items, orderVars = "user", scales = "fixed")
 ```
 
-## FE Buildings by carrier
+### FE Buildings by carrier
 
 ```{r FE Buildings by carrier}
 items <- c(
@@ -214,7 +224,7 @@ items <- c(
 showAreaAndBarPlots(data, items, orderVars = "user", scales = "fixed")
 ```
 
-## FE Transport by carrier
+### FE Transport by carrier
 
 ```{r FE Transport by carrier}
 items <- c(
@@ -227,7 +237,7 @@ items <- c(
 showAreaAndBarPlots(data, items, orderVars = "user", scales = "fixed")
 ```
 
-## FE CDR by carrier
+### FE CDR by carrier
 
 
 ```{r FE CDR by carrier}
@@ -242,14 +252,14 @@ showAreaAndBarPlots(data, items, orderVars = "user", scales = "fixed")
 ```
 
 
-## FE Non-energy Use by carrier
+### FE Non-energy Use by carrier
 
 ```{r FE Non-energy Use by carrier}
 items <- c(
-  "FE|Non-energy Use|Industry|Solids",
+  "FE|Non-energy Use|Industry|Gases",
   "FE|Non-energy Use|Industry|Liquids",
-  "FE|Non-energy Use|Industry|Gases")
-showAreaAndBarPlots(data, items)
+  "FE|Non-energy Use|Industry|Solids")
+showAreaAndBarPlots(data, items, orderVars = "user")
 ```
 
 ## SE Electricity by carrier
@@ -260,19 +270,19 @@ tot <- "SE|Electricity"
 
 items <- c(
   "SE|Electricity|Net Imports",
+  "SE|Electricity|Hydrogen",
   "SE|Electricity|Solar|CSP",
   "SE|Electricity|Solar|PV",
   "SE|Electricity|Wind|Onshore",
   "SE|Electricity|Wind|Offshore",
   "SE|Electricity|Hydro",  
-  "SE|Electricity|Hydrogen",
   "SE|Electricity|Nuclear",  
   "SE|Electricity|Geothermal",  
   "SE|Electricity|Biomass|w/ CC",
   "SE|Electricity|Biomass|w/o CC",
-  "SE|Electricity|Oil",  
   "SE|Electricity|Gas|w/ CC",
   "SE|Electricity|Gas|w/o CC",
+  "SE|Electricity|Oil",  
   "SE|Electricity|Coal|w/ CC",
   "SE|Electricity|Coal|w/o CC",
   NULL)
@@ -292,8 +302,8 @@ items <- c(
   "PE|Nuclear",  
   "PE|Geothermal",
   "PE|Biomass",  
-  "PE|Oil",
   "PE|Gas",  
+  "PE|Oil",
   "PE|Coal",
   NULL)
 
@@ -306,6 +316,10 @@ showAreaAndBarPlots(data, items, orderVars = "user", scales = "fixed")
 ```{r CO2 Prices}
 showLinePlots(data, "Price|Carbon")
 showRegiLinePlots(data, "Price|Carbon")
+
+if ("Price|Carbon|SCC" %in% data$variable) {
+  showAreaAndBarPlots(data, c("Price|Carbon|SCC", "Price|Carbon|Guardrail"), "Price|Carbon", scales = "fixed")
+}
 ```
 
 ```{r CO2 Prices per sector}

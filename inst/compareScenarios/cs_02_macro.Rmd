@@ -18,12 +18,26 @@ showLinePlots(data, "Population")
 
 ```{r GDP - MER}
 showLinePlots(data, "GDP|MER")
+
+for (item in grep("^GDP\\|MER\\|.*(Macro-Economic Climate Damage|chronic physical risk damage estimate)", levels(data$variable), value = TRUE)) {
+  showLinePlots(data, item)
+  showAreaAndBarPlots(data, item, "GDP|MER", scales = "fixed")
+}
 ```
 
 ## GDP - PPP
 
 ```{r GDP - PPP}
 showLinePlots(data, "GDP|PPP")
+
+for (item in grep("^GDP\\|PPP\\|.*(Macro-Economic Climate Damage|chronic physical risk damage estimate)", levels(data$variable), value = TRUE)) {
+  showLinePlots(data, item)
+  showAreaAndBarPlots(data, item, "GDP|PPP", scales = "fixed")
+}
+
+if ("Damage factor" %in% levels(data$variable)) {
+  showLinePlots(data, "Damage factor")
+}
 ```
 
 ## GDP - MER per Capita
@@ -38,7 +52,15 @@ showLinePlots(data, "GDP|MER pCap")
 showLinePlots(data, "GDP|PPP pCap")
 ```
 
+## GDP - PPP growth rate
+```{r GDP - PPP growth rate}
+showLinePlots(quitte::calc_growthrate(data, only.new = TRUE, filter.function = "GDP|PPP"), "GDP|PPP [Growth Rate]")
+```
 
+## GDP - MER growth rate
+```{r GDP - MER growth rate}
+showLinePlots(quitte::calc_growthrate(data, only.new = TRUE, filter.function = "GDP|MER"), "GDP|MER [Growth Rate]")
+```
 
 ## Capital Stock
 
@@ -243,10 +265,10 @@ kaya <-
 kayaUnits <- tribble(
   ~variable, ~unit,
   "Population", "million",
-  "GDP_MER_by_Pop", "billion US$2005/yr/million",
-  "GDP_PPP_by_Pop", "billion US$2005/yr/million",
-  "FE_by_GDP_MER", "EJ/billion US$2005",
-  "FE_by_GDP_PPP", "EJ/billion US$2005",
+  "GDP_MER_by_Pop", "billion US$2017/yr/million",
+  "GDP_PPP_by_Pop", "billion US$2017/yr/million",
+  "FE_by_GDP_MER", "EJ/billion US$2017",
+  "FE_by_GDP_PPP", "EJ/billion US$2017",
   "emiCO2_by_FE", "EJ/Mt CO2")
 kayaVars <- kayaUnits$variable
 kaya <-

@@ -48,9 +48,9 @@ getNewsestModeltests <- function(namePattern, requireMif) {
 
 #' Load compareScenarios Data
 #'
-#' Load data from mif files into R-objects as used in \link[=compareScenarios]{compareScenarios()}.
+#' Load data from mif files into R-objects as used in \link[piamPlotComparison]{compareScenarios}.
 #'
-#' @param cfgScen,cfgDefault See section "YAML Parameters" in \link[=compareScenarios]{compareScenarios()}.
+#' @param cfgScen,cfgDefault See section "YAML Parameters" in \link[piamPlotComparison]{compareScenarios}.
 #' @param envir \code{environment}. The environment where the loaded data is put into.
 #' @inheritParams piamPlotComparison::compareScenarios
 #' @examples
@@ -75,7 +75,6 @@ loadCs2Data <- function(
     mifScen = mifScen,
     mifHist = mifHist,
     cfgScen = cfgScen,
-    cfgDefault = cfgDefault,
     outputDir = folder,
     outputFormat = "pdf",
     outputFile = outputFile,
@@ -103,7 +102,7 @@ cs2InputPaths <- function(outputDirs) {
 #' Load Modeltest Results
 #'
 #' The newest model tests are collected from the cluster and copied into a
-#' temporary folder (by default). Then the \link[=compareScenarios]{compareScenarios()}
+#' temporary folder (by default). Then the \link[piamPlotComparison]{compareScenarios}
 #' data loading procedure is used to load this data into the users environment.
 #'
 #' @param namePattern \code{character(1)}. A regular expression to filter the
@@ -117,14 +116,14 @@ cs2InputPaths <- function(outputDirs) {
 #' ssp1 <- new.env()
 #' ssp2eu <- new.env()
 #' loadModeltest(ssp1, "^SSP1-AMT-")
-#' loadModeltest(ssp2eu, "^SSP2EU-.*-AMT$")
+#' loadModeltest(ssp2eu, "^SSP2-.*-AMT$")
 #' ssp1$data
 #' ssp2eu$data
 #' }
 #' @export
 loadModeltest <- function(
   envir = globalenv(),
-  namePattern = "^SSP2EU-.*-AMT$",
+  namePattern = "^SSP2-.*-AMT$",
   folder = tempdir()
 ) {
 
