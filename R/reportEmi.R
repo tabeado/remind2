@@ -393,6 +393,11 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
 
 
 
+  # compute share of stored carbon from total captured carbon
+  p_share_CCS <- dimSums(vm_co2CCS, dim = 3, na.rm = TRUE) / dimSums(vm_co2capture, dim = 3)
+  p_share_CCS[is.infinite(p_share_CCS)] <- 0
+  p_share_CCS[is.na(p_share_CCS)] <- 0
+
   ## Waste Incineration Emissions ----
 
   # This distributes energy-related waste incineration emissions ex-post to sectors. The emissions are
@@ -496,7 +501,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
 
     if (exists("vm_incinerationCCS")) {
       # calculate captured waste carbon used for CCU (not stored but released)
-      WasteCCU <- dimSums(vm_incinerationCCS, dim = c(3.2, 3.3)) * (1 - dimSums(vm_co2CCS, dim = 3) / dimSums(vm_co2capture, dim = 3))
+      WasteCCU <- dimSums(vm_incinerationCCS, dim = c(3.2, 3.3)) * (1 - p_share_CCS)
       WasteCCU[is.na(WasteCCU)] <- 0
     } else {
       # set to zero for GDXs where no waste carbon capture implemented
@@ -628,11 +633,6 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   # pe2se,extraction,CCU -> supply-side
   # se2fe,industryCCS -> demand-side
 
-
-  # compute share of stored carbon from total captured carbon
-  p_share_CCS <- dimSums(vm_co2CCS, dim = 3, na.rm = TRUE) / dimSums(vm_co2capture, dim = 3)
-  p_share_CCS[is.infinite(p_share_CCS)] <- 0
-  p_share_CCS[is.na(p_share_CCS)] <- 0
 
   sel_pm_emifac_pe2se <- if (getSets(pm_emifac)[[6]] == "emiAll") {
     mselect(pm_emifac, all_te = pe2se$all_te, emiAll = "co2")
@@ -1133,6 +1133,25 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
 
     out
   )
+  
+  # Check if industry subsector fossil emissions negative
+  # This can be because of small deviations in industry equations 
+  # as different REMIND variables are used to calculate these emissions
+  # The equations are considered feasible by the solver due to tolerance margins
+  
+  # fossil industry emissions to be checked
+  emi.fosneg.check <- c(grep("Emi\\|CO2\\|Energy\\|Demand\\|Industry\\|.*Fossil", getNames(out), value=T),
+                        grep("Emi\\|CO2\\|pre-CCS\\|Energy\\|Demand\\|Industry\\|.*Fossil", getNames(out), value=T))
+  
+  # if negative and within the solver tolerance of 1e-7, set to 0
+  out[,,emi.fosneg.check][out[,, emi.fosneg.check] < 0 & out[,, emi.fosneg.check] >= -1e-7] <- 0
+  # if even more negative -> throw warning
+  if (any(out[,,emi.fosneg.check] < -1e-7 )) {
+    warning("Some industry subsector fossil emissions are negative, please check calculation in reportEmi!")
+  }
+
+  
+  
 
   ##### 2.1.3.2 International Bunkers ----
   bunkersEmi <- dimSums(mselect(EmiFeCarrier, emi_sectors = "trans", all_emiMkt = "other"), dim = 3) * GtC_2_MtCO2
