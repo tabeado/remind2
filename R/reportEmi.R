@@ -109,6 +109,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   vm_emiTeMkt <- readGDX(gdx, c("vm_emiTeMkt", "v_emiTeMkt"), field = "l", restore_zeros = FALSE, format = "first_found")[, t, ]
   # emissions from MAC curves (non-energy emissions)
   vm_emiMacSector <- readGDX(gdx, "vm_emiMacSector", field = "l", restore_zeros = FALSE)[, t, ]
+  p_co2lucSub <- readGDX(gdx, "p_co2lucSub", restore_zeros = FALSE)[, t, ]
   # F-Gases
   vm_emiFgas <- readGDX(gdx, "vm_emiFgas", field = "l", restore_zeros = FALSE)[, t, ]
   # Emissions from MACs (currently: all emissions outside of energy CO2 emissions)
@@ -1252,9 +1253,26 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   ### 2.3 Land-use Change Emissions ----
 
   out <- mbind(out,
-               # land-use change CO2
-               setNames(dimSums(vm_emiMacSector[, , "co2luc"], dim = 3) * GtC_2_MtCO2,
-                        "Emi|CO2|+|Land-Use Change (Mt CO2/yr)"))
+    # land-use change CO2
+    setNames(dimSums(vm_emiMacSector[, , "co2luc"]                 , dim = 3) * GtC_2_MtCO2, "Emi|CO2|+|Land-Use Change (Mt CO2/yr)"),
+    setNames(dimSums(p_co2lucSub[, , "co2lucNegIntentAR"]          , dim = 3) * GtC_2_MtCO2, "Emi|CO2|Land-Use Change|Negative|Intentional|+|Reforestation (Mt CO2/yr)"),
+    setNames(dimSums(p_co2lucSub[, , "co2lucNegIntentAgroforestry"], dim = 3) * GtC_2_MtCO2, "Emi|CO2|Land-Use Change|Negative|Intentional|+|Agroforestry (Mt CO2/yr)"),
+    setNames(dimSums(p_co2lucSub[, , "co2lucNegIntentTimber"]      , dim = 3) * GtC_2_MtCO2, "Emi|CO2|Land-Use Change|Negative|Intentional|+|Timber (Mt CO2/yr)"),
+    setNames(dimSums(p_co2lucSub[, , "co2lucNegIntentSCM"]         , dim = 3) * GtC_2_MtCO2, "Emi|CO2|Land-Use Change|Negative|Intentional|+|Soil Carbon Management (Mt CO2/yr)"),
+    setNames(dimSums(p_co2lucSub[, , "co2lucNegIntentPeat"]        , dim = 3) * GtC_2_MtCO2, "Emi|CO2|Land-Use Change|Negative|Intentional|+|Peatland (Mt CO2/yr)"),
+    setNames(dimSums(p_co2lucSub[, , "co2lucNegUnintent"]          , dim = 3) * GtC_2_MtCO2, "Emi|CO2|Land-Use Change|Negative|+|Unintentional (Mt CO2/yr)"),
+    setNames(dimSums(p_co2lucSub[, , "co2lucPos"]                  , dim = 3) * GtC_2_MtCO2, "Emi|CO2|Land-Use Change|+|Positive (Mt CO2/yr)"))
+
+  # aggregates of co2luc subcategories
+  intentional <- c("co2lucNegIntentAR", "co2lucNegIntentAgroforestry", "co2lucNegIntentTimber", "co2lucNegIntentSCM", "co2lucNegIntentPeat")
+  out <- mbind(out,
+    setNames(dimSums(p_co2lucSub[, , intentional]                  , dim = 3) * GtC_2_MtCO2, "Emi|CO2|Land-Use Change|Negative|+|Intentional (Mt CO2/yr)"))
+
+  out <- mbind(out, 
+    setNames(out[,,"Emi|CO2|Land-Use Change|Negative|+|Intentional (Mt CO2/yr)"] +
+             out[,,"Emi|CO2|Land-Use Change|Negative|+|Unintentional (Mt CO2/yr)"],          "Emi|CO2|Land-Use Change|+|Negative (Mt CO2/yr)"),
+    setNames(out[,,"Emi|CO2|Land-Use Change|+|Positive (Mt CO2/yr)"] +
+             out[,,"Emi|CO2|Land-Use Change|Negative|+|Unintentional (Mt CO2/yr)"],          "Emi|CO2|Gross|Land-Use Change (Mt CO2/yr)"))
 
 
   ### 2.4 Waste CO2 emissions (IPCC category 5) ----
