@@ -128,7 +128,7 @@ convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
     }
   } else {
     warning(paste0("File ", gdx_refpolicycost, " not found. Did not execute 'reportPolicyCosts'! ",
-            "If a policy costs reporting is desired, please use the 'policyCosts' output.R script."))
+                   "If a policy costs reporting is desired, please use the 'policyCosts' output.R script."))
   }
 
   # SDP variables ----
@@ -150,8 +150,11 @@ convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
   output <- add_dimension(output, dim = 3.1, add = "model", nm = "REMIND")
   output <- add_dimension(output, dim = 3.1, add = "scenario", nm = scenario)
 
+  checks <- list()
+
   ## check variable names ----
-  checkVarNames(getNames(output, dim = 3))
+  varNameChecks <- piamInterfaces::checkVarNames(getNames(output, dim = 3))
+  checks["varNameChecks"] <- length(varNameChecks)
 
   ## summation checks ----
   .reportSummationErrors <- function(msg, testthat) {
@@ -175,7 +178,7 @@ convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
     summationsFile = system.file("extdata/additional_summation_checks.csv",
                                  package = "remind2"),
     absDiff = 0.01, relDiff = 0.02, roundDiff = TRUE) %>%
-    bind_rows(sumChecks),
+      bind_rows(sumChecks),
     type = "message"
   ) %>%
     .reportSummationErrors(testthat = testthat)
@@ -184,15 +187,18 @@ convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
     message("All summation checks were fine!")
   }
 
+  checks["sumChecks"] <- nrow(sumChecks)
+
   ## range checks ----
-  test_ranges(
-        data = output,
-        tests = list(
-          list(
-            "^Emi\\|CO2\\|Energy\\|Demand\\|Industry\\|.*Fossil \\(Mt CO2/yr\\)$",
-            low = 0),
-          list("Share.*\\((%|Percent)\\)$", low = 0, up = 100)),
-        reaction = "warning")
+  rangeChecks <- test_ranges(
+    data = output,
+    tests = list(
+      list(
+        "^Emi\\|CO2\\|Energy\\|Demand\\|Industry\\|.*Fossil \\(Mt CO2/yr\\)$", low = 0),
+      list("Share.*\\((%|Percent)\\)$", low = 0, up = 100)),
+    reaction = "warning")
+
+  checks["rangeChecks"] <- length(rangeChecks)
 
   # write or return output ----
   if (!is.null(file)) {
@@ -207,6 +213,9 @@ convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
               summation_errors_file)
       write.csv(sumChecks, summation_errors_file, quote = FALSE, row.names = FALSE)
     }
+
+    saveRDS(checks, file.path(dirname(file), "sanityChecks.rds"))
+
   } else {
     # return summation errors as attribute
     if (nrow(sumChecks) > 0) {

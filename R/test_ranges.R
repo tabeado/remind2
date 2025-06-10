@@ -1,7 +1,7 @@
-#' Test Ranges on Variables in magpie or quitte Objects
+#' Test Ranges on Variables in magpie Objects
 #'
 #' @md
-#' @param data A [`magpie`][magclass::magclass] or quitte object to test.
+#' @param data A [`magpie`][magclass::magclass] object to test.
 #' @param tests A list of tests to perform, where each tests consists of:
 #'     - A regular expression to match variables names in `data` (mandatory
 #'       first item).
@@ -16,7 +16,7 @@
 #' @param report.missing If set to `TRUE`, will message about regular
 #'     expressions from `tests` not matching any variables in `data`.
 #'
-#' @author Michaja Pehl, Falk Benke
+#' @author Michaja Pehl
 #'
 #' @examples
 #' require(dplyr)
@@ -41,6 +41,7 @@
 #' @importFrom quitte magclass_to_tibble
 #' @importFrom tidyr unite
 #' @importFrom tidyselect everything
+#' @importFrom rlang !! sym
 
 #' @export
 test_ranges <- function(data, tests, reaction = c('warning', 'stop'),
@@ -49,19 +50,25 @@ test_ranges <- function(data, tests, reaction = c('warning', 'stop'),
   match.arg(reaction)
 
   if (!(   is.list(tests)
-        && all(sapply(tests, is.list))
-        && all(sapply(tests, function(x) { is.character(x[[1]]) })))) {
+           && all(sapply(tests, is.list))
+           && all(sapply(tests, function(x) { is.character(x[[1]]) })))) {
     stop('`tests` must be a list of lists, and the first element of each list ',
          'must be a string.')
   }
 
-  # Test all variables in data against low and up
-  .test <- function(data, low, up) {
+  # Test all variables in data_variables agains low and up
+  .test <- function(data_variables, low, up) {
+    # get the name of the variable dimension in the magpie object
+    variable_name <- data_variables %>%
+      getItems(dim = 3, split = TRUE) %>%
+      names() %>%
+      tail(n = 1)
 
-    low_data <- if (!is.null(low) && any(data$value < low)) {
-      data %>%
+    low_data <- if (!is.null(low) && any(data_variables < low)) {
+      data_variables %>%
+        magclass_to_tibble() %>%
         filter(.data$value < low) %>%
-        distinct(.data$variable, .keep_all = TRUE) %>%
+        distinct(!!sym(variable_name), .keep_all = TRUE) %>%
         unite('text', everything(), sep = '   ') %>%
         pull('text')
     }
@@ -69,10 +76,11 @@ test_ranges <- function(data, tests, reaction = c('warning', 'stop'),
       character()
     }
 
-    up_data <- if (!is.null(up) && any(data$value > up)) {
-      data %>%
+    up_data <- if (!is.null(up) && any(data_variables > up)) {
+      data_variables %>%
+        magclass_to_tibble() %>%
         filter(.data$value > up) %>%
-        distinct(.data$variable, .keep_all = TRUE) %>%
+        distinct(!!sym(variable_name), .keep_all = TRUE) %>%
         unite('text', everything(), sep = '   ') %>%
         pull('text')
     }
@@ -88,19 +96,13 @@ test_ranges <- function(data, tests, reaction = c('warning', 'stop'),
     return(list(low_data, up_data))
   }
 
-  if (is.magpie(data)) {
-    data_names <- last(getNames(data, fulldim = TRUE))
-  } else if (quitte::is.quitte(data)) {
-    data_names <- unique(paste0(data$variable, " (", data$unit, ")"))
-  } else {
-    stop("data must bei either quitte or magpie object")
-  }
-
+  data_names <- last(getNames(data, fulldim = TRUE))
   msg <- list()
   for (t in tests) {
     # if t has no 'ignore.case' element, or it is not set to FALSE, do not
     # ignore the case
     ignore.case <- !'ignore.case' %in% names(t) || !isFALSE(t$ignore.case)
+
     variables <- grep(t[[1]], data_names, ignore.case = ignore.case,
                       value = TRUE)
 
@@ -108,22 +110,15 @@ test_ranges <- function(data, tests, reaction = c('warning', 'stop'),
       message('No variables match regex "', t[[1]], '"')
     }
 
-    if (is.magpie(data)) {
-      df <- data[, , variables] %>%
-        magclass_to_tibble()
-    } else {
-      df <- data %>% filter(
-        .data$variable %in% magclass::unitsplit(variables)$variable
-      )
-    }
-
     msg <- append(
       msg,
-      .test(df, getElement(t, 'low'), getElement(t, 'up')) %>%
+      .test(data[,,variables], getElement(t, 'low'), getElement(t, 'up')) %>%
         Filter(function(x) { 0 != length(x) }, x = .) %>%
         lapply(paste, collapse = '\n')
     )
   }
+
+  out <- msg
 
   if (length(msg)) {
     msg <- paste('range error\n', msg, collapse = '\n')
@@ -133,9 +128,7 @@ test_ranges <- function(data, tests, reaction = c('warning', 'stop'),
     else {
       stop(msg)
     }
-  } else {
-    message("All range checks were fine.")
   }
 
-  return(msg)
+  return(out)
 }
