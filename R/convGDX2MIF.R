@@ -183,7 +183,7 @@ convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
   ) %>%
     .reportSummationErrors(testthat = testthat)
 
-  if (length(sumChecks) == 0) {
+  if (nrow(sumChecks) == 0) {
     message("All summation checks were fine!")
   }
 
