@@ -150,11 +150,8 @@ convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
   output <- add_dimension(output, dim = 3.1, add = "model", nm = "REMIND")
   output <- add_dimension(output, dim = 3.1, add = "scenario", nm = scenario)
 
-  checks <- list()
-
   ## check variable names ----
-  varNameChecks <- piamInterfaces::checkVarNames(getNames(output, dim = 3))
-  checks["varNameChecks"] <- length(varNameChecks)
+  piamInterfaces::checkVarNames(getNames(output, dim = 3))
 
   ## summation checks ----
   .reportSummationErrors <- function(msg, testthat) {
@@ -187,8 +184,6 @@ convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
     message("All summation checks were fine!")
   }
 
-  checks["sumChecks"] <- nrow(sumChecks)
-
   ## range checks ----
   rangeChecks <- test_ranges(
     data = output,
@@ -196,9 +191,7 @@ convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
       list(
         "^Emi\\|CO2\\|Energy\\|Demand\\|Industry\\|.*Fossil \\(Mt CO2/yr\\)$", low = 0),
       list("Share.*\\((%|Percent)\\)$", low = 0, up = 100)),
-    reaction = "warning")
-
-  checks["rangeChecks"] <- length(rangeChecks)
+    reaction = "message")
 
   # write or return output ----
   if (!is.null(file)) {
@@ -214,7 +207,14 @@ convGDX2MIF <- function(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
       write.csv(sumChecks, summation_errors_file, quote = FALSE, row.names = FALSE)
     }
 
-    saveRDS(checks, file.path(dirname(file), "sanityChecks.rds"))
+    if (length(rangeChecks) > 0) {
+      range_checks_file <- sub("(\\.[^.]+)$", "_range_errors.txt", file)
+      warning("Range checks have revealed some problems! See file ",
+              range_checks_file)
+      rangeChecks <- paste(rangeChecks, collapse = '\n')
+      writeLines(rangeChecks, range_checks_file)
+    }
+
 
   } else {
     # return summation errors as attribute

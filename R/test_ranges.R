@@ -11,7 +11,7 @@
 #'       omitted.
 #'     - An optional entry `ignore.case` which can be set to `FALSE` if the
 #'       regular expression should be matched case-sensitive.
-#' @param reaction A character string, either `'warning'` or `'stop'`, to either
+#' @param reaction A character string, either `'message'` or `'stop'`, to either
 #'     warn or throw an error if variables exceed the ranges.
 #' @param report.missing If set to `TRUE`, will message about regular
 #'     expressions from `tests` not matching any variables in `data`.
@@ -44,7 +44,7 @@
 #' @importFrom rlang !! sym
 
 #' @export
-test_ranges <- function(data, tests, reaction = c('warning', 'stop'),
+test_ranges <- function(data, tests, reaction = c('message', 'stop'),
                         report.missing = FALSE) {
 
   match.arg(reaction)
@@ -58,6 +58,7 @@ test_ranges <- function(data, tests, reaction = c('warning', 'stop'),
 
   # Test all variables in data_variables agains low and up
   .test <- function(data_variables, low, up) {
+
     # get the name of the variable dimension in the magpie object
     variable_name <- data_variables %>%
       getItems(dim = 3, split = TRUE) %>%
@@ -122,8 +123,8 @@ test_ranges <- function(data, tests, reaction = c('warning', 'stop'),
 
   if (length(msg)) {
     msg <- paste('range error\n', msg, collapse = '\n')
-    if ('warning' == reaction[[1]]) {
-      warning(msg)
+    if ('message' == reaction[[1]]) {
+      message(msg)
     }
     else {
       stop(msg)
