@@ -109,7 +109,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   vm_emiTeMkt <- readGDX(gdx, c("vm_emiTeMkt", "v_emiTeMkt"), field = "l", restore_zeros = FALSE, format = "first_found")[, t, ]
   # emissions from MAC curves (non-energy emissions)
   vm_emiMacSector <- readGDX(gdx, "vm_emiMacSector", field = "l", restore_zeros = FALSE)[, t, ]
-  p_co2lucSub <- readGDX(gdx, "p_co2lucSub", restore_zeros = FALSE)[, t, ]
+  p_co2lucSub <- readGDX(gdx, "p_co2lucSub", restore_zeros = TRUE)[, t, ]
   # F-Gases
   vm_emiFgas <- readGDX(gdx, "vm_emiFgas", field = "l", restore_zeros = FALSE)[, t, ]
   # Emissions from MACs (currently: all emissions outside of energy CO2 emissions)
@@ -1134,16 +1134,16 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
 
     out
   )
-  
+
   # Check if industry subsector fossil emissions negative
-  # This can be because of small deviations in industry equations 
+  # This can be because of small deviations in industry equations
   # as different REMIND variables are used to calculate these emissions
   # The equations are considered feasible by the solver due to tolerance margins
-  
+
   # fossil industry emissions to be checked
   emi.fosneg.check <- c(grep("Emi\\|CO2\\|Energy\\|Demand\\|Industry\\|.*Fossil", getNames(out), value=T),
                         grep("Emi\\|CO2\\|pre-CCS\\|Energy\\|Demand\\|Industry\\|.*Fossil", getNames(out), value=T))
-  
+
   # if negative and within the solver tolerance of 1e-7, set to 0
   out[,,emi.fosneg.check][out[,, emi.fosneg.check] < 0 & out[,, emi.fosneg.check] >= -1e-7] <- 0
   # if even more negative -> throw warning
@@ -1151,8 +1151,8 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
     warning("Some industry subsector fossil emissions are negative, please check calculation in reportEmi!")
   }
 
-  
-  
+
+
 
   ##### 2.1.3.2 International Bunkers ----
   bunkersEmi <- dimSums(mselect(EmiFeCarrier, emi_sectors = "trans", all_emiMkt = "other"), dim = 3) * GtC_2_MtCO2
@@ -1268,7 +1268,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   out <- mbind(out,
     setNames(dimSums(p_co2lucSub[, , intentional]                  , dim = 3) * GtC_2_MtCO2, "Emi|CO2|Land-Use Change|Negative|+|Intentional (Mt CO2/yr)"))
 
-  out <- mbind(out, 
+  out <- mbind(out,
     setNames(out[,,"Emi|CO2|Land-Use Change|Negative|+|Intentional (Mt CO2/yr)"] +
              out[,,"Emi|CO2|Land-Use Change|Negative|+|Unintentional (Mt CO2/yr)"],          "Emi|CO2|Land-Use Change|+|Negative (Mt CO2/yr)"),
     setNames(out[,,"Emi|CO2|Land-Use Change|+|Positive (Mt CO2/yr)"] +
