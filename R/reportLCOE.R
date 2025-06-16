@@ -1059,9 +1059,9 @@ reportLCOE <- function(gdx, output.type = "both") {
     df.pomeg.expand <- df.pomeg %>%
       # only take capacity distribution of 5-year time steps and up to 50 years of operation
       right_join(df.period_operationPeriod,
-                 relationship = "many-to-many") %>%
+                 relationship = "many-to-many", by = c("opTimeYr")) %>%
       # add energy input and output carrier dimension
-      left_join(en2en)
+      left_join(en2en, by = c("tech"))
 
     # calculate average capacity-weighted and discounted fuel price over lifetime of plant
     df.fuel.price.weighted <- df.pomeg.expand %>%
@@ -1365,7 +1365,8 @@ reportLCOE <- function(gdx, output.type = "both") {
       rename(subrate = value)
 
     df.FEtax <- df.taxrate %>%
-      full_join(df.subrate) %>%
+      full_join(df.subrate, by = c("model", "scenario", "region", "variable", "unit", "period",
+                                   "emi_sectors", "all_enty")) %>%
       # set NA to 0
       mutate(subrate = ifelse(is.na(subrate), 0, subrate),
              taxrate = ifelse(is.na(taxrate), 0, taxrate)) %>%
