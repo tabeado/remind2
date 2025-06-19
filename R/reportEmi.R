@@ -1133,25 +1133,26 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
 
     out
   )
-  
+
   # Check if industry subsector fossil emissions negative
-  # This can be because of small deviations in industry equations 
+  # This can be because of small deviations in industry equations
   # as different REMIND variables are used to calculate these emissions
-  # The equations are considered feasible by the solver due to tolerance margins
-  
+  # The equations are considered feasible by the solver due to tolerance margins.
+  # It can lead to small inconsistencies between vm_demFENonEnergySector, o37_demFeIndSub
+  # and pm_IndstCO2Captured.
+
   # fossil industry emissions to be checked
   emi.fosneg.check <- c(grep("Emi\\|CO2\\|Energy\\|Demand\\|Industry\\|.*Fossil", getNames(out), value=T),
                         grep("Emi\\|CO2\\|pre-CCS\\|Energy\\|Demand\\|Industry\\|.*Fossil", getNames(out), value=T))
-  
-  # if negative and within the solver tolerance of 1e-7, set to 0
-  out[,,emi.fosneg.check][out[,, emi.fosneg.check] < 0 & out[,, emi.fosneg.check] >= -1e-7] <- 0
+
+  # if negative and within the solver tolerance of 1e-7 GtC/yr ~ 1e-2 MtCO2/yr, set to 0
+  out[,,emi.fosneg.check][out[,, emi.fosneg.check] < 0 & out[,, emi.fosneg.check] >= -1e-2] <- 0
   # if even more negative -> throw warning
-  if (any(out[,,emi.fosneg.check] < -1e-7 )) {
+  if (any(out[,,emi.fosneg.check] < -1e-2 )) {
     warning("Some industry subsector fossil emissions are negative, please check calculation in reportEmi!")
   }
 
-  
-  
+
 
   ##### 2.1.3.2 International Bunkers ----
   bunkersEmi <- dimSums(mselect(EmiFeCarrier, emi_sectors = "trans", all_emiMkt = "other"), dim = 3) * GtC_2_MtCO2
