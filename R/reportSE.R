@@ -29,19 +29,13 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   module2realisation <- readGDX(gdx, "module2realisation")
   rownames(module2realisation) <- module2realisation$modules
 
-  ####### get power realisations #########
-  realisation <- readGDX(gdx, "module2realisation")
-  power_realisation <- if ("power" %in% realisation[, 1]) realisation[which(realisation[, 1] == "power"), 2]
-
   ####### conversion factors ##########
   pm_conv_TWa_EJ <- 31.536
   ####### read in needed data #########
   ## sets
   pe2se    <- readGDX(gdx, "pe2se")
   se2se    <- readGDX(gdx, "se2se")
-  all_te   <- readGDX(gdx, "all_te")
   te       <- readGDX(gdx, "te")
-  tefosccs <- readGDX(gdx, c("teFosCCS", "tefosccs"), format = "first_found")
   teccs    <- readGDX(gdx, c("teCCS", "teccs"), format = "first_found")
   tenoccs  <- readGDX(gdx, c("teNoCCS", "tenoccs"), format = "first_found")
   techp    <- readGDX(gdx, c("teChp", "techp"), format = "first_found")
@@ -71,15 +65,9 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   vm_prodSe <- readGDX(gdx, name = c("vm_prodSe", "v_seprod"), field = "l", restore_zeros = FALSE, format = "first_found") * pm_conv_TWa_EJ
   vm_prodSe <- mselect(vm_prodSe, all_enty1 = entySe)
 
-  #  storloss only exist for versions previous to the power module creation and for the IntC and DTcoup power module realisation
-  if (power_realisation %in% c("IntC", "DTcoup")) {
-    storLoss <- readGDX(gdx, name = c("v32_storloss", "v_storloss"), field = "l", restore_zeros = TRUE, format = "first_found") * pm_conv_TWa_EJ
-    # calculate minimal temporal resolution #####
-    y <- Reduce(intersect, list(getYears(vm_prodSe), getYears(storLoss)))
-  } else { # RLDC power module
-    storLoss <- NULL
-    y <- getYears(vm_prodSe)
-  }
+  storLoss <- readGDX(gdx, name = c("v32_storloss", "v_storloss"), field = "l", restore_zeros = TRUE, format = "first_found") * pm_conv_TWa_EJ
+  # calculate minimal temporal resolution #####
+  y <- Reduce(intersect, list(getYears(vm_prodSe), getYears(storLoss)))
 
   v_macBase <- readGDX(gdx, name = c("v_macBase", "vm_macBase"), field = "l", restore_zeros = FALSE, format = "first_found") * pm_conv_TWa_EJ
   v_macBase <- v_macBase[, y, ]
@@ -429,9 +417,6 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   # read in again with restore_zero = T to get all regions in case the parameter is zero for some regions
   pm_fuExtrOwnCons <- readGDX(gdx, "pm_fuExtrOwnCons", restore_zeros = TRUE)[, , getNames(pm_fuExtrOwnCons_reduced)]
   vm_fuExtr <- readGDX(gdx, "vm_fuExtr", field = "l", restore_zeros = FALSE)[, y, ]
-  pe2rlf <- readGDX(gdx, "pe2rlf")
-  pe2rlfemi <- pe2rlf %>% filter(!!sym("all_enty") %in% getNames(pm_fuExtrOwnCons, dim = 2))
-
 
   # calculate electricity for fuel extraction as in q32_balSe
   # by multiplying fuel consumption of extraction with extraction quantities
