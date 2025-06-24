@@ -370,7 +370,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
         as.quitte() %>%
         filter(!is.na(.data$value)) %>% # remove unwanted combinations introduced by readGDX
         select("period", "iteration", "ext_regi", "emiMktExt", "value") %>%
-        mutate("converged" = .data$value <= emiMktTarget_tolerance[ext_regi])
+        mutate("converged" = .data$value <= emiMktTarget_tolerance[.data$ext_regi])
 
       data <- pmEmiMktTargetDevIter %>%
         group_by(.data$iteration) %>%
@@ -447,7 +447,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
           as.quitte() %>%
           select("iteration", "qttyTarget", "qttyTargetGroup", "isLimited" = "value")
       } else {
-        pmImplicitQttyTargetIsLimited <- p80ImplicitQttyTargetDevIter %>% select(-value) %>% mutate("isLimited" = 0)
+        pmImplicitQttyTargetIsLimited <- p80ImplicitQttyTargetDevIter %>% select(-"value") %>% mutate("isLimited" = 0)
       }
 
       p80ImplicitQttyTargetDevIter <- p80ImplicitQttyTargetDevIter %>%

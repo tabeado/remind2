@@ -29,12 +29,12 @@ nashConvergenceReport <- function(gdx = "fulldata.gdx", outputDir = getwd()) {
 
   # create markdown documents
   for(report in activeReports){
-    mkdFile <- system.file("markdown", paste0("Nash convergence - ", report, ".Rmd"), package = "remind2")
+    mkdFile <- system.file("markdown", paste0("nashConvergence-", report, ".Rmd"), package = "remind2")
     if(mkdFile != ""){
       rmarkdown::render(
         mkdFile,
         output_dir = outputDir,
-        output_file = paste0("Nash convergence - ", report, ".html"),
+        output_file = paste0("nashConvergence-", report, ".html"),
         output_format = "html_document",
         params = yamlParams
       )
@@ -71,14 +71,14 @@ nashConvergenceReport <- function(gdx = "fulldata.gdx", outputDir = getwd()) {
   }
   indexHTML <- paste0(indexHTML,'\n  </div>\n<div id="content">\n<div class="lds-ring"><div></div><div></div><div></div><div></div></div>')
   for(report in active_reports){
-    indexHTML <- paste0(indexHTML,'\n    <div id="', report,'"', ifelse(report == "overview",'',' class="hide"'), '><iframe data-src="Nash convergence - ', report, '.html" loading="lazy" src="Nash convergence - ', report, '.html"></iframe></div>')
+    indexHTML <- paste0(indexHTML,'\n    <div id="', report,'"', ifelse(report == "overview",'',' class="hide"'), '><iframe data-src="nashConvergence-', report, '.html" loading="lazy" src="nashConvergence-', report, '.html"></iframe></div>')
   }
   indexHTML <- paste0(indexHTML,'\n</div>')
   indexHTML <- paste0(indexHTML,'\n<script type="text/javascript"> const addClassList = (element) => { Object.values(element.children).forEach((e) => { e.classList.add("hide"); }); }; document.addEventListener("click", (e) => { const { target } = e; if (!target.classList.contains("sidenavLink")) { return; } Object.values(document.getElementById("sideBar").getElementsByTagName("a")).forEach((e) => { e.classList.remove("selected"); }); target.classList.add("selected"); addClassList(document.getElementById("content")); const hash = target.hash.replace("#",""); selected = document.getElementById(hash); selected.classList.remove("hide"); });</script>')
   indexHTML <- paste0(indexHTML,'\n</body>\n</html>')
 
   # write html to file
-  fileConn<-file(normalizePath(paste0(output_dir,"/Nash convergence - index.html")))
+  fileConn<-file(normalizePath(paste0(output_dir,"/nashConvergence-index.html")))
   writeLines(indexHTML, fileConn)
   close(fileConn)
 
