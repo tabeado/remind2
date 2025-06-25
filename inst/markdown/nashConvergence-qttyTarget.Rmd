@@ -319,7 +319,6 @@ for(reg in tgtRegions){
   }
 }
 
-cat(out,file="output.txt", append=FALSE)
 
 ```
 
