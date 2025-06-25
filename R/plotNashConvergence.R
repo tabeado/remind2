@@ -247,7 +247,6 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
         linewidth = aestethics$line$size
       )) +
       theme_minimal() +
-      #ggtitle("Tradable goods surplus") +
       facet_grid(type ~ period, scales = "free_y") +
       scale_color_manual(values = surplusColor) +
       scale_fill_manual(values = booleanColor) +
