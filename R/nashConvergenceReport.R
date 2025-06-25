@@ -16,7 +16,7 @@ nashConvergenceReport <- function(gdx = "fulldata.gdx", outputDir = getwd()) {
 
   # check if it is run
   m2r <- gdx::readGDX(gdx, "module2realisation", restore_zeros = FALSE)
-  if (m2r[m2r$module == "optimization", "*"] != "nash") {
+  if (m2r[m2r$modules == "optimization", "*"] != "nash") {
     print("Warning: this script only supports nash optimizations")
     return()
   }
