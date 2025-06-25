@@ -363,7 +363,6 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
 
       pm_emiMktTarget_tolerance <- mip::getPlotData("pm_emiMktTarget_tolerance", gdx)
       emiMktTarget_tolerance <- setNames(pm_emiMktTarget_tolerance$pm_emiMktTarget_tolerance,pm_emiMktTarget_tolerance$ext_regi)
-      #cmEmiMktTargetTolerance <- as.vector(readGDX(gdx, name = "cm_emiMktTarget_tolerance", react = "error"))
 
       pmEmiMktTargetDevIter <- pmEmiMktTargetDevIter %>%
         as.quitte() %>%
