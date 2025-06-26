@@ -69,7 +69,6 @@ Imports:
     reshape2,
     rlang,
     rmarkdown,
-    scales,
     tibble,
     tidyr,
     tidyselect,
@@ -81,6 +80,7 @@ Suggests:
     htmltools,
     kableExtra,
     knitr,
+    scales,
     testthat,
     tidyverse
 VignetteBuilder: 
