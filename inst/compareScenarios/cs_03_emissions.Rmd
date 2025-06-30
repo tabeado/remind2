@@ -464,17 +464,28 @@ walk(items, showLinePlots, data = data)
 ### Cumulated Emissions
 
 ```{r CO2 Cumulated}
-d <-
-  data %>%
+d <- data %>%
   filter(variable == "Emi|CO2|Cumulated")
-# subtract 2010 values
-d <-
-  d %>%
+# subtract 2020 values and convert to Gt
+d <- d %>%
   left_join(
-    d %>% filter(period == 2010),
-    by = c("model", "scenario", "region", "variable"),
-    suffix = c("", "2010")) %>%
-  mutate(value = value - value2010)
+    d %>% filter(period == 2020),
+    by = c("model", "scenario", "region", "variable", "unit"),
+    suffix = c("", "2020")) %>%
+  mutate(value = (value - value2020) / 1000,
+         unit = "Gt CO2")
+
+# define lines for usual CO2 budgets of standard REMIND runs
+pkBudg <- tribble(
+      ~region, ~period, ~value, ~variable,                      
+      "World", 2020,    500,    "Emi|CO2|Cumulated|target|500 GtCO2 from",
+      "World", 2020,    650,    "Emi|CO2|Cumulated|target|650 GtCO2 from",
+      "World", 2020,    1000,   "Emi|CO2|Cumulated|target|1000 GtCO2 from",
+ )
+
+# show cumulated global emissions
+showLinePlotsWithTarget(bind_rows(d, pkBudg), "Emi|CO2|Cumulated")
+
 showLinePlots(d)
 ```
 
