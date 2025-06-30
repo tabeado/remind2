@@ -145,7 +145,7 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
       get_cap(c("biochp", "gaschp", "coalchp"), "|Electricity|CHP"),
       get_cap("spv",                            "|Electricity|Solar|+|PV"),
       get_cap("csp",                            "|Electricity|Solar|+|CSP"),
-      get_cap("windon",                        "|Electricity|Wind|+|Onshore"),
+      get_cap("windon",                         "|Electricity|Wind|+|Onshore"),
       get_cap("windoff",                        "|Electricity|Wind|+|Offshore")
     )
 
