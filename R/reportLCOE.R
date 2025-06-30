@@ -361,9 +361,6 @@ reportLCOE <- function(gdx, output.type = "both") {
 
     grid_factor_tech <- new.magpie(names = te2grid$all_te, fill = 1)
     getSets(grid_factor_tech)[3] <- "all_te"
-    if ("wind" %in% getNames(grid_factor_tech)) {
-      grid_factor_tech[, , "wind"] <- 1.5
-    }
     grid_factor_tech[, , "windon"] <- 1.5
     grid_factor_tech[, , "windoff"] <- 3.0
 
