@@ -30,7 +30,7 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   rownames(module2realisation) <- module2realisation$modules
 
   ####### conversion factors ##########
-  pm_conv_TWa_EJ <- 31.536
+  TWa_2_EJ <- 3600 * 24 * 365 / 1e6
   ####### read in needed data #########
   ## sets
   pe2se    <- readGDX(gdx, "pe2se")
@@ -44,6 +44,7 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   entySe   <- readGDX(gdx, c("entySe", "sety"), format = "first_found")
   entyPe   <- readGDX(gdx, c("entyPe", "pety"), format = "first_found")
   oc2te    <- readGDX(gdx, c("pc2te", "oc2te"), format = "first_found")
+  peFos    <- readGDX(gdx, "peFos")
 
   se_Liq    <- intersect(c("seliqfos", "seliqbio", "seliqsyn"), entySe)
   se_Gas    <- intersect(c("segafos", "segabio", "segasyn"), entySe)
@@ -62,16 +63,16 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   p_macBase <- readGDX(gdx, c("p_macBaseMagpie", "pm_macBaseMagpie", "p_macBase"), format = "first_found")
   #  p_macEmi  <- readGDX(gdx,"p_macEmi")
   ## variables
-  vm_prodSe <- readGDX(gdx, name = c("vm_prodSe", "v_seprod"), field = "l", restore_zeros = FALSE, format = "first_found") * pm_conv_TWa_EJ
+  vm_prodSe <- readGDX(gdx, name = c("vm_prodSe", "v_seprod"), field = "l", restore_zeros = FALSE, format = "first_found") * TWa_2_EJ
   vm_prodSe <- mselect(vm_prodSe, all_enty1 = entySe)
 
-  storLoss <- readGDX(gdx, name = c("v32_storloss", "v_storloss"), field = "l", restore_zeros = TRUE, format = "first_found") * pm_conv_TWa_EJ
+  storLoss <- readGDX(gdx, name = c("v32_storloss", "v_storloss"), field = "l", restore_zeros = TRUE, format = "first_found") * TWa_2_EJ
   # calculate minimal temporal resolution #####
   y <- Reduce(intersect, list(getYears(vm_prodSe), getYears(storLoss)))
 
-  v_macBase <- readGDX(gdx, name = c("v_macBase", "vm_macBase"), field = "l", restore_zeros = FALSE, format = "first_found") * pm_conv_TWa_EJ
+  v_macBase <- readGDX(gdx, name = c("v_macBase", "vm_macBase"), field = "l", restore_zeros = FALSE, format = "first_found") * TWa_2_EJ
   v_macBase <- v_macBase[, y, ]
-  vm_emiMacSector <- readGDX(gdx, name = c("vm_emiMacSector"), field = "l", restore_zeros = FALSE, format = "first_found") * pm_conv_TWa_EJ
+  vm_emiMacSector <- readGDX(gdx, name = c("vm_emiMacSector"), field = "l", restore_zeros = FALSE, format = "first_found") * TWa_2_EJ
   vm_emiMacSector <-   vm_emiMacSector[, y, ]
   ####### set temporal resolution #####
   vm_prodSe    <- vm_prodSe[, y, ]
@@ -89,8 +90,7 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
 
   ####### internal function for reporting ###########
 
-  se.prod <- function(vm_prodSe, dataoc, oc2te, entySe, enty.input, se.output, te = te_pese2se,
-                      name = NULL, storageLoss = storLoss, all_pety = entyPe, storageLossOnly = FALSE) {
+  get_prodSE <- function(enty.input, se.output, te = te_pese2se, name = NULL, storageLoss = storLoss, all_pety = entyPe, storageLossOnly = FALSE) {
 
     if (storageLossOnly && is.null(storageLoss)) {
       return(NULL)
@@ -132,87 +132,84 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
     return(out)
   }
 
-  se.prodLoss <- function(vm_prodSe, dataoc, oc2te, entySe, enty.input, se.output, te = te_pese2se,
-                          name = NULL, storageLoss = storLoss, all_pety = entyPe) {
-    return(se.prod(vm_prodSe, dataoc, oc2te, entySe, enty.input, se.output, te, name, storageLoss, all_pety, storageLossOnly = TRUE))
+  get_lossSE <- function(enty.input, se.output, te = te_pese2se, name = NULL, storageLoss = storLoss, all_pety = entyPe) {
+    return(get_prodSE(enty.input, se.output, te, name, storageLoss, all_pety, storageLossOnly = TRUE))
   }
 
   ## reporting should adhere to the following logic:
   ## if a category has more than one subcategory, the subcategories should be reported *explicitly*.
 
-  tmp1 <- se.prod(vm_prodSe, dataoc, oc2te, entySe, abind(entyPe, entySe), entySe, name = "SE (EJ/yr)")
+  tmp1 <- get_prodSE(abind(entyPe, entySe), entySe, name = "SE (EJ/yr)")
 
   ## Biomass
   tmp1 <- mbind(tmp1,
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, entySe, name = "SE|Biomass (EJ/yr)")
+    get_prodSE(pebio, entySe, name = "SE|Biomass (EJ/yr)")
   )
 
 
-  windonStr <- ifelse ("windon" %in% te, "windon", "wind")
-
   ## Electricity
   tmp1 <- mbind(tmp1,
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, append(entyPe, "seh2"), "seel",   name = "SE|Electricity (EJ/yr)"), # seh2 to account for se2se production once we add h2 to elec technology
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, entyPe, "seel", te = techp,       name = "SE|Electricity|Combined Heat and Power w/o CC (EJ/yr)"),
+    get_prodSE(append(entyPe, "seh2"), "seel",   name = "SE|Electricity (EJ/yr)"), # seh2 to account for se2se production once we add h2 to elec technology
+    get_prodSE(entyPe, "seel", te = techp,       name = "SE|Electricity|Combined Heat and Power w/o CC (EJ/yr)"),
 
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seel",                    name = "SE|Electricity|+|Biomass (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seel", te = teccs,        name = "SE|Electricity|Biomass|+|w/ CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seel", te = tenoccs,      name = "SE|Electricity|Biomass|+|w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seel", te = "bioigccc",   name = "SE|Electricity|Biomass|++|Gasification Combined Cycle w/ CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seel", te = "bioigcc",    name = "SE|Electricity|Biomass|++|Gasification Combined Cycle w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seel", te = "biochp",     name = "SE|Electricity|Biomass|++|Combined Heat and Power w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seel", te = setdiff(pe2se$all_te, c("bioigccc", "bioigcc", "biochp")),
-                                                                                name = "SE|Electricity|Biomass|++|Other (EJ/yr)"),
+    get_prodSE(pebio, "seel",                    name = "SE|Electricity|+|Biomass (EJ/yr)"),
+    get_prodSE(pebio, "seel", te = teccs,        name = "SE|Electricity|Biomass|+|w/ CC (EJ/yr)"),
+    get_prodSE(pebio, "seel", te = tenoccs,      name = "SE|Electricity|Biomass|+|w/o CC (EJ/yr)"),
+    get_prodSE(pebio, "seel", te = "bioigccc",   name = "SE|Electricity|Biomass|++|Gasification Combined Cycle w/ CC (EJ/yr)"),
+    get_prodSE(pebio, "seel", te = "bioigcc",    name = "SE|Electricity|Biomass|++|Gasification Combined Cycle w/o CC (EJ/yr)"),
+    get_prodSE(pebio, "seel", te = "biochp",     name = "SE|Electricity|Biomass|++|Combined Heat and Power w/o CC (EJ/yr)"),
+    get_prodSE(pebio, "seel", te = setdiff(pe2se$all_te, c("bioigccc", "bioigcc", "biochp")),
+                                                 name = "SE|Electricity|Biomass|++|Other (EJ/yr)"),
 
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", "seel",                 name = "SE|Electricity|+|Coal (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", "seel", te = teccs,     name = "SE|Electricity|Coal|+|w/ CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", "seel", te = tenoccs,   name = "SE|Electricity|Coal|+|w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", "seel", te = "igcc",    name = "SE|Electricity|Coal|++|Gasification Combined Cycle w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", "seel", te = "igccc",   name = "SE|Electricity|Coal|++|Gasification Combined Cycle w/ CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", "seel", te = "pc",      name = "SE|Electricity|Coal|++|Pulverised Coal w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", "seel", te = "coalchp", name = "SE|Electricity|Coal|++|Combined Heat and Power w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", "seel", te = setdiff(pe2se$all_te, c("igcc", "igccc", "pc", "coalchp")),
-                                                                                name = "SE|Electricity|Coal|++|Other (EJ/yr)"),
+    get_prodSE("pecoal", "seel",                 name = "SE|Electricity|+|Coal (EJ/yr)"),
+    get_prodSE("pecoal", "seel", te = teccs,     name = "SE|Electricity|Coal|+|w/ CC (EJ/yr)"),
+    get_prodSE("pecoal", "seel", te = tenoccs,   name = "SE|Electricity|Coal|+|w/o CC (EJ/yr)"),
+    get_prodSE("pecoal", "seel", te = "igcc",    name = "SE|Electricity|Coal|++|Gasification Combined Cycle w/o CC (EJ/yr)"),
+    get_prodSE("pecoal", "seel", te = "igccc",   name = "SE|Electricity|Coal|++|Gasification Combined Cycle w/ CC (EJ/yr)"),
+    get_prodSE("pecoal", "seel", te = "pc",      name = "SE|Electricity|Coal|++|Pulverised Coal w/o CC (EJ/yr)"),
+    get_prodSE("pecoal", "seel", te = "coalchp", name = "SE|Electricity|Coal|++|Combined Heat and Power w/o CC (EJ/yr)"),
+    get_prodSE("pecoal", "seel", te = setdiff(pe2se$all_te, c("igcc", "igccc", "pc", "coalchp")),
+                                                 name = "SE|Electricity|Coal|++|Other (EJ/yr)"),
 
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegas", "seel",                  name = "SE|Electricity|+|Gas (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegas", "seel", te = teccs,      name = "SE|Electricity|Gas|+|w/ CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegas", "seel", te = tenoccs,    name = "SE|Electricity|Gas|+|w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegas", "seel", te = "ngcc",     name = "SE|Electricity|Gas|++|Combined Cycle w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegas", "seel", te = "ngccc",    name = "SE|Electricity|Gas|++|Combined Cycle w/ CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegas", "seel", te = "ngt",      name = "SE|Electricity|Gas|++|Gas Turbine (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegas", "seel", te = "gaschp",   name = "SE|Electricity|Gas|++|Combined Heat and Power w/o CC (EJ/yr)"),
+    get_prodSE("pegas", "seel",                  name = "SE|Electricity|+|Gas (EJ/yr)"),
+    get_prodSE("pegas", "seel", te = teccs,      name = "SE|Electricity|Gas|+|w/ CC (EJ/yr)"),
+    get_prodSE("pegas", "seel", te = tenoccs,    name = "SE|Electricity|Gas|+|w/o CC (EJ/yr)"),
+    get_prodSE("pegas", "seel", te = "ngcc",     name = "SE|Electricity|Gas|++|Combined Cycle w/o CC (EJ/yr)"),
+    get_prodSE("pegas", "seel", te = "ngccc",    name = "SE|Electricity|Gas|++|Combined Cycle w/ CC (EJ/yr)"),
+    get_prodSE("pegas", "seel", te = "ngt",      name = "SE|Electricity|Gas|++|Gas Turbine (EJ/yr)"),
+    get_prodSE("pegas", "seel", te = "gaschp",   name = "SE|Electricity|Gas|++|Combined Heat and Power w/o CC (EJ/yr)"),
 
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "seh2", "seel",                   name = "SE|Electricity|+|Hydrogen (EJ/yr)"),
+    get_prodSE("seh2", "seel",                   name = "SE|Electricity|+|Hydrogen (EJ/yr)"),
 
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "peoil", "seel",                  name = "SE|Electricity|+|Oil (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "peoil", "seel", te = tenoccs,    name = "SE|Electricity|Oil|w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "peoil", "seel", te = "dot",      name = "SE|Electricity|Oil|DOT (EJ/yr)"),
+    get_prodSE("peoil", "seel",                  name = "SE|Electricity|+|Oil (EJ/yr)"),
+    get_prodSE("peoil", "seel", te = tenoccs,    name = "SE|Electricity|Oil|w/o CC (EJ/yr)"),
+    get_prodSE("peoil", "seel", te = "dot",      name = "SE|Electricity|Oil|DOT (EJ/yr)"),
 
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, entyPe, "seel", te = teReNoBio,   name = "SE|Electricity|Non-Biomass Renewables (EJ/yr)"),
+    get_prodSE(entyPe, "seel", te = teReNoBio,   name = "SE|Electricity|Non-Biomass Renewables (EJ/yr)"),
 
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "peur", "seel",                   name = "SE|Electricity|+|Nuclear (EJ/yr)"),
+    get_prodSE("peur", "seel",                   name = "SE|Electricity|+|Nuclear (EJ/yr)"),
 
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegeo", "seel",                  name = "SE|Electricity|+|Geothermal (EJ/yr)"),
+    get_prodSE("pegeo", "seel",                  name = "SE|Electricity|+|Geothermal (EJ/yr)"),
 
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pehyd", "seel",                  name = "SE|Electricity|+|Hydro (EJ/yr)"),
+    get_prodSE("pehyd", "seel",                  name = "SE|Electricity|+|Hydro (EJ/yr)"),
 
-    se.prod(    vm_prodSe, dataoc, oc2te, entySe, c("pewin", "pesol"), "seel",  name = "SE|Electricity|WindSolar (EJ/yr)"),
-    se.prod(    vm_prodSe, dataoc, oc2te, entySe, "pesol", "seel",              name = "SE|Electricity|+|Solar (EJ/yr)"),
-    se.prod(    vm_prodSe, dataoc, oc2te, entySe, "pesol", "seel", te = "csp",  name = "SE|Electricity|Solar|+|CSP (EJ/yr)"),
-    se.prod(    vm_prodSe, dataoc, oc2te, entySe, "pesol", "seel", te = "spv",  name = "SE|Electricity|Solar|+|PV (EJ/yr)"),
+    get_prodSE(c("pewin", "pesol"), "seel",      name = "SE|Electricity|WindSolar (EJ/yr)"),
+    get_prodSE("pesol", "seel",                  name = "SE|Electricity|+|Solar (EJ/yr)"),
+    get_prodSE("pesol", "seel", te = "csp",      name = "SE|Electricity|Solar|+|CSP (EJ/yr)"),
+    get_prodSE("pesol", "seel", te = "spv",      name = "SE|Electricity|Solar|+|PV (EJ/yr)"),
 
-    se.prodLoss(vm_prodSe, dataoc, oc2te, entySe, c("pewin", "pesol"), "seel",  name = "SE|Electricity|Curtailment (EJ/yr)"),
-    se.prodLoss(vm_prodSe, dataoc, oc2te, entySe, "pesol", "seel",              name = "SE|Electricity|Curtailment|+|Solar (EJ/yr)"),
-    se.prodLoss(vm_prodSe, dataoc, oc2te, entySe, "pesol", "seel", te = "csp",  name = "SE|Electricity|Curtailment|Solar|+|CSP (EJ/yr)"),
-    se.prodLoss(vm_prodSe, dataoc, oc2te, entySe, "pesol", "seel", te = "spv",  name = "SE|Electricity|Curtailment|Solar|+|PV (EJ/yr)"),
+    get_lossSE(c("pewin", "pesol"), "seel",      name = "SE|Electricity|Curtailment (EJ/yr)"),
+    get_lossSE("pesol", "seel",                  name = "SE|Electricity|Curtailment|+|Solar (EJ/yr)"),
+    get_lossSE("pesol", "seel", te = "csp",      name = "SE|Electricity|Curtailment|Solar|+|CSP (EJ/yr)"),
+    get_lossSE("pesol", "seel", te = "spv",      name = "SE|Electricity|Curtailment|Solar|+|PV (EJ/yr)"),
 
-    se.prod(    vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = c(windonStr, "windoff"), name = "SE|Electricity|+|Wind (EJ/yr)"),
-    se.prod(    vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = windonStr,               name = "SE|Electricity|Wind|+|Onshore (EJ/yr)"),
-    se.prod(    vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = "windoff",               name = "SE|Electricity|Wind|+|Offshore (EJ/yr)"),
+    get_prodSE("pewin", "seel",                  name = "SE|Electricity|+|Wind (EJ/yr)"),
+    get_prodSE("pewin", "seel", te = "windon",   name = "SE|Electricity|Wind|+|Onshore (EJ/yr)"),
+    get_prodSE("pewin", "seel", te = "windoff",  name = "SE|Electricity|Wind|+|Offshore (EJ/yr)"),
 
-    se.prodLoss(vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = c(windonStr, "windoff"), name = "SE|Electricity|Curtailment|+|Wind (EJ/yr)"),
-    se.prodLoss(vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = windonStr,               name = "SE|Electricity|Curtailment|Wind|+|Onshore (EJ/yr)"),
-    se.prodLoss(vm_prodSe, dataoc, oc2te, entySe, "pewin", "seel", te = "windoff",               name = "SE|Electricity|Curtailment|Wind|+|Offshore (EJ/yr)")
+    get_lossSE("pewin", "seel",                  name = "SE|Electricity|Curtailment|+|Wind (EJ/yr)"),
+    get_lossSE("pewin", "seel", te = "windon",   name = "SE|Electricity|Curtailment|Wind|+|Onshore (EJ/yr)"),
+    get_lossSE("pewin", "seel", te = "windoff",  name = "SE|Electricity|Curtailment|Wind|+|Offshore (EJ/yr)")
   )
 
 
@@ -233,100 +230,93 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   }
 
   tmp1 <- mbind(tmp1,
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, input_gas, se_Gas,                name = "SE|Gases (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, se_Gas,                    name = "SE|Gases|+|Biomass (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, se_Gas, te = teccs,        name = "SE|Gases|Biomass|+|w/ CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, se_Gas, te = tenoccs,      name = "SE|Gases|Biomass|+|w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "seh2", se_Gas,                   name = "SE|Gases|+|Hydrogen (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, c("pegas", "pecoal"), se_Gas,     name = "SE|Gases|+|Fossil (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegas", se_Gas,                  name = "SE|Gases|Fossil|+|Natural Gas (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", se_Gas,                 name = "SE|Gases|Fossil|+|Coal (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", se_Gas, te = teccs,     name = "SE|Gases|Fossil|Coal|+|w/ CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", se_Gas, te = tenoccs,   name = "SE|Gases|Fossil|Coal|+|w/o CC (EJ/yr)")
+    get_prodSE(input_gas, se_Gas,                name = "SE|Gases (EJ/yr)"),
+    get_prodSE(pebio, se_Gas,                    name = "SE|Gases|+|Biomass (EJ/yr)"),
+    get_prodSE(pebio, se_Gas, te = teccs,        name = "SE|Gases|Biomass|+|w/ CC (EJ/yr)"),
+    get_prodSE(pebio, se_Gas, te = tenoccs,      name = "SE|Gases|Biomass|+|w/o CC (EJ/yr)"),
+    get_prodSE("seh2", se_Gas,                   name = "SE|Gases|+|Hydrogen (EJ/yr)"),
+    get_prodSE(peFos, se_Gas,                name = "SE|Gases|+|Fossil (EJ/yr)"),
+    get_prodSE("pegas", se_Gas,                  name = "SE|Gases|Fossil|+|Natural Gas (EJ/yr)"),
+    get_prodSE("pecoal", se_Gas,                 name = "SE|Gases|Fossil|+|Coal (EJ/yr)"),
+    get_prodSE("pecoal", se_Gas, te = teccs,     name = "SE|Gases|Fossil|Coal|+|w/ CC (EJ/yr)"),
+    get_prodSE("pecoal", se_Gas, te = tenoccs,   name = "SE|Gases|Fossil|Coal|+|w/o CC (EJ/yr)")
   )
 
   ## Heat
   tmp1 <- mbind(tmp1,
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, entyPe, "sehe",                   name = "SE|Heat (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe,  pebio, "sehe",                   name = "SE|Heat|+|Biomass (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", "sehe",                 name = "SE|Heat|+|Coal (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegas", "sehe",                  name = "SE|Heat|+|Gas (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegeo", "sehe",                  name = "SE|Heat|+|Geothermal (EJ/yr)"), # same as SE|Heat|Electricity|Heat Pump
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegeo", "sehe",                  name = "SE|Heat|Electricity|Heat Pump (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pesol", "sehe",                  name = "SE|Heat|+|Solar (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe,  entyPe, "sehe", te = techp,      name = "SE|Heat|Combined Heat and Power (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", "sehe", te = "coalchp", name = "SE|Heat|Coal|Combined Heat and Power (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegas", "sehe", te = "gaschp",   name = "SE|Heat|Gas|Combined Heat and Power (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe,  pebio, "sehe", te = "biochp",    name = "SE|Heat|Biomass|Combined Heat and Power (EJ/yr)")
+    get_prodSE(entyPe, "sehe",                   name = "SE|Heat (EJ/yr)"),
+    get_prodSE( pebio, "sehe",                   name = "SE|Heat|+|Biomass (EJ/yr)"),
+    get_prodSE("pecoal", "sehe",                 name = "SE|Heat|+|Coal (EJ/yr)"),
+    get_prodSE("pegas", "sehe",                  name = "SE|Heat|+|Gas (EJ/yr)"),
+    get_prodSE("pegeo", "sehe",                  name = "SE|Heat|+|Geothermal (EJ/yr)"), # same as SE|Heat|Electricity|Heat Pump
+    get_prodSE("pegeo", "sehe",                  name = "SE|Heat|Electricity|Heat Pump (EJ/yr)"),
+    get_prodSE("pesol", "sehe",                  name = "SE|Heat|+|Solar (EJ/yr)"),
+    get_prodSE( entyPe, "sehe", te = techp,      name = "SE|Heat|Combined Heat and Power (EJ/yr)"),
+    get_prodSE("pecoal", "sehe", te = "coalchp", name = "SE|Heat|Coal|Combined Heat and Power (EJ/yr)"),
+    get_prodSE("pegas", "sehe", te = "gaschp",   name = "SE|Heat|Gas|Combined Heat and Power (EJ/yr)"),
+    get_prodSE( pebio, "sehe", te = "biochp",    name = "SE|Heat|Biomass|Combined Heat and Power (EJ/yr)")
   )
 
   ## Hydrogen
   tmp1 <- mbind(tmp1,
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, c(entyPe, entySe), "seh2",        name = "SE|Hydrogen (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seh2",                    name = "SE|Hydrogen|+|Biomass (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seh2", te = teccs,        name = "SE|Hydrogen|Biomass|+|w/ CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, "seh2", te = tenoccs,      name = "SE|Hydrogen|Biomass|+|w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", "seh2",                 name = "SE|Hydrogen|+|Coal (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", "seh2", te = teccs,     name = "SE|Hydrogen|Coal|+|w/ CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", "seh2", te = tenoccs,   name = "SE|Hydrogen|Coal|+|w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegas", "seh2",                  name = "SE|Hydrogen|+|Gas (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegas", "seh2", te = teccs,      name = "SE|Hydrogen|Gas|+|w/ CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegas", "seh2", te = tenoccs,    name = "SE|Hydrogen|Gas|+|w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "seel", "seh2",                   name = "SE|Hydrogen|+|Electricity (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "seel", "seh2", te = "elh2",      name = "SE|Hydrogen|Electricity|+|Standard Electrolysis (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "seel", "seh2", te = "elh2VRE",   name = "SE|Hydrogen|Electricity|+|VRE Storage Electrolysis (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, c("pegas", "pecoal", "peoil"), "seh2",
-                                                                                name = "SE|Hydrogen|Fossil (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, c("pegas", "pecoal", "peoil"), "seh2", te = teccs,
-                                                                                name = "SE|Hydrogen|Fossil|+|w/ CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, c("pegas", "pecoal", "peoil"), "seh2", te = tenoccs,
-                                                                                name = "SE|Hydrogen|Fossil|+|w/o CC (EJ/yr)")
+    get_prodSE(c(entyPe, entySe), "seh2",        name = "SE|Hydrogen (EJ/yr)"),
+    get_prodSE(pebio, "seh2",                    name = "SE|Hydrogen|+|Biomass (EJ/yr)"),
+    get_prodSE(pebio, "seh2", te = teccs,        name = "SE|Hydrogen|Biomass|+|w/ CC (EJ/yr)"),
+    get_prodSE(pebio, "seh2", te = tenoccs,      name = "SE|Hydrogen|Biomass|+|w/o CC (EJ/yr)"),
+    get_prodSE("pecoal", "seh2",                 name = "SE|Hydrogen|+|Coal (EJ/yr)"),
+    get_prodSE("pecoal", "seh2", te = teccs,     name = "SE|Hydrogen|Coal|+|w/ CC (EJ/yr)"),
+    get_prodSE("pecoal", "seh2", te = tenoccs,   name = "SE|Hydrogen|Coal|+|w/o CC (EJ/yr)"),
+    get_prodSE("pegas", "seh2",                  name = "SE|Hydrogen|+|Gas (EJ/yr)"),
+    get_prodSE("pegas", "seh2", te = teccs,      name = "SE|Hydrogen|Gas|+|w/ CC (EJ/yr)"),
+    get_prodSE("pegas", "seh2", te = tenoccs,    name = "SE|Hydrogen|Gas|+|w/o CC (EJ/yr)"),
+    get_prodSE("seel", "seh2",                   name = "SE|Hydrogen|+|Electricity (EJ/yr)"),
+    get_prodSE("seel", "seh2", te = "elh2",      name = "SE|Hydrogen|Electricity|+|Standard Electrolysis (EJ/yr)"),
+    get_prodSE("seel", "seh2", te = "elh2VRE",   name = "SE|Hydrogen|Electricity|+|VRE Storage Electrolysis (EJ/yr)"),
+    get_prodSE(peFos, "seh2",                name = "SE|Hydrogen|Fossil (EJ/yr)"),
+    get_prodSE(peFos, "seh2", te = teccs,    name = "SE|Hydrogen|Fossil|+|w/ CC (EJ/yr)"),
+    get_prodSE(peFos, "seh2", te = tenoccs,  name = "SE|Hydrogen|Fossil|+|w/o CC (EJ/yr)")
   )
 
   ## Liquids
   tmp1 <- mbind(tmp1,
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, input_liquids, se_Liq,            name = "SE|Liquids (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, se_Liq,                    name = "SE|Liquids|+|Biomass (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, se_Liq, te = teccs,        name = "SE|Liquids|Biomass|+|w/ CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, se_Liq, te = tenoccs,      name = "SE|Liquids|Biomass|+|w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pebiolc", se_Liq,                name = "SE|Liquids|Biomass|++|Cellulosic (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pebiolc", se_Liq, teccs,         name = "SE|Liquids|Biomass|Cellulosic|+|w/ CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pebiolc", se_Liq, tenoccs,       name = "SE|Liquids|Biomass|Cellulosic|+|w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, c("pebioil", "pebios"), se_Liq,   name = "SE|Liquids|Biomass|++|Non-Cellulosic (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, c("pebioil", "pebios"), se_Liq,   name = "SE|Liquids|Biomass|1st Generation (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pebios", se_Liq,                 name = "SE|Liquids|Biomass|Conventional Ethanol (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, se_Liq, "bioftcrec",       name = "SE|Liquids|Biomass|BioFTR|w/ CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, se_Liq, "bioftrec",        name = "SE|Liquids|Biomass|BioFTR|w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, se_Liq, "biodiesel",       name = "SE|Liquids|Biomass|Biodiesel (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, se_Liq, "bioethl",         name = "SE|Liquids|Biomass|Lignocellulosic Ethanol (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pebioil", se_Liq,                name = "SE|Liquids|Biomass|Non-Cellulosic|+|Oil-based (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pebios", se_Liq,                 name = "SE|Liquids|Biomass|Non-Cellulosic|+|Sugar and Starch (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "seh2", se_Liq,                   name = "SE|Liquids|+|Hydrogen (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, c("pegas", "pecoal", "peoil"), se_Liq,
-                                                                                name = "SE|Liquids|+|Fossil (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", se_Liq,                 name = "SE|Liquids|Fossil|+|Coal (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", se_Liq, te = teccs,     name = "SE|Liquids|Fossil|Coal|+|w/ CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", se_Liq, te = tenoccs,   name = "SE|Liquids|Fossil|Coal|+|w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegas", se_Liq,                  name = "SE|Liquids|Fossil|+|Gas (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegas", se_Liq, te = teccs,      name = "SE|Liquids|Fossil|Gas|+|w/ CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pegas", se_Liq, te = tenoccs,    name = "SE|Liquids|Fossil|Gas|+|w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "peoil", se_Liq,                  name = "SE|Liquids|Fossil|+|Oil (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, c("pegas", "pecoal", "peoil"), se_Liq, te = teccs,
-                                                                                name = "SE|Liquids|Fossil|++|w/ CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, c("pegas", "pecoal", "peoil"), se_Liq, te = tenoccs,
-                                                                                name = "SE|Liquids|Fossil|++|w/o CC (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, c("pegas", "pecoal", "peoil"), se_Liq, te = tenoccs,
-                                                                                name = "SE|Liquids|Fossil|w/ oil|w/o CC (EJ/yr)")
+    get_prodSE(input_liquids, se_Liq,            name = "SE|Liquids (EJ/yr)"),
+    get_prodSE(pebio, se_Liq,                    name = "SE|Liquids|+|Biomass (EJ/yr)"),
+    get_prodSE(pebio, se_Liq, te = teccs,        name = "SE|Liquids|Biomass|+|w/ CC (EJ/yr)"),
+    get_prodSE(pebio, se_Liq, te = tenoccs,      name = "SE|Liquids|Biomass|+|w/o CC (EJ/yr)"),
+    get_prodSE("pebiolc", se_Liq,                name = "SE|Liquids|Biomass|++|Cellulosic (EJ/yr)"),
+    get_prodSE("pebiolc", se_Liq, teccs,         name = "SE|Liquids|Biomass|Cellulosic|+|w/ CC (EJ/yr)"),
+    get_prodSE("pebiolc", se_Liq, tenoccs,       name = "SE|Liquids|Biomass|Cellulosic|+|w/o CC (EJ/yr)"),
+    get_prodSE(c("pebioil", "pebios"), se_Liq,   name = "SE|Liquids|Biomass|++|Non-Cellulosic (EJ/yr)"),
+    get_prodSE(c("pebioil", "pebios"), se_Liq,   name = "SE|Liquids|Biomass|1st Generation (EJ/yr)"),
+    get_prodSE("pebios", se_Liq,                 name = "SE|Liquids|Biomass|Conventional Ethanol (EJ/yr)"),
+    get_prodSE(pebio, se_Liq, "bioftcrec",       name = "SE|Liquids|Biomass|BioFTR|w/ CC (EJ/yr)"),
+    get_prodSE(pebio, se_Liq, "bioftrec",        name = "SE|Liquids|Biomass|BioFTR|w/o CC (EJ/yr)"),
+    get_prodSE(pebio, se_Liq, "biodiesel",       name = "SE|Liquids|Biomass|Biodiesel (EJ/yr)"),
+    get_prodSE(pebio, se_Liq, "bioethl",         name = "SE|Liquids|Biomass|Lignocellulosic Ethanol (EJ/yr)"),
+    get_prodSE("pebioil", se_Liq,                name = "SE|Liquids|Biomass|Non-Cellulosic|+|Oil-based (EJ/yr)"),
+    get_prodSE("pebios", se_Liq,                 name = "SE|Liquids|Biomass|Non-Cellulosic|+|Sugar and Starch (EJ/yr)"),
+    get_prodSE("seh2", se_Liq,                   name = "SE|Liquids|+|Hydrogen (EJ/yr)"),
+    get_prodSE(peFos, se_Liq,                    name = "SE|Liquids|+|Fossil (EJ/yr)"),
+    get_prodSE("pecoal", se_Liq,                 name = "SE|Liquids|Fossil|+|Coal (EJ/yr)"),
+    get_prodSE("pecoal", se_Liq, te = teccs,     name = "SE|Liquids|Fossil|Coal|+|w/ CC (EJ/yr)"),
+    get_prodSE("pecoal", se_Liq, te = tenoccs,   name = "SE|Liquids|Fossil|Coal|+|w/o CC (EJ/yr)"),
+    get_prodSE("pegas", se_Liq,                  name = "SE|Liquids|Fossil|+|Gas (EJ/yr)"),
+    get_prodSE("pegas", se_Liq, te = teccs,      name = "SE|Liquids|Fossil|Gas|+|w/ CC (EJ/yr)"),
+    get_prodSE("pegas", se_Liq, te = tenoccs,    name = "SE|Liquids|Fossil|Gas|+|w/o CC (EJ/yr)"),
+    get_prodSE("peoil", se_Liq,                  name = "SE|Liquids|Fossil|+|Oil (EJ/yr)"),
+    get_prodSE(peFos, se_Liq, te = teccs,        name = "SE|Liquids|Fossil|++|w/ CC (EJ/yr)"),
+    get_prodSE(peFos, se_Liq, te = tenoccs,      name = "SE|Liquids|Fossil|++|w/o CC (EJ/yr)"),
+    get_prodSE(peFos, se_Liq, te = tenoccs,      name = "SE|Liquids|Fossil|w/ oil|w/o CC (EJ/yr)")
   )
 
   ## Solids
   tmp1 <- mbind(tmp1,
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, entyPe, se_Solids,                name = "SE|Solids (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, "pecoal", se_Solids,              name = "SE|Solids|+|Coal (EJ/yr)"),
+    get_prodSE(entyPe, se_Solids,                name = "SE|Solids (EJ/yr)"),
+    get_prodSE("pecoal", se_Solids,              name = "SE|Solids|+|Coal (EJ/yr)"),
     # SE|Solids|Biomass is supposed to exclude traditional biomass
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, se_Solids, te = setdiff(pe2se$all_te, "biotr"),
-                                                                                name = "SE|Solids|+|Biomass (EJ/yr)"),
-    se.prod(vm_prodSe, dataoc, oc2te, entySe, pebio, se_Solids, te = "biotr",   name = "SE|Solids|+|Traditional Biomass (EJ/yr)")
+    get_prodSE(pebio, se_Solids, te = setdiff(pe2se$all_te, "biotr"),
+                                                 name = "SE|Solids|+|Biomass (EJ/yr)"),
+    get_prodSE(pebio, se_Solids, te = "biotr",   name = "SE|Solids|+|Traditional Biomass (EJ/yr)")
   )
 
   ## Trade
@@ -336,13 +326,13 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
     vm_Xport <- readGDX(gdx, "vm_Xport", field = "l", restore_zeros = FALSE)[, t, ]
 
     tmp1 <- mbind(tmp1,
-      setNames(mselect(vm_Mport - vm_Xport, all_enty = "seh2") * pm_conv_TWa_EJ,
+      setNames(mselect(vm_Mport - vm_Xport, all_enty = "seh2") * TWa_2_EJ,
         "SE|Hydrogen|Net Imports (EJ/yr)"),
-      setNames(mselect(vm_Mport - vm_Xport, all_enty = "seel") * pm_conv_TWa_EJ,
+      setNames(mselect(vm_Mport - vm_Xport, all_enty = "seel") * TWa_2_EJ,
         "SE|Electricity|Net Imports (EJ/yr)"),
-      setNames(mselect(vm_Mport - vm_Xport, all_enty = "seliqsyn") * pm_conv_TWa_EJ,
+      setNames(mselect(vm_Mport - vm_Xport, all_enty = "seliqsyn") * TWa_2_EJ,
         "SE|Liquids|Hydrogen|Net Imports (EJ/yr)"),
-      setNames(mselect(vm_Mport - vm_Xport, all_enty = "segasyn") * pm_conv_TWa_EJ,
+      setNames(mselect(vm_Mport - vm_Xport, all_enty = "segasyn") * TWa_2_EJ,
         "SE|Gases|Hydrogen|Net Imports (EJ/yr)"))
   }
 
@@ -350,13 +340,13 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   # SE|Input|X|Y variables denote the demand of energy carrier X
   # flowing into sector/production of Y.
 
-  vm_demFeSector <- readGDX(gdx, "vm_demFeSector", field = "l", restore_zeros = FALSE)[, y, ] * pm_conv_TWa_EJ
+  vm_demFeSector <- readGDX(gdx, "vm_demFeSector", field = "l", restore_zeros = FALSE)[, y, ] * TWa_2_EJ
   vm_demFeSector[is.na(vm_demFeSector)] <- 0
 
   # SE demand
-  vm_demSe <- readGDX(gdx, "vm_demSe", field = "l", restore_zeros = FALSE)[, y, ] * pm_conv_TWa_EJ
+  vm_demSe <- readGDX(gdx, "vm_demSe", field = "l", restore_zeros = FALSE)[, y, ] * TWa_2_EJ
   # SE demand of specific energy system technologies
-  v_demSeOth <- readGDX(gdx, c("v_demSeOth", "vm_demSeOth"), field = "l", restore_zeros = FALSE)[, y, ] * pm_conv_TWa_EJ
+  v_demSeOth <- readGDX(gdx, c("v_demSeOth", "vm_demSeOth"), field = "l", restore_zeros = FALSE)[, y, ] * TWa_2_EJ
   # conversion efficiency
   pm_eta_conv <- readGDX(gdx, "pm_eta_conv", field = "l", restore_zeros = FALSE)[, y, ]
 
@@ -384,7 +374,7 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   # SE electricity use
 
   ### calculation of electricity use for own consumption of energy system
-  vm_prodFe <- readGDX(gdx, "vm_prodFe", field = "l", restore_zeros = FALSE) * pm_conv_TWa_EJ  # all energy values are first converted to EJ
+  vm_prodFe <- readGDX(gdx, "vm_prodFe", field = "l", restore_zeros = FALSE) * TWa_2_EJ  # all energy values are first converted to EJ
   vm_co2CCS <- readGDX(gdx, "vm_co2CCS", field = "l", restore_zeros = FALSE)
 
   # filter for coupled production coefficents which consume seel
@@ -396,17 +386,17 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
 
   # FE and SE production that has own consumption of electricity
   # calculate vm_prodSe back to TWa (was in EJ before), but prod couple coefficient is defined in TWa(input)/Twa(output)
-  prodOwnCons <- mbind(vm_prodFe / pm_conv_TWa_EJ, vm_prodSe / pm_conv_TWa_EJ)[, , getNames(CoeffOwnConsSeel_woCCS, dim = 3)]
+  prodOwnCons <- mbind(vm_prodFe / TWa_2_EJ, vm_prodSe / TWa_2_EJ)[, , getNames(CoeffOwnConsSeel_woCCS, dim = 3)]
 
   tmp1 <- mbind(tmp1, setNames(
-    -pm_conv_TWa_EJ *
+    -TWa_2_EJ *
       (dimSums(CoeffOwnConsSeel_woCCS * prodOwnCons[, , getNames(CoeffOwnConsSeel_woCCS, dim = 3)], dim = 3, na.rm = TRUE) +
         dimSums(CoeffOwnConsSeel[, , "ccsinje"] * vm_co2CCS[, , "ccsinje"], dim = 3,  na.rm = TRUE)),
     "SE|Input|Electricity|Self Consumption Energy System (EJ/yr)"))
 
   # electricity for central ground heat pumps
   tmp1 <- mbind(tmp1, setNames(
-    -pm_conv_TWa_EJ *
+    -TWa_2_EJ *
       (dimSums(CoeffOwnConsSeel_woCCS[, , "geohe"] * prodOwnCons[, , "geohe"], dim = 3)),
     "SE|Input|Electricity|Self Consumption Energy System|Central Ground Heat Pump (EJ/yr)"))
 
@@ -427,7 +417,7 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
                     # sum over pm_fuExtrOwnCons to reduce all_enty dimensions
                     dimSums(mselect(pm_fuExtrOwnCons, all_enty = "seel"), dim = 3.1)
                     * vm_fuExtr[, , getNames(pm_fuExtrOwnCons, dim = 2)], dim = 3)
-                    * pm_conv_TWa_EJ,
+                    * TWa_2_EJ,
                   "SE|Input|Electricity|PE Production (EJ/yr)"))
 
   # set to zero in 2005 as the fuel production electricity demand is not included in the SE balance equation in this year
