@@ -27,12 +27,12 @@ reportPE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   TWa_2_EJ <- 3600 * 24 * 365 / 1e6
   ####### read in needed data #########
   ## sets
-  pe2se    <- readGDX(gdx, "pe2se") # map primary energy carriers to secondary
   teCCS    <- readGDX(gdx, "teCCS", format = "first_found") # technologies with carbon capture
   teNoCCS  <- readGDX(gdx, "teNoCCS", format = "first_found") # technologies without CCS
+  entySe   <- readGDX(gdx, "entySe", format = "first_found") # secondary energy types
   peFos    <- readGDX(gdx, "peFos", format = "first_found") # primary energy fossil fuels
   peBio    <- readGDX(gdx, "peBio", format = "first_found") # biomass primary energy types
-  entySe   <- readGDX(gdx, "entySe", format = "first_found") # secondary energy types
+  pe2se    <- readGDX(gdx, "pe2se") # map primary energy carriers to secondary
   pc2te    <- readGDX(gdx, "pc2te", format = "first_found") # prod couple: mapping for own consumption of technologies
   pc2te    <- pc2te[(pc2te$all_enty1 %in% entySe) & (pc2te$all_enty2 %in% entySe), ] # ensure main and couple product are valid entySe
 
@@ -73,7 +73,7 @@ reportPE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
     # Compute the PE of technologies that have SEcarrier as their main product
     PE <- dimSums(mselect(demPE, all_enty = PEcarrier, all_enty1 = SEcarrier, all_te = te), dim = 3)
 
-    # Some technologies output a couple of SE carriers: the main product, and the couple product
+    # Some technologies output a couple of SE carriers: the main product (all_enty1), and the couple product (all_enty2)
     # Add the couple PE of technologies that have SEcarrier as their couple product (and another carrier as main product)
     pc2te_couple <- pc2te[(pc2te$all_enty %in% PEcarrier) & (pc2te$all_enty2 %in% SEcarrier) & (pc2te$all_te %in% te), ]
     PE <- PE + dimSums(demPE[pc2te_couple] * prodCouple[pc2te_couple] / (1 + prodCouple[pc2te_couple]), dim = 3)
@@ -171,7 +171,7 @@ reportPE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
     get_prodSE("pegeo",                                              name = "PE|+|Geothermal (EJ/yr)"),
     get_prodSE("pegeo", "sehe",                                      name = "PE|Geothermal|+|Heat (EJ/yr)"),
     get_prodSE("pegeo", "seel",                                      name = "PE|Geothermal|+|Electricity (EJ/yr)"),
-    get_prodSE("peur",                                               name = "PE|+|Nuclear (EJ/yr)"), # demPE is in [Mt Uranium]
+    get_prodSE("peur",                                               name = "PE|+|Nuclear (EJ/yr)"),
     get_prodSE("pehyd",                                              name = "PE|+|Hydro (EJ/yr)"),
     get_prodSE("pewin",                                              name = "PE|+|Wind (EJ/yr)"),
     get_prodSE("pewin", te = "windon",                               name = "PE|Wind|+|Onshore (EJ/yr)"),
