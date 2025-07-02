@@ -70,19 +70,19 @@ reportPE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   
   ####### internal functions for reporting ###########
   get_demPE <- function(PEcarrier, SEcarrier = entySe, te = pe2se$all_te, name = NULL) {
-    ## identify all techs with SEcarrier as a main product
-    pc2te_main <- pc2te[(pc2te$all_enty %in% PEcarrier) & (pc2te$all_enty1 %in% SEcarrier) & (pc2te$all_te %in% te), ]
-    ## identify all techs with SEcarrier as a couple product
+    # Compute the PE of technologies that have SEcarrier as their main product
+    PE <- dimSums(mselect(demPE, all_enty = PEcarrier, all_enty1 = SEcarrier, all_te = te), dim = 3)
+
+    # Some technologies output a couple of SE carriers: the main product, and the couple product
+    # Add the couple PE of technologies that have SEcarrier as their couple product (and another carrier as main product)
     pc2te_couple <- pc2te[(pc2te$all_enty %in% PEcarrier) & (pc2te$all_enty2 %in% SEcarrier) & (pc2te$all_te %in% te), ]
-    ## all primary energy demand with SEcarrier as a main product
-    x1 <- dimSums(mselect(demPE, all_enty = PEcarrier, all_enty1 = SEcarrier, all_te = te), dim = 3)
-    ## negative term for couple products by technologies with SEcarrier as a main product
-    x2 <- dimSums(demPE[pc2te_main] * prodCouple[pc2te_main] / (1 + prodCouple[pc2te_main]), dim = 3)
-    ## additional pe demand for technologies with SEcarrier as a couple product
-    x3 <- dimSums(demPE[pc2te_couple] * prodCouple[pc2te_couple] / (1 + prodCouple[pc2te_couple]), dim = 3)
-    out <- (x1 - x2 + x3)
-    if (!is.null(name)) magclass::getNames(out) <- name
-    return(out)
+    PE <- PE + dimSums(demPE[pc2te_couple] * prodCouple[pc2te_couple] / (1 + prodCouple[pc2te_couple]), dim = 3)
+    # Subtract the couple PE of technologies that have SEcarrier as their main product, but also have a couple product
+    pc2te_main <- pc2te[(pc2te$all_enty %in% PEcarrier) & (pc2te$all_enty1 %in% SEcarrier) & (pc2te$all_te %in% te), ]
+    PE <- PE - dimSums(demPE[pc2te_main] * prodCouple[pc2te_main] / (1 + prodCouple[pc2te_main]), dim = 3)
+
+    if (!is.null(name)) magclass::getNames(PE) <- name
+    return(PE)
   }
 
   get_prodSE <- function(PEcarrier, SEcarrier = entySe, te = pe2se$all_te, name) {
