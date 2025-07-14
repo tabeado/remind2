@@ -110,7 +110,10 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
       get_cap(c("igcc", "pc", "coalchp", "igccc"), "|Electricity|+|Coal"),
       get_cap("dot",                               "|Electricity|+|Oil"),
       get_cap(c("ngcc", "ngt", "gaschp", "ngccc"), "|Electricity|+|Gas"),
-      get_cap(c("bioigccc", "biochp", "bioigcc"),  "|Electricity|+|Biomass"),
+      setNames(dimSums(gms_data[, , c("bioigccc", "biochp", "bioigcc")], dim = 3)
+          + dimSums(gms_data[, , c("biopyrel")] * dataoc[, , "pebiolc.sebiochar.biopyrel.seel"], dim = 3, na.rm = TRUE)
+          + dimSums(gms_data[, , c("biopyrchp")] * dataoc[, , "pebiolc.sebiochar.biopyrchp.seel"], dim = 3, na.rm = TRUE), 
+                                         full_name("|Electricity|+|Biomass")),
       get_cap(c("tnrs", "fnrs"),                   "|Electricity|+|Nuclear")
     )
   
@@ -141,6 +144,9 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
       get_cap("ngt",                            "|Electricity|Gas|GT"),
       get_cap(c("bioigccc"),                    "|Electricity|Biomass|w/ CC"),
       get_cap(c("biochp", "bioigcc"),           "|Electricity|Biomass|w/o CC"),
+      setNames(dimSums(gms_data[, , c("biopyrel")] * dataoc[, , "pebiolc.sebiochar.biopyrel.seel"], dim = 3, na.rm = TRUE)
+            + dimSums(gms_data[, , c("biopyrchp")] * dataoc[, , "pebiolc.sebiochar.biopyrchp.seel"], dim = 3, na.rm = TRUE), 
+            full_name("|Electricity|Biomass|biochar")),
       get_cap("biochp",                         "|Electricity|Biomass|CHP"),
       get_cap(c("biochp", "gaschp", "coalchp"), "|Electricity|CHP"),
       get_cap("spv",                            "|Electricity|Solar|+|PV"),
@@ -188,7 +194,9 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
       setNames(dimSums(gms_data[, , c("coalhp")], dim = 3)
             + dimSums(gms_data[, , c("coalchp")] * dataoc[, , "pecoal.seel.coalchp.sehe"], dim = 3, na.rm = TRUE), full_name("|Heat|+|Coal")),
       setNames(dimSums(gms_data[, , c("biohp")], dim = 3)
-            + dimSums(gms_data[, , c("biochp")] * dataoc[, , "pebiolc.seel.biochp.sehe"], dim = 3, na.rm = TRUE),  full_name("|Heat|+|Biomass")),
+            + dimSums(gms_data[, , c("biochp")] * dataoc[, , "pebiolc.seel.biochp.sehe"], dim = 3, na.rm = TRUE)
+            + dimSums(gms_data[, , c("biopyrhe")] * dataoc[, , "pebiolc.sebiochar.biopyrhe.sehe"], dim = 3, na.rm = TRUE)
+            + dimSums(gms_data[, , c("biopyrchp")] * dataoc[, , "pebiolc.sebiochar.biopyrchp.sehe"], dim = 3, na.rm = TRUE),  full_name("|Heat|+|Biomass")),
       setNames(dimSums(gms_data[, , c("gashp")], dim = 3)
             + dimSums(gms_data[, , c("gaschp")] * dataoc[, , "pegas.seel.gaschp.sehe"], dim = 3, na.rm = TRUE),    full_name("|Heat|+|Gas"))
     )
@@ -208,7 +216,9 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
       get_cap(c("coalftrec", "coalftcrec"),                                  "|Liquids|+|Coal"),
       get_cap(c("refliq"),                                                   "|Liquids|+|Oil"),
       get_cap(c("gasftrec", "gasftcrec"),                                    "|Liquids|+|Gas"),
-      get_cap(c("bioftrec", "bioftcrec", "biodiesel", "bioeths", "bioethl"), "|Liquids|+|Biomass"),
+      setNames(dimSums(gms_data[, , c("bioftrec", "bioftcrec", "biodiesel", "bioeths", "bioethl")], dim = 3)
+            + dimSums(gms_data[, , c("biopyrliq")] * dataoc[, , "pebiolc.sebiochar.biopyrliq.seliqbio"], dim = 3, na.rm = TRUE), 
+                                                                   full_name("|Liquids|+|Biomass")),
       get_cap(c("MeOH"),                                                     "|Liquids|+|Hydrogen")
     )
     cap_liquids <- mbind(cap_liquids, setNames(dimSums(cap_liquids, dim = 3), full_name("|Liquids"))) # sum of the above
@@ -225,8 +235,15 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
     )
     cap_solids <- mbind(cap_solids, setNames(dimSums(cap_solids, dim = 3), full_name("|Solids"))) # sum of the above
 
+    # biochar
+    cap_biochar <- mbind(
+      get_cap(c("biopyronly", "biopyrhe", "biopyrel", "biopyrchp", "biopyrliq"),  "|Biochar"),
+      get_cap(c("biopyronly"),                                                    "|Biochar|+|no co-product"),
+      get_cap(c("biopyrhe", "biopyrel", "biopyrchp"),                             "|Biochar|+|heat or electricity"),
+      get_cap(c("biopyrliq"),                                                     "|Biochar|+|liquids")
+    )
 
-    reported_cap <- mbind(cap_electricity, cap_storage, cap_hydrogen, cap_heat, cap_gas, cap_liquids, cap_solids)
+    reported_cap <- mbind(cap_electricity, cap_storage, cap_hydrogen, cap_heat, cap_gas, cap_liquids, cap_solids, cap_biochar)
 
     # carbon management
     if ("dac" %in% magclass::getNames(gms_data, dim = 1)) {
