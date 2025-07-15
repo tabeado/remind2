@@ -31,7 +31,10 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
 
   ####### conversion factors ##########
   TWa_2_EJ <- 3600 * 24 * 365 / 1e6
-  s_tBC_2_TWa <- readGDX(gdx, name = "s_tBC_2_TWa", format = "first_found", react = "silent")
+  s_tBC_2_TWa <- readGDX(gdx, name = "s_tBC_2_TWa", format = "first_found", react = "silent") # Biochar calorific value
+  if (is.null(s_tBC_2_TWa)){ 
+    s_tBC_2_TWa <- 1          # necessary to avoid division by zero for versions preceding biochar introduction
+  }
 
   ####### read in needed data #########
   ## sets
@@ -50,6 +53,7 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   seLiq <- intersect(c("seliqfos", "seliqbio", "seliqsyn"), entySe)
   seGas <- intersect(c("segafos", "segabio", "segasyn"), entySe)
   seSol <- intersect(c("sesofos", "sesobio"), entySe)
+  sebiochar <- intersect(c("sebiochar"), entySe)
 
   ## variables
   prodSE <- readGDX(gdx, name = "vm_prodSe", field = "l", restore_zeros = FALSE) * TWa_2_EJ
@@ -301,16 +305,16 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
 
   ## Biochar
   out <- mbind(out,
-    get_prodSE(entyPe, "sebiochar",                    name = "SE|Biochar (EJ/yr)"),
-    get_prodSE(entyPe, "sebiochar", te = "biopyronly", name = "SE|Biochar|+|No co-product (EJ/yr)"),
-    get_prodSE(entyPe, "sebiochar", te = "biopyrhe", name = "SE|Biochar|+|Heat (EJ/yr)"),
-    get_prodSE(entyPe, "sebiochar", te = "biopyrel", name = "SE|Biochar|+|Electricity (EJ/yr)"),
-    get_prodSE(entyPe, "sebiochar", te = "biopyrchp", name = "SE|Biochar|+|Combined Heat and Power (EJ/yr)"),
-    get_prodSE(entyPe, "sebiochar", te = "biopyrliq",  name = "SE|Biochar|+|Liquids (EJ/yr)")
+    get_prodSE(entyPe, sebiochar,                    name = "SE|Biochar (EJ/yr)"),
+    get_prodSE(entyPe, sebiochar, te = "biopyronly", name = "SE|Biochar|+|No co-product (EJ/yr)"),
+    get_prodSE(entyPe, sebiochar, te = "biopyrhe", name = "SE|Biochar|+|Heat (EJ/yr)"),
+    get_prodSE(entyPe, sebiochar, te = "biopyrel", name = "SE|Biochar|+|Electricity (EJ/yr)"),
+    get_prodSE(entyPe, sebiochar, te = "biopyrchp", name = "SE|Biochar|+|Combined Heat and Power (EJ/yr)"),
+    get_prodSE(entyPe, sebiochar, te = "biopyrliq",  name = "SE|Biochar|+|Liquids (EJ/yr)")
   )
 
   out <- mbind(out,
-    setNames(out[, , "SE|Biochar (EJ/yr)"] / TWa_2_EJ / s_tBC_2_TWa / 10^6, "SE|Biochar Mt (Mt/yr)"),
+    setNames(out[, , "SE|Biochar (EJ/yr)"] / TWa_2_EJ / s_tBC_2_TWa * 10^-6, "SE|Biochar Mt (Mt/yr)"),
     setNames(out[, , "SE|Biochar|+|No co-product (EJ/yr)"] / TWa_2_EJ / s_tBC_2_TWa / 10^6, "SE|Biochar Mt|+|No co-product (Mt/yr)"),
     setNames(out[, , "SE|Biochar|+|Heat (EJ/yr)"] / TWa_2_EJ / s_tBC_2_TWa / 10^6, "SE|Biochar Mt|+|Heat (Mt/yr)"),
     setNames(out[, , "SE|Biochar|+|Electricity (EJ/yr)"] / TWa_2_EJ / s_tBC_2_TWa / 10^6, "SE|Biochar Mt|+|Electricity (Mt/yr)"),
