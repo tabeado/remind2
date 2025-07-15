@@ -250,11 +250,8 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
     # biochar
     if("biopyrel" %in% getNames(gms_data, dim=1)){
     cap_biochar <- mbind(
-      get_cap(c("biopyronly", "biopyrhe", "biopyrel", "biopyrchp", "biopyrliq"),  "|Biochar"),
-      get_cap(c("biopyronly"),                                                    "|Biochar|+|no co-product"),
-      get_cap(c("biopyrhe", "biopyrel", "biopyrchp"),                             "|Biochar|+|heat or electricity"),
-      get_cap(c("biopyrliq"),                                                     "|Biochar|+|liquids")
-    )} else { 
+      get_cap(c("biopyronly", "biopyrhe", "biopyrel", "biopyrchp", "biopyrliq"),  "|Biochar"))
+      } else { 
     cap_biochar <- magclass::new.magpie(getRegions(gms_data), getYears(gms_data), full_name("|Biochar"), fill = 0)
     }
 

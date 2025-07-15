@@ -242,9 +242,6 @@ reportEnergyInvestment <- function(gdx, regionSubsetList = NULL,
 
   # Biochar
   tmp <- mbind(tmp, setNames(inv_se(ie = "pebiolc", oe = "sebiochar", pe2se, adjte, v_directteinv, v_adjustteinv),  "Energy Investments|Biochar (billion US$2017/yr)"))
-  tmp <- mbind(tmp, setNames(inv_se(ie = "pebiolc", te = "biopyronly", oe = "sebiochar", pe2se, adjte, v_directteinv, v_adjustteinv), "Energy Investments|Biochar|+|no co-product (billion US$2017/yr)"))
-  tmp <- mbind(tmp, setNames(inv_se(ie = "pebiolc", te = c("biopyrhe","biopyrel", "biopyrchp"), oe = "sebiochar", pe2se, adjte, v_directteinv, v_adjustteinv), "Energy Investments|Biochar|+|heat or electricity (billion US$2017/yr)"))
-  tmp <- mbind(tmp, setNames(inv_se(ie = "pebiolc", te = "biopyrliq", oe = "sebiochar", pe2se, adjte, v_directteinv, v_adjustteinv), "Energy Investments|Biochar|+|Liquids (billion US$2017/yr)"))
 
   tmp <- mbind(tmp, setNames((tmp[, , "Energy Investments|Supply (billion US$2017/yr)"]
   - tmp[, , "Energy Investments|Electricity (billion US$2017/yr)"]
