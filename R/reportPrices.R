@@ -85,7 +85,7 @@ reportPrices <- function(gdx, output = NULL, regionSubsetList = NULL,
   pm_taxemiMkt   <- readGDX(gdx, name = "pm_taxemiMkt", format = "first_found", react = "silent")[, t, ]
   p47_taxCO2eq_AggFE <- readGDX(gdx, name = "p47_taxCO2eq_AggFE", format = "first_found", react = "silent")[, t, ]
   p47_taxCO2eq_SectorAggFE <- readGDX(gdx, name = "p47_taxCO2eq_SectorAggFE", format = "first_found", react = "silent")[, t, ]
-  p33_BiocharPrice <- readGDX(gdx, "p33_BiocharPrice", field = "l", format = "first_found")[, t, ]
+  p33_BiocharPrice <- readGDX(gdx, "p33_BiocharPrice", field = "l", format = "first_found", react = "silent")[, t, ]
 
   ## variables
   pric_emu       <- readGDX(gdx, name = "vm_pebiolc_price", field = "l", format = "first_found")[, t, ]
@@ -1068,8 +1068,12 @@ reportPrices <- function(gdx, output = NULL, regionSubsetList = NULL,
   for (i in getRegions(out)) glob_price[i, , ] <- pm_pvp[, , "pebiolc"] / pm_pvp[, , "good"] * tdptwyr2dpgj
   out <- mbind(out, setNames(glob_price,                                       "Price|Biomass|World Market (US$2017/GJ)"))
 
-  for (i in getRegions(out)) glob_price[i, , ] <- p33_BiocharPrice * s_tBC_2_TWa * sm_trillion_2_non # [trilUS$2017/TWa BC] * [TWa/t BC] * [TrilUSD/USD]
-  out <- mbind(out, setNames(glob_price,                              "Price|Biochar (US$2017/t Biochar)"))
+  if (!is.null(s_tBC_2_TWa)){ 
+    for (i in getRegions(out)) glob_price[i, , ] <- p33_BiocharPrice * s_tBC_2_TWa * sm_trillion_2_non # [trilUS$2017/TWa BC] * [TWa/t BC] * [TrilUSD/USD]
+    out <- mbind(out, setNames(glob_price,                              "Price|Biochar (US$2017/t Biochar)"))
+  } else {
+    out <- mbind(out, new.magpie(getRegions(out), getYears(out), "Price|Biochar (US$2017/t Biochar)", fill = NA))
+  }   
 
   ## special global prices
 
