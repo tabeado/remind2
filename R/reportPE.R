@@ -139,8 +139,8 @@ reportPE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
     get_demPE(peBio,                                                 name = "PE|+|Biomass (EJ/yr)"),
     get_demPE(peBio, te = teCCS,                                     name = "PE|Biomass|++|w/ CC (EJ/yr)"),
     get_demPE(peBio, te = teNoCCS,                                   name = "PE|Biomass|++|w/o CC (EJ/yr)"),
-    get_demPE(c("pebioil", "pebios"),                                name = "PE|Biomass|1st Generation (EJ/yr)"),
-    get_demPE(peBio, te = "biotr",                                   name = "PE|Biomass|Traditional (EJ/yr)"),
+    get_demPE(c("pebioil", "pebios"),                                name = "PE|Biomass|+++|1st Generation (EJ/yr)"),
+    get_demPE(peBio, te = "biotr",                                   name = "PE|Biomass|++++|Traditional (EJ/yr)"),
     get_demPE(peBio, "seel",                                         name = "PE|Biomass|+|Electricity (EJ/yr)"),
     get_demPE(peBio, "seel", teCCS,                                  name = "PE|Biomass|Electricity|+|w/ CC (EJ/yr)"),
     get_demPE(peBio, "seel", teNoCCS,                                name = "PE|Biomass|Electricity|+|w/o CC (EJ/yr)"),
@@ -187,11 +187,11 @@ reportPE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
     setNames(dimSums(demPE[, , c(peFos, peBio)], dim = 3)
            + dimSums(prodSE[, , c("pegeo", "pehyd", "pewin", "pesol", "peur")], dim = 3), "PE (EJ/yr)"),
     setNames(dimSums(demPE[, , peBio], dim = 3)
-           - dimSums(mselect(demPE, all_enty = peBio, all_te = "biotr"), dim = 3),  "PE|Biomass|Modern (EJ/yr)"),
-    setNames(fuExtr[, , "pebiolc.2"], "PE|Biomass|Residues (EJ/yr)"),
+           - dimSums(mselect(demPE, all_enty = peBio, all_te = "biotr"), dim = 3),  "PE|Biomass|++++|Modern (EJ/yr)"),
+    setNames(fuExtr[, , "pebiolc.2"], "PE|Biomass|+++|Residues (EJ/yr)"),
     setNames((fuExtr[, , "pebiolc.1"]
               + (1 - pm_costsPEtradeMp[, , "pebiolc"]) * Mport[, , "pebiolc"]
-              - Xport[, , "pebiolc"]), "PE|Biomass|Energy Crops (EJ/yr)")
+              - Xport[, , "pebiolc"]), "PE|Biomass|+++|Energy Crops (EJ/yr)")
   )
 
   # add global values
