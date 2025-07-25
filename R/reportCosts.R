@@ -297,13 +297,13 @@ reportCosts <- function(gdx,output=NULL,regionSubsetList=NULL,t=c(seq(2005,2060,
   # v_costfu: these costs are the total fuel extraction costs, even the ones for export
   # Supply costs: exports valued at supply cost (else the ESM costs would be greatly underestimated for a resource-exporting country that makes large profits from the export), except for biomass where supply costs are not yet reported
   cost <- v_costfu * 1000 - setNames(output[regi_on_gdx,,"Res|Average Supply Costs|Coal ($/GJ)"] * Xport[,,"pecoal"]  * pm_conv_TWa_EJ,NULL) -
-                            setNames(output[regi_on_gdx,,"Res|Average Supply Costs|Gas ($/GJ)"]       * Xport[,,"pegas"]   * pm_conv_TWa_EJ,NULL) -
-                            setNames(output[regi_on_gdx,,"Res|Average Supply Costs|Oil ($/GJ)"]       * Xport[,,"peoil"]   * pm_conv_TWa_EJ,NULL) -
+                            setNames(output[regi_on_gdx,,"Res|Average Supply Costs|Gas ($/GJ)"]  * Xport[,,"pegas"]   * pm_conv_TWa_EJ,NULL) -
+                            setNames(output[regi_on_gdx,,"Res|Average Supply Costs|Oil ($/GJ)"]  * Xport[,,"peoil"]   * pm_conv_TWa_EJ,NULL) -
                             setNames(output[regi_on_gdx,,"Price|Primary Energy|Biomass|Modern|Rawdata (US$2017/GJ)"]  * Xport[,,"pebiolc"] * pm_conv_TWa_EJ,NULL) -
-                            setNames(output[regi_on_gdx,,"Res|Average Supply Costs|Uranium ($/GJ)"]   * Xport[,,"peur"]    * pm_conv_TWa_EJ * 4.43,NULL) -
-                            dimSums(pm_XPortsPrice[,,trade_se] * Xport[,,trade_se], dim=3,na.rm=T) * 1000 +
+                            setNames(output[regi_on_gdx,,"Res|Average Supply Costs|Uranium ($/GJ)"] * Xport[,,"peur"] * pm_conv_TWa_EJ * 4.43,NULL) -
+                            dimSums(pm_XPortsPrice[,,trade_se] * Xport[,,trade_se] * pm_conv_TWa_EJ, dim=3,na.rm=T) * 1000 +
                             dimSums(Mport[,,trade_pe] * pebal.m[,,trade_pe] / (budget.m + 1.e-10), dim=3,na.rm=T) * 1000 + # imports valued with domestic market price
-                            dimSums(pm_MPortsPrice[,,trade_se] * Mport[,,trade_se], dim=3,na.rm=T) * 1000
+                            dimSums(pm_MPortsPrice[,,trade_se] * Mport[,,trade_se] * pm_conv_TWa_EJ, dim=3,na.rm=T) * 1000
 
   tmp  <- mbind(tmp,setNames(cost, "Fuel costs for own ESM (billion US$2017/yr)"))
 
