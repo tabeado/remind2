@@ -174,20 +174,17 @@ showAreaAndBarPlots(data,
 ```
 
 # Biochar production 
-```{r Biochar Total Line Plot Only}
+```{r Biochar Plots}
 showLinePlots(data, "SE|Biochar Mt")
-```
-
-```{r Biochar area by type}
 showAreaAndBarPlots(
   data = data,
-  vars = rev(c('SE|Biochar Mt|No co-product (Mt/yr)',
-                'SE|Biochar Mt|Heat (Mt/yr)', 
-                'SE|Biochar Mt|Electricity (Mt/yr)',
-                'SE|Biochar Mt|Combined Heat and Power (Mt/yr)',
-                'SE|Biochar Mt|Liquids (Mt/yr)')),
+  vars = c('SE|Biochar Mt|No co-product',
+           'SE|Biochar Mt|Heat', 
+           'SE|Biochar Mt|Electricity',
+           'SE|Biochar Mt|Combined Heat and Power',
+           'SE|Biochar Mt|Liquids'),
 
-  tot = 'SE|Biochar Mt (Mt/yr)',
+  tot = 'SE|Biochar Mt',
   scales = 'fixed',
   orderVars = 'user')
 ```
