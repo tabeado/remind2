@@ -33,7 +33,7 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   TWa_2_EJ <- 3600 * 24 * 365 / 1e6
   s_tBC_2_TWa <- readGDX(gdx, name = "s_tBC_2_TWa", format = "first_found", react = "silent") # Biochar calorific value
   if (is.null(s_tBC_2_TWa)){ 
-    s_tBC_2_TWa <- 1          # necessary to avoid division by zero for versions preceding biochar introduction
+    s_tBC_2_TWa <- 1          # necessary to avoid division by zero for versions preceding biochar introduction; to be removed with v360 (TD)
   }
 
   ####### read in needed data #########

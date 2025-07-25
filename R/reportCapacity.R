@@ -110,7 +110,7 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
       get_cap(c("igcc", "pc", "coalchp", "igccc"), "|Electricity|+|Coal"),
       get_cap("dot",                               "|Electricity|+|Oil"),
       get_cap(c("ngcc", "ngt", "gaschp", "ngccc"), "|Electricity|+|Gas"),
-      if("biopyrel" %in% getNames(gms_data, dim=1)){
+      if("biopyrel" %in% getNames(gms_data, dim=1)){  # for backwards compatibility, to be removed with v360 (TD)
         setNames(dimSums(gms_data[, , c("bioigccc", "biochp", "bioigcc")], dim = 3) 
           + dimSums(gms_data[, , c("biopyrel")] * dataoc[, , "pebiolc.sebiochar.biopyrel.seel"], dim = 3, na.rm = TRUE)
           + dimSums(gms_data[, , c("biopyrchp")] * dataoc[, , "pebiolc.sebiochar.biopyrchp.seel"], dim = 3, na.rm = TRUE), 
@@ -145,7 +145,7 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
       get_cap("gaschp",                         "|Electricity|Gas|CHP"),
       get_cap("ngt",                            "|Electricity|Gas|GT"),
       get_cap(c("bioigccc"),                    "|Electricity|Biomass|w/ CC"),
-      if("biopyrel" %in% getNames(gms_data, dim=1)){
+      if("biopyrel" %in% getNames(gms_data, dim=1)){  # for backwards compatibility, to be removed with v360 (TD)
         setNames(dimSums(gms_data[, , c("biochp", "bioigcc")], dim = 3) 
               + dimSums(gms_data[, , c("biopyrel")] * dataoc[, , "pebiolc.sebiochar.biopyrel.seel"], dim = 3, na.rm = TRUE)
               + dimSums(gms_data[, , c("biopyrchp")] * dataoc[, , "pebiolc.sebiochar.biopyrchp.seel"], dim = 3, na.rm = TRUE), 
@@ -198,7 +198,7 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
       get_cap("geohe", "|Heat|+|Electricity|Heat Pump"),
       setNames(dimSums(gms_data[, , c("coalhp")], dim = 3)
             + dimSums(gms_data[, , c("coalchp")] * dataoc[, , "pecoal.seel.coalchp.sehe"], dim = 3, na.rm = TRUE), full_name("|Heat|+|Coal")),
-      if("biopyrhe" %in% getNames(gms_data, dim=1)){
+      if("biopyrhe" %in% getNames(gms_data, dim=1)){  # for backwards compatibility, to be removed with v360 (TD)
         setNames(dimSums(gms_data[, , c("biohp")], dim = 3) 
             + dimSums(gms_data[, , c("biochp")] * dataoc[, , "pebiolc.seel.biochp.sehe"], dim = 3, na.rm = TRUE)
             + dimSums(gms_data[, , c("biopyrhe")] * dataoc[, , "pebiolc.sebiochar.biopyrhe.sehe"], dim = 3, na.rm = TRUE)
@@ -225,7 +225,7 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
       get_cap(c("coalftrec", "coalftcrec"),                                  "|Liquids|+|Coal"),
       get_cap(c("refliq"),                                                   "|Liquids|+|Oil"),
       get_cap(c("gasftrec", "gasftcrec"),                                    "|Liquids|+|Gas"),
-      if("biopyrliq" %in% getNames(gms_data, dim=1)){
+      if("biopyrliq" %in% getNames(gms_data, dim=1)){ # for backwards compatibility, to be removed with v360 (TD)
           setNames(dimSums(gms_data[, , c("bioftrec", "bioftcrec", "biodiesel", "bioeths", "bioethl")], dim = 3)
               + dimSums(gms_data[, , c("biopyrliq")] * dataoc[, , "pebiolc.sebiochar.biopyrliq.seliqbio"], dim = 3, na.rm = TRUE), 
               full_name("|Liquids|+|Biomass"))
@@ -248,7 +248,7 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
     cap_solids <- mbind(cap_solids, setNames(dimSums(cap_solids, dim = 3), full_name("|Solids"))) # sum of the above
     
     # biochar
-    if("biopyrel" %in% getNames(gms_data, dim=1)){
+    if("biopyrel" %in% getNames(gms_data, dim=1)){  # for backwards compatibility, to be removed with v360 (TD)
     cap_biochar <- mbind(
       get_cap(c("biopyronly", "biopyrhe", "biopyrel", "biopyrchp", "biopyrliq"),  "|Biochar"))
       } else { 
