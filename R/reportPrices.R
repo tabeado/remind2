@@ -75,8 +75,8 @@ reportPrices <- function(gdx, output = NULL, regionSubsetList = NULL,
   bio_tax_factor <- readGDX(gdx, name = "p21_tau_bioenergy_tax", format = "first_found", react = "silent")[, t, ]
   if (is.null(bio_tax_factor)) bio_tax_factor <- readGDX(gdx, name = "v21_tau_bio", field = "l", format = "first_found")[, t, ]
   pm_pvp         <- readGDX(gdx, name = c("pm_pvp", "p80_pvp"), format = "first_found")[, t, p80_subset]
-  pm_MPortsPrice <- readGDX(gdx,name=c("pm_MPortsPrice"),format = "first_found")[, t, ]
-  pm_XPortsPrice <- readGDX(gdx,name=c("pm_XPortsPrice"),format = "first_found")[, t, ]
+  pm_MPortsPrice <- readGDX(gdx, name=c("pm_MPortsPrice"), format = "first_found")[, t, ]
+  pm_XPortsPrice <- readGDX(gdx, name=c("pm_XPortsPrice"), format = "first_found")[, t, ]
   pm_taxCO2eq    <- readGDX(gdx, name = c("pm_taxCO2eq", "pm_tau_CO2_tax"), format = "first_found")[, t, ]
   pm_taxCO2eqSum <- readGDX(gdx, name = "pm_taxCO2eqSum", format = "first_found")[, t, ]
   pm_taxCO2eqSCC <- readGDX(gdx, name = "pm_taxCO2eqSCC", format = "first_found")[, t, ]
@@ -957,7 +957,18 @@ reportPrices <- function(gdx, output = NULL, regionSubsetList = NULL,
                "Price|Final Energy|Industry|Gases (US$2017/GJ)"       = "FE|Industry|Gases (EJ/yr)",
                "Price|Final Energy|Industry|Hydrogen (US$2017/GJ)"       = "FE|Industry|Hydrogen (EJ/yr)",
                "Price|Final Energy|Industry|Heat (US$2017/GJ)"       = "FE|Industry|Heat (EJ/yr)",
-               "Price|Final Energy|Industry|Solids (US$2017/GJ)"       = "FE|Industry|Solids (EJ/yr)"
+               "Price|Final Energy|Industry|Solids (US$2017/GJ)"       = "FE|Industry|Solids (EJ/yr)",
+               
+               "Trade|Price|Imports|SE|Electricity (US$2017/GJ)"      = "Trade|Imports|SE|Electricity (EJ/yr)",
+               "Trade|Price|Imports|SE|Hydrogen (US$2017/GJ)"         = "Trade|Imports|SE|Hydrogen (EJ/yr)",
+               "Trade|Price|Imports|SE|Liquids|Biomass (US$2017/GJ)"  = "Trade|Imports|SE|Liquids|Biomass (EJ/yr)",
+               "Trade|Price|Imports|SE|Liquids|Hydrogen (US$2017/GJ)" = "Trade|Imports|SE|Liquids|Hydrogen (EJ/yr)",
+               "Trade|Price|Imports|SE|Gases|Hydrogen (US$2017/GJ)"   = "Trade|Imports|SE|Gases|Hydrogen (EJ/yr)",
+               "Trade|Price|Exports|SE|Electricity (US$2017/GJ)"      = "Trade|Exports|SE|Electricity (EJ/yr)",
+               "Trade|Price|Exports|SE|Hydrogen (US$2017/GJ)"         = "Trade|Exports|SE|Hydrogen (EJ/yr)",
+               "Trade|Price|Exports|SE|Liquids|Biomass (US$2017/GJ)"  = "Trade|Exports|SE|Liquids|Biomass (EJ/yr)",
+               "Trade|Price|Exports|SE|Liquids|Hydrogen (US$2017/GJ)" = "Trade|Exports|SE|Liquids|Hydrogen (EJ/yr)",
+               "Trade|Price|Exports|SE|Gases|Hydrogen (US$2017/GJ)"   = "Trade|Exports|SE|Gases|Hydrogen (EJ/yr)"
   )
 
   # transport-specific mappings depending on realization
