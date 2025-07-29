@@ -75,6 +75,8 @@ reportPrices <- function(gdx, output = NULL, regionSubsetList = NULL,
   bio_tax_factor <- readGDX(gdx, name = "p21_tau_bioenergy_tax", format = "first_found", react = "silent")[, t, ]
   if (is.null(bio_tax_factor)) bio_tax_factor <- readGDX(gdx, name = "v21_tau_bio", field = "l", format = "first_found")[, t, ]
   pm_pvp         <- readGDX(gdx, name = c("pm_pvp", "p80_pvp"), format = "first_found")[, t, p80_subset]
+  pm_MPortsPrice <- readGDX(gdx,name=c("pm_MPortsPrice"),format = "first_found")[, t, ]
+  pm_XPortsPrice <- readGDX(gdx,name=c("pm_XPortsPrice"),format = "first_found")[, t, ]
   pm_taxCO2eq    <- readGDX(gdx, name = c("pm_taxCO2eq", "pm_tau_CO2_tax"), format = "first_found")[, t, ]
   pm_taxCO2eqSum <- readGDX(gdx, name = "pm_taxCO2eqSum", format = "first_found")[, t, ]
   pm_taxCO2eqSCC <- readGDX(gdx, name = "pm_taxCO2eqSCC", format = "first_found")[, t, ]
@@ -441,6 +443,33 @@ reportPrices <- function(gdx, output = NULL, regionSubsetList = NULL,
       )
     }
   }
+
+  ## SE Trade Prices
+  out <- mbind(out,
+               setNames(mselect(pm_MPortsPrice, all_enty = "seel") * tdptwyr2dpgj,
+                        "Trade|Price|Imports|SE|Electricity (US$2017/GJ)"),
+               setNames(mselect(pm_MPortsPrice, all_enty = "seh2") * tdptwyr2dpgj,
+                        "Trade|Price|Imports|SE|Hydrogen (US$2017/GJ)"),
+               setNames(mselect(pm_MPortsPrice, all_enty = "sesobio") * tdptwyr2dpgj,
+                        "Trade|Price|Imports|SE|Liquids|Biomass (US$2017/GJ)"),
+               setNames(mselect(pm_MPortsPrice, all_enty = "seliqsyn") * tdptwyr2dpgj,
+                        "Trade|Price|Imports|SE|Liquids|Hydrogen (US$2017/GJ)")
+               setNames(mselect(pm_MPortsPrice, all_enty = "segasyn") * tdptwyr2dpgj,
+                        "Trade|Price|Imports|SE|Gases|Hydrogen (US$2017/GJ)")
+  )
+
+  out <- mbind(out,
+               setNames(mselect(pm_XPortsPrice, all_enty = "seel") * tdptwyr2dpgj,
+                        "Trade|Price|Exports|SE|Electricity (US$2017/GJ)"),
+               setNames(mselect(pm_XPortsPrice, all_enty = "seh2") * tdptwyr2dpgj,
+                        "Trade|Price|Exports|SE|Hydrogen (US$2017/GJ)"),
+               setNames(mselect(pm_XPortsPrice, all_enty = "sesobio") * tdptwyr2dpgj,
+                        "Trade|Price|Exports|SE|Liquids|Biomass (US$2017/GJ)"),
+               setNames(mselect(pm_XPortsPrice, all_enty = "seliqsyn") * tdptwyr2dpgj,
+                        "Trade|Price|Exports|SE|Liquids|Hydrogen (US$2017/GJ)"),
+               setNames(mselect(pm_XPortsPrice, all_enty = "segasyn") * tdptwyr2dpgj,
+                        "Trade|Price|Exports|SE|Gases|Hydrogen (US$2017/GJ)")
+  )
 
   ## detailed FE price calculations ----
 
