@@ -275,7 +275,7 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
     get_prodSE("pebios", seLiq,                 name = "SE|Liquids|Biomass|Conventional Ethanol (EJ/yr)"),
     get_prodSE(peBio, seLiq, "bioftcrec",       name = "SE|Liquids|Biomass|BioFTR|w/ CC (EJ/yr)"),
     get_prodSE(peBio, seLiq, "bioftrec",        name = "SE|Liquids|Biomass|BioFTR|w/o CC (EJ/yr)"),
-    get_prodSE(peBio, seLiq, "biopyrliq",       name = "SE|Liquids|Biomass|Pyrolysis w/ BioFTR (EJ/yr)"),
+    get_prodSE(peBio, seLiq, "biopyrliq",       name = "SE|Liquids|Biomass|BioFTR|w/ pyrolysis (EJ/yr)"), 
     get_prodSE(peBio, seLiq, "biodiesel",       name = "SE|Liquids|Biomass|Biodiesel (EJ/yr)"),
     get_prodSE(peBio, seLiq, "bioethl",         name = "SE|Liquids|Biomass|Lignocellulosic Ethanol (EJ/yr)"),
     get_prodSE("pebioil", seLiq,                name = "SE|Liquids|Biomass|Non-Cellulosic|+|Oil-based (EJ/yr)"),
