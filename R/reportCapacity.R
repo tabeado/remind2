@@ -247,10 +247,12 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
     
     # biochar
     if("biopyronly" %in% getNames(gms_data, dim=1)){ # for backwards compatibility, to be removed with v360 (TD)
-    cap_biochar <- mbind(
-      get_cap(c("biopyronly", "biopyrhe", "biopyrchp", "biopyrliq"), "|Biochar"))
-      } else { 
-    cap_biochar <- magclass::new.magpie(getRegions(gms_data), getYears(gms_data), full_name("|Biochar"), fill = 0)
+      s_tBC_2_TWa <- readGDX(gdx, name = "s_tBC_2_TWa", format = "first_found", react = "silent") # Biochar calorific value
+      factor_biochar <- 1 / (s_tBC_2_TWa * 10^6 * 10^3) # 1 / ([TWa/t BC] * 10^6 [t BC/ Mt BC] * 10^3 [GW/TW]) = 1 / [GWa/MtBC] = [Mt BC/ GWa]
+      unit_biochar <- ifelse(prefix == "Cap", " (Mt Biochar/yr)", " (Mt Biochar/yr/yr)") # finding the relevant unit
+
+      cap_biochar <- setNames(dimSums(gms_data[, , c("biopyronly", "biopyrhe", "biopyrchp", "biopyrliq")], dim = 3) * 
+                                    factor_biochar, paste0(prefix,"|Biochar", unit_biochar))
     }
 
     reported_cap <- mbind(cap_electricity, cap_storage, cap_hydrogen, cap_heat, cap_gas, cap_liquids, cap_solids, cap_biochar)
@@ -320,9 +322,10 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
     magclass::getNames(reported_cumul),
     ifelse(
       grepl("Cumulative Cap\\|Carbon Management", magclass::getNames(reported_cumul)),
-      " (Mt CO2/yr)", 
-      " (GW)"
-    )
+      " (Mt CO2/yr)",
+      ifelse(grepl("Cumulative Cap\\|Biochar", magclass::getNames(reported_cumul)),
+      " (Mt Biochar/yr)",
+      " (GW)"))
   )
 
 
