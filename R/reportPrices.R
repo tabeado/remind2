@@ -453,7 +453,7 @@ reportPrices <- function(gdx, output = NULL, regionSubsetList = NULL,
                setNames(mselect(pm_MPortsPrice, all_enty = "sesobio") * tdptwyr2dpgj,
                         "Trade|Price|Imports|SE|Liquids|Biomass (US$2017/GJ)"),
                setNames(mselect(pm_MPortsPrice, all_enty = "seliqsyn") * tdptwyr2dpgj,
-                        "Trade|Price|Imports|SE|Liquids|Hydrogen (US$2017/GJ)")
+                        "Trade|Price|Imports|SE|Liquids|Hydrogen (US$2017/GJ)"),
                setNames(mselect(pm_MPortsPrice, all_enty = "segasyn") * tdptwyr2dpgj,
                         "Trade|Price|Imports|SE|Gases|Hydrogen (US$2017/GJ)")
   )
