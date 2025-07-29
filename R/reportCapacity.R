@@ -70,12 +70,12 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
   v_earlyreti <-   v_earlyreti[, ttot, ]
   t2005 <- ttot[ttot > 2004]
 
-  ####### fix negative values of dataoc to 0 - using the lines from reportSE.R ##################
-  #### adjust regional dimension of dataoc
-  dataoc <- new.magpie(getRegions(vm_cap), getYears(pm_prodCouple), magclass::getNames(pm_prodCouple), fill = 0)
-  dataoc[getRegions(pm_prodCouple), , ] <- pm_prodCouple
-  getSets(dataoc) <- getSets(pm_prodCouple)
-  dataoc[dataoc < 0] <- 0
+  ####### fix negative values of prodCouple to 0 - using the lines from reportSE.R ##################
+  #### adjust regional dimension of prodCouple
+  prodCouple <- new.magpie(getRegions(vm_cap), getYears(pm_prodCouple), magclass::getNames(pm_prodCouple), fill = 0)
+  prodCouple[getRegions(pm_prodCouple), , ] <- pm_prodCouple
+  getSets(prodCouple) <- getSets(pm_prodCouple)
+  prodCouple[prodCouple < 0] <- 0
 
   ####### internal function for reporting ###########
   # this function is just a shortcut for setNames(dimSums(vm_cap ...))
@@ -112,7 +112,7 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
       get_cap(c("ngcc", "ngt", "gaschp", "ngccc"), "|Electricity|+|Gas"),
       if("biopyrchp" %in% getNames(gms_data, dim=1)){  # for backwards compatibility, to be removed with v360 (TD)
         setNames(dimSums(gms_data[, , c("bioigccc", "biochp", "bioigcc")], dim = 3) 
-          + dimSums(gms_data[, , c("biopyrchp")] * dataoc[, , "pebiolc.sebiochar.biopyrchp.seel"], dim = 3, na.rm = TRUE), 
+          + dimSums(gms_data[, , c("biopyrchp")] * prodCouple[, , "pebiolc.sebiochar.biopyrchp.seel"], dim = 3, na.rm = TRUE), 
           full_name("|Electricity|+|Biomass")) 
       } else {get_cap(c("bioigccc", "biochp", "bioigcc"), "|Electricity|+|Biomass")},
       get_cap(c("tnrs", "fnrs"),                   "|Electricity|+|Nuclear")
@@ -146,7 +146,7 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
       get_cap(c("bioigccc"),                    "|Electricity|Biomass|w/ CC"),
       if("biopyrchp" %in% getNames(gms_data, dim=1)){  # for backwards compatibility, to be removed with v360 (TD)
         setNames(dimSums(gms_data[, , c("biochp", "bioigcc")], dim = 3) 
-              + dimSums(gms_data[, , c("biopyrchp")] * dataoc[, , "pebiolc.sebiochar.biopyrchp.seel"], dim = 3, na.rm = TRUE), 
+              + dimSums(gms_data[, , c("biopyrchp")] * prodCouple[, , "pebiolc.sebiochar.biopyrchp.seel"], dim = 3, na.rm = TRUE), 
                                       full_name("|Electricity|Biomass|w/o CC"))
       } else {
         get_cap(c("biochp", "bioigcc"),         "|Electricity|Biomass|w/o CC")},
@@ -195,17 +195,17 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
       get_cap("solhe", "|Heat|+|Solar"),
       get_cap("geohe", "|Heat|+|Electricity|Heat Pump"),
       setNames(dimSums(gms_data[, , c("coalhp")], dim = 3)
-            + dimSums(gms_data[, , c("coalchp")] * dataoc[, , "pecoal.seel.coalchp.sehe"], dim = 3, na.rm = TRUE), full_name("|Heat|+|Coal")),
+            + dimSums(gms_data[, , c("coalchp")] * prodCouple[, , "pecoal.seel.coalchp.sehe"], dim = 3, na.rm = TRUE), full_name("|Heat|+|Coal")),
       if("biopyrhe" %in% getNames(gms_data, dim=1)){  # for backwards compatibility, to be removed with v360 (TD)
         setNames(dimSums(gms_data[, , c("biohp")], dim = 3) 
-            + dimSums(gms_data[, , c("biochp")] * dataoc[, , "pebiolc.seel.biochp.sehe"], dim = 3, na.rm = TRUE)
-            + dimSums(gms_data[, , c("biopyrhe")] * dataoc[, , "pebiolc.sebiochar.biopyrhe.sehe"], dim = 3, na.rm = TRUE)
-            + dimSums(gms_data[, , c("biopyrchp")] * dataoc[, , "pebiolc.sebiochar.biopyrchp.sehe"], dim = 3, na.rm = TRUE), full_name("|Heat|+|Biomass"))
+            + dimSums(gms_data[, , c("biochp")] * prodCouple[, , "pebiolc.seel.biochp.sehe"], dim = 3, na.rm = TRUE)
+            + dimSums(gms_data[, , c("biopyrhe")] * prodCouple[, , "pebiolc.sebiochar.biopyrhe.sehe"], dim = 3, na.rm = TRUE)
+            + dimSums(gms_data[, , c("biopyrchp")] * prodCouple[, , "pebiolc.sebiochar.biopyrchp.sehe"], dim = 3, na.rm = TRUE), full_name("|Heat|+|Biomass"))
         } else {setNames(dimSums(gms_data[, , c("biohp")], dim = 3)
-            + dimSums(gms_data[, , c("biochp")] * dataoc[, , "pebiolc.seel.biochp.sehe"], dim = 3, na.rm = TRUE), full_name("|Heat|+|Biomass")) 
+            + dimSums(gms_data[, , c("biochp")] * prodCouple[, , "pebiolc.seel.biochp.sehe"], dim = 3, na.rm = TRUE), full_name("|Heat|+|Biomass")) 
             },
       setNames(dimSums(gms_data[, , c("gashp")], dim = 3)
-            + dimSums(gms_data[, , c("gaschp")] * dataoc[, , "pegas.seel.gaschp.sehe"], dim = 3, na.rm = TRUE),    full_name("|Heat|+|Gas"))
+            + dimSums(gms_data[, , c("gaschp")] * prodCouple[, , "pegas.seel.gaschp.sehe"], dim = 3, na.rm = TRUE),    full_name("|Heat|+|Gas"))
     )
     cap_heat <- mbind(cap_heat, setNames(dimSums(cap_heat, dim = 3), full_name("|Heat"))) # sum of the above
 
@@ -225,7 +225,7 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
       get_cap(c("gasftrec", "gasftcrec"),                                    "|Liquids|+|Gas"),
       if("biopyrliq" %in% getNames(gms_data, dim=1)){ # for backwards compatibility, to be removed with v360 (TD)
           setNames(dimSums(gms_data[, , c("bioftrec", "bioftcrec", "biodiesel", "bioeths", "bioethl")], dim = 3)
-              + dimSums(gms_data[, , c("biopyrliq")] * dataoc[, , "pebiolc.sebiochar.biopyrliq.seliqbio"], dim = 3, na.rm = TRUE), 
+              + dimSums(gms_data[, , c("biopyrliq")] * prodCouple[, , "pebiolc.sebiochar.biopyrliq.seliqbio"], dim = 3, na.rm = TRUE), 
               full_name("|Liquids|+|Biomass"))
              } else {
          get_cap(c("bioftrec", "bioftcrec", "biodiesel", "bioeths", "bioethl"), "|Liquids|+|Biomass")},
