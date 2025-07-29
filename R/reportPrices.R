@@ -48,6 +48,8 @@ reportPrices <- function(gdx, output = NULL, regionSubsetList = NULL,
     output <- mbind(output, reportExtraction(gdx, regionSubsetList = regionSubsetList, t = t))
     message("- reportMacroEconomy")
     output <- mbind(output, reportMacroEconomy(gdx, regionSubsetList = regionSubsetList, t = t)[, getYears(output), ])
+    message("- reportMacroEconomy")
+    output <- mbind(output, reportTrade(gdx, regionSubsetList = regionSubsetList, t = t)[, getYears(output), ])
   }
   output[is.na(output)] <- 0     # substitute na by 0
   output <- deletePlus(output)   # delete "+" and "++" from variable names
