@@ -166,10 +166,10 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL,
   }
 
   if ("biopyronly" %in% te){ # for backwards compatibility, to be removed with v360 (TD)
-    techmap <- append(techmap, c("biopyronly" = "Biochar|No co-product",
-                                 "biopyrhe" = "Biochar|Heat",
-                                 "biopyrchp" = "Biochar|Combined Heat and Power",
-                                 "biopyrliq" = "Biochar|Liquids"))
+    techmap <- append(techmap, c("biopyronly" = "Biochar|w/o co-product",
+                                 "biopyrhe" = "Biochar|w/ heat",
+                                 "biopyrchp" = "Biochar|w/ heat and power",
+                                 "biopyrliq" = "Biochar|w/ liquids"))
   }
 
   if (("seliq" %in% sety) || ("seliqbio" %in% sety)) {

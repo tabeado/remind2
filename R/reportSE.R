@@ -307,19 +307,18 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   ## Biochar
   out <- mbind(out,
     get_prodSE(entyPe, sebiochar,                    name = "SE|Biochar (EJ/yr)"),
-    get_prodSE(entyPe, sebiochar, te = "biopyronly", name = "SE|Biochar|+|No co-product (EJ/yr)"),
-    get_prodSE(entyPe, sebiochar, te = "biopyrhe", name = "SE|Biochar|+|Heat (EJ/yr)"),
-    get_prodSE(entyPe, sebiochar, te = "biopyrchp", name = "SE|Biochar|+|Combined Heat and Power (EJ/yr)"),
-    get_prodSE(entyPe, sebiochar, te = "biopyrliq",  name = "SE|Biochar|+|Liquids (EJ/yr)")
+    get_prodSE(entyPe, sebiochar, te = "biopyronly", name = "SE|Biochar|+|w/o co-product (EJ/yr)"),
+    get_prodSE(entyPe, sebiochar, te = "biopyrhe", name = "SE|Biochar|+|w/ heat (EJ/yr)"),
+    get_prodSE(entyPe, sebiochar, te = "biopyrchp", name = "SE|Biochar|+|w/ heat and power (EJ/yr)"),
+    get_prodSE(entyPe, sebiochar, te = "biopyrliq",  name = "SE|Biochar|+|w/ liquids (EJ/yr)")
   )
 
   out <- mbind(out,
     setNames(out[, , "SE|Biochar (EJ/yr)"] / TWa_2_EJ / s_tBC_2_TWa * 10^-6, "SE|Biochar Mt (Mt/yr)"),
-    setNames(out[, , "SE|Biochar|+|No co-product (EJ/yr)"] / TWa_2_EJ / s_tBC_2_TWa / 10^6, "SE|Biochar Mt|+|No co-product (Mt/yr)"),
-    setNames(out[, , "SE|Biochar|+|Heat (EJ/yr)"] / TWa_2_EJ / s_tBC_2_TWa / 10^6, "SE|Biochar Mt|+|Heat (Mt/yr)"),
-    setNames(out[, , "SE|Biochar|+|Electricity (EJ/yr)"] / TWa_2_EJ / s_tBC_2_TWa / 10^6, "SE|Biochar Mt|+|Electricity (Mt/yr)"),
-    setNames(out[, , "SE|Biochar|+|Combined Heat and Power (EJ/yr)"] / TWa_2_EJ / s_tBC_2_TWa / 10^6, "SE|Biochar Mt|+|Combined Heat and Power (Mt/yr)"),
-    setNames(out[, , "SE|Biochar|+|Liquids (EJ/yr)"] / TWa_2_EJ / s_tBC_2_TWa / 10^6, "SE|Biochar Mt|+|Liquids (Mt/yr)")
+    setNames(out[, , "SE|Biochar|+|w/o co-product (EJ/yr)"] / TWa_2_EJ / s_tBC_2_TWa / 10^6, "SE|Biochar Mt|+|w/o co-product (Mt/yr)"),
+    setNames(out[, , "SE|Biochar|+|w/ heat (EJ/yr)"] / TWa_2_EJ / s_tBC_2_TWa / 10^6, "SE|Biochar Mt|+|w/ heat (Mt/yr)"),
+    setNames(out[, , "SE|Biochar|+|w/ heat and power (EJ/yr)"] / TWa_2_EJ / s_tBC_2_TWa / 10^6, "SE|Biochar Mt|+|w/ heat and power (Mt/yr)"),
+    setNames(out[, , "SE|Biochar|+|w/ liquids (EJ/yr)"] / TWa_2_EJ / s_tBC_2_TWa / 10^6, "SE|Biochar Mt|+|w/ liquids (Mt/yr)")
   )
 
   ## Trade
