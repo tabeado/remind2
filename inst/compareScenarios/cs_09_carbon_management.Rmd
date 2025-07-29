@@ -173,18 +173,28 @@ showAreaAndBarPlots(data,
                     tot = "Carbon Management|Feedstocks")
 ```
 
-# Biochar production 
+# CDR extras
+
+## Biochar production
 ```{r Biochar Plots}
 showLinePlots(data, "SE|Biochar Mt")
 showAreaAndBarPlots(
   data = data,
   vars = c('SE|Biochar Mt|No co-product',
            'SE|Biochar Mt|Heat', 
-           'SE|Biochar Mt|Electricity',
            'SE|Biochar Mt|Combined Heat and Power',
            'SE|Biochar Mt|Liquids'),
 
   tot = 'SE|Biochar Mt',
   scales = 'fixed',
   orderVars = 'user')
+```
+
+## EW rock spreading
+```{r CO2 EW rock}
+items <- c(
+  "CDR|Rocks spread",
+  "CDR|Rocks weathering"
+)
+walk(items, showLinePlots, data = data)
 ```

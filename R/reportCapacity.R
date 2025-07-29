@@ -110,9 +110,8 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
       get_cap(c("igcc", "pc", "coalchp", "igccc"), "|Electricity|+|Coal"),
       get_cap("dot",                               "|Electricity|+|Oil"),
       get_cap(c("ngcc", "ngt", "gaschp", "ngccc"), "|Electricity|+|Gas"),
-      if("biopyrel" %in% getNames(gms_data, dim=1)){  # for backwards compatibility, to be removed with v360 (TD)
+      if("biopyrchp" %in% getNames(gms_data, dim=1)){  # for backwards compatibility, to be removed with v360 (TD)
         setNames(dimSums(gms_data[, , c("bioigccc", "biochp", "bioigcc")], dim = 3) 
-          + dimSums(gms_data[, , c("biopyrel")] * dataoc[, , "pebiolc.sebiochar.biopyrel.seel"], dim = 3, na.rm = TRUE)
           + dimSums(gms_data[, , c("biopyrchp")] * dataoc[, , "pebiolc.sebiochar.biopyrchp.seel"], dim = 3, na.rm = TRUE), 
           full_name("|Electricity|+|Biomass")) 
       } else {get_cap(c("bioigccc", "biochp", "bioigcc"), "|Electricity|+|Biomass")},
@@ -145,9 +144,8 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
       get_cap("gaschp",                         "|Electricity|Gas|CHP"),
       get_cap("ngt",                            "|Electricity|Gas|GT"),
       get_cap(c("bioigccc"),                    "|Electricity|Biomass|w/ CC"),
-      if("biopyrel" %in% getNames(gms_data, dim=1)){  # for backwards compatibility, to be removed with v360 (TD)
+      if("biopyrchp" %in% getNames(gms_data, dim=1)){  # for backwards compatibility, to be removed with v360 (TD)
         setNames(dimSums(gms_data[, , c("biochp", "bioigcc")], dim = 3) 
-              + dimSums(gms_data[, , c("biopyrel")] * dataoc[, , "pebiolc.sebiochar.biopyrel.seel"], dim = 3, na.rm = TRUE)
               + dimSums(gms_data[, , c("biopyrchp")] * dataoc[, , "pebiolc.sebiochar.biopyrchp.seel"], dim = 3, na.rm = TRUE), 
                                       full_name("|Electricity|Biomass|w/o CC"))
       } else {
@@ -248,9 +246,9 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
     cap_solids <- mbind(cap_solids, setNames(dimSums(cap_solids, dim = 3), full_name("|Solids"))) # sum of the above
     
     # biochar
-    if("biopyrel" %in% getNames(gms_data, dim=1)){  # for backwards compatibility, to be removed with v360 (TD)
+    if("biopyronly" %in% getNames(gms_data, dim=1)){ # for backwards compatibility, to be removed with v360 (TD)
     cap_biochar <- mbind(
-      get_cap(c("biopyronly", "biopyrhe", "biopyrel", "biopyrchp", "biopyrliq"),  "|Biochar"))
+      get_cap(c("biopyronly", "biopyrhe", "biopyrchp", "biopyrliq"), "|Biochar"))
       } else { 
     cap_biochar <- magclass::new.magpie(getRegions(gms_data), getYears(gms_data), full_name("|Biochar"), fill = 0)
     }

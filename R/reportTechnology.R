@@ -168,7 +168,6 @@ reportTechnology <- function(gdx, output = NULL, regionSubsetList = NULL,
   if ("biopyronly" %in% te){ # for backwards compatibility, to be removed with v360 (TD)
     techmap <- append(techmap, c("biopyronly" = "Biochar|No co-product",
                                  "biopyrhe" = "Biochar|Heat",
-                                 "biopyrel" = "Biochar|Electricity",
                                  "biopyrchp" = "Biochar|Combined Heat and Power",
                                  "biopyrliq" = "Biochar|Liquids"))
   }
