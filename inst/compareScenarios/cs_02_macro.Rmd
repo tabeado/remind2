@@ -232,23 +232,15 @@ vars <-
 walk(vars, showLinePlots, data = data)
 ```
 
-### SE Imports Trade
+### SE Trade
 
-```{r SE Imports Trade}
+```{r SE Trade}
 vars <-
   levels(data$variable) %>%
-  str_subset("^Trade\\|Imports\\|SE\\|")
+  str_subset("^Trade\\|SE\\|")
 walk(vars, showLinePlots, data = data)
 ```
 
-### SE Exports Trade
-
-```{r SE Exports Trade}
-vars <-
-  levels(data$variable) %>%
-  str_subset("^Trade\\|Exports\\|SE\\|")
-walk(vars, showLinePlots, data = data)
-```
 
 ## FE intensity of GDP_PPP
 ### area plot
