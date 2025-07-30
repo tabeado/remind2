@@ -355,6 +355,10 @@ reportCosts <- function(gdx,output=NULL,regionSubsetList=NULL,t=c(seq(2005,2060,
   ########## Energy System costs ########
   #######################################
 
+  tmp  <- mbind(tmp,setNames(v_costin*1000,"Energy System Cost|Supply|Investments (billion US$2017/yr)"))
+  tmp  <- mbind(tmp,setNames(v_costom*1000,"Energy System Cost|Supply|Operation and Maintenance Cost (billion US$2017/yr)"))
+  tmp  <- mbind(tmp,setNames(tmp[,,"Fuel costs for own ESM (billion US$2017/yr)"],"Energy System Cost|Supply|Fuel Cost (billion US$2017/yr)"))
+
   cost <- (v_costin + v_costom) * 1000 + tmp[,,"Fuel costs for own ESM (billion US$2017/yr)"]
   tmp  <- mbind(tmp,setNames(cost,"Energy system costs (billion US$2017/yr)"))
 
