@@ -180,10 +180,10 @@ showAreaAndBarPlots(data,
 showLinePlots(data, "SE|Biochar Mt")
 showAreaAndBarPlots(
   data = data,
-  vars = c('SE|Biochar Mt|No co-product',
-           'SE|Biochar Mt|Heat', 
-           'SE|Biochar Mt|Combined Heat and Power',
-           'SE|Biochar Mt|Liquids'),
+  vars = c('SE|Biochar Mt|w/o co-product',
+           'SE|Biochar Mt|w/ heat', 
+           'SE|Biochar Mt|w/ heat and power',
+           'SE|Biochar Mt|w/ liquids'),
 
   tot = 'SE|Biochar Mt',
   scales = 'fixed',
