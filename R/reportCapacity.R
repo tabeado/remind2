@@ -247,7 +247,7 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
     
     # biochar
     if("biopyronly" %in% getNames(gms_data, dim=1)){ # for backwards compatibility, to be removed with v360 (TD)
-      s_tBC_2_TWa <- readGDX(gdx, name = "s_tBC_2_TWa", format = "first_found", react = "silent") # Biochar calorific value
+      s_tBC_2_TWa <- readGDX(gdx, name = "sm_tBC_2_TWa", format = "first_found", react = "silent") # Biochar calorific value
       factor_biochar <- 1 / (s_tBC_2_TWa * 10^6 * 10^3) # 1 / ([TWa/t BC] * 10^6 [t BC/ Mt BC] * 10^3 [GW/TW]) = 1 / [GWa/MtBC] = [Mt BC/ GWa]
       unit_biochar <- ifelse(prefix == "Cap", " (Mt Biochar/yr)", " (Mt Biochar/yr/yr)") # finding the relevant unit
 

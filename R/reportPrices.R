@@ -62,7 +62,7 @@ reportPrices <- function(gdx, output = NULL, regionSubsetList = NULL,
   s_twa2mwh <- readGDX(gdx, "sm_TWa_2_MWh", format = "first_found", reacht = "silent")
   tdptwyr2dpgj <- 31.71   # TerraDollar per TWyear to Dollar per GJ
   p80_subset   <- c("perm", "good", "peur", "peoil", "pegas", "pecoal", "pebiolc") # TODO: read in from gdx as sets trade
-  s_tBC_2_TWa <- readGDX(gdx, name = "s_tBC_2_TWa", format = "first_found", react = "silent")
+  s_tBC_2_TWa <- readGDX(gdx, name = "sm_tBC_2_TWa", format = "first_found", react = "silent")
   sm_trillion_2_non <- readGDX(gdx, "sm_trillion_2_non", format = "first_found", react = "silent")
   ####### read in needed data #########
 
