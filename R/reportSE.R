@@ -53,7 +53,6 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   seLiq <- intersect(c("seliqfos", "seliqbio", "seliqsyn"), entySe)
   seGas <- intersect(c("segafos", "segabio", "segasyn"), entySe)
   seSol <- intersect(c("sesofos", "sesobio"), entySe)
-  sebiochar <- intersect(c("sebiochar"), entySe)
 
   ## variables
   prodSE <- readGDX(gdx, name = "vm_prodSe", field = "l", restore_zeros = FALSE) * TWa_2_EJ
@@ -306,11 +305,11 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
 
   ## Biochar
   out <- mbind(out,
-    get_prodSE(entyPe, sebiochar,                    name = "SE|Biochar (EJ/yr)"),
-    get_prodSE(entyPe, sebiochar, te = "biopyronly", name = "SE|Biochar|+|w/o co-product (EJ/yr)"),
-    get_prodSE(entyPe, sebiochar, te = "biopyrhe", name = "SE|Biochar|+|w/ heat (EJ/yr)"),
-    get_prodSE(entyPe, sebiochar, te = "biopyrchp", name = "SE|Biochar|+|w/ heat and power (EJ/yr)"),
-    get_prodSE(entyPe, sebiochar, te = "biopyrliq",  name = "SE|Biochar|+|w/ liquids (EJ/yr)")
+    get_prodSE(entyPe, "sebiochar",                    name = "SE|Biochar (EJ/yr)"),
+    get_prodSE(entyPe, "sebiochar", te = "biopyronly", name = "SE|Biochar|+|w/o co-product (EJ/yr)"),
+    get_prodSE(entyPe, "sebiochar", te = "biopyrhe",   name = "SE|Biochar|+|w/ heat (EJ/yr)"),
+    get_prodSE(entyPe, "sebiochar", te = "biopyrchp",  name = "SE|Biochar|+|w/ heat and power (EJ/yr)"),
+    get_prodSE(entyPe, "sebiochar", te = "biopyrliq",  name = "SE|Biochar|+|w/ liquids (EJ/yr)")
   )
 
   out <- mbind(out,
