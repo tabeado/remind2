@@ -253,6 +253,8 @@ reportCapacity <- function(gdx, regionSubsetList = NULL,
 
       cap_biochar <- setNames(dimSums(gms_data[, , c("biopyronly", "biopyrhe", "biopyrchp", "biopyrliq")], dim = 3) * 
                                     factor_biochar, paste0(prefix,"|Biochar", unit_biochar))
+    } else { 
+    cap_biochar <- magclass::new.magpie(getRegions(gms_data), getYears(gms_data), full_name("|Biochar"), fill = 0)
     }
 
     reported_cap <- mbind(cap_electricity, cap_storage, cap_hydrogen, cap_heat, cap_gas, cap_liquids, cap_solids, cap_biochar)
