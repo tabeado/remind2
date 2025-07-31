@@ -396,7 +396,6 @@ showAreaAndBarPlots(
   vars = rev(c('Emi|CO2|CDR|OAE',
                'Emi|CO2|CDR|EW',
                'Emi|CO2|CDR|DACCS',
-               'Emi|CO2|CDR|Biochar',
                'Emi|CO2|CDR|BECCS|Demand Side|CDR Sector',
                'Emi|CO2|CDR|Synthetic Fuel CCS|CDR Sector',
                'Emi|CO2|Energy|Demand|CDR Sector',
