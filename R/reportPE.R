@@ -65,13 +65,12 @@ reportPE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
 
     # Some technologies output a couple of SE carriers: the main product (all_enty1), and the couple product (all_enty2)
     # Add the couple PE of technologies that have SEcarrier as their couple product (and another carrier as main product)
-    pc2te_couple <- pc2te[(pc2te$all_enty %in% PEcarrier) & (pc2te$all_enty2 %in% SEcarrier) & (pc2te$all_te %in% te), ]
-    PE <- PE + dimSums(demPE[pc2te_couple] * prodCouple[pc2te_couple] / (1 + prodCouple[pc2te_couple]), dim = 3)
-    # Subtract the couple PE of technologies that have SEcarrier as their main product, but also have couple products.
     # This requires summing over each technology (dim 3) and its possibly several couple products (dim 3.4)
-    pc2te_main <- pc2te[(pc2te$all_enty %in% PEcarrier) & (pc2te$all_enty1 %in% SEcarrier) & (pc2te$all_te %in% te), ]
-    PE <- PE - dimSums(dimSums(demPE[pc2te_main] * prodCouple[pc2te_main], dim = 3.4) /
-                      (1 + dimSums(prodCouple[pc2te_main], dim = 3.4)),    dim = 3)
+    pc2te_couple <- pc2te[(pc2te$all_enty %in% PEcarrier) & (pc2te$all_enty2 %in% SEcarrier) & (pc2te$all_te %in% te), ]
+    PE <- PE + dimSums(demPE[pc2te_couple] * prodCouple[pc2te_couple] / (1 + dimSums(prodCouple[pc2te_couple], dim = 3.4)), dim = 3)
+    # Subtract the couple PE of technologies that have SEcarrier as their main product, but also have couple products.
+    pc2te_mainPr <- pc2te[(pc2te$all_enty %in% PEcarrier) & (pc2te$all_enty1 %in% SEcarrier) & (pc2te$all_te %in% te), ]
+    PE <- PE - dimSums(demPE[pc2te_mainPr] * prodCouple[pc2te_mainPr] / (1 + dimSums(prodCouple[pc2te_mainPr], dim = 3.4)), dim = 3)
 
     if (!is.null(name)) magclass::getNames(PE) <- name
     return(PE)
