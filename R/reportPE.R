@@ -44,15 +44,16 @@ reportPE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   demPE  <- readGDX(gdx, name = "vm_demPe", field = "l", restore_zeros = FALSE)
   prodSE <- readGDX(gdx, name = "vm_prodSe", field = "l", restore_zeros = FALSE)
   y <- Reduce(intersect, list(getYears(demPE), getYears(prodSE))) # calculate minimal temporal resolution
-  demPE  <- demPE[, y, pe2se] * TWa_2_EJ
-  prodSE <- prodSE[, y, entySe] * TWa_2_EJ
+  demPE  <- demPE[pe2se][, y, ] * TWa_2_EJ
+  prodSE <- mselect(prodSE, all_enty1 = entySe)[, y, ] * TWa_2_EJ
   fuExtr <- readGDX(gdx, "vm_fuExtr", field = "l")[, y, ] * TWa_2_EJ
   Mport  <- readGDX(gdx, "vm_Mport", field = "l")[, y, ] * TWa_2_EJ
   Xport  <- readGDX(gdx, "vm_Xport", field = "l")[, y, ] * TWa_2_EJ
 
   ## parameters
-  prodCouple <- readGDX(gdx, "pm_prodCouple", restore_zeros = FALSE) # share of couple production
-  prodCouple <- magclass::matchDim(prodCouple, prodSE, dim = 1, fill = 0) # adjust regional dimension
+  prodCouple_tmp <- readGDX(gdx, "pm_prodCouple", restore_zeros = FALSE) # share of couple production
+  prodCouple <- magclass::matchDim(prodCouple_tmp, prodSE, dim = 1, fill = 0) # adjust regional dimension
+  getSets(prodCouple) <- getSets(prodCouple_tmp) # necessary because matchDim overwrites sets names of dim 3
   prodCouple[prodCouple < 0] <- 0 # ignore negative values (own consumption of technologies)
 
   pm_costsPEtradeMp <- readGDX(gdx, "pm_costsPEtradeMp", restore_zeros = FALSE)
