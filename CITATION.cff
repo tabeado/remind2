@@ -9,6 +9,8 @@ authors:
 - family-names: Rodrigues
   given-names: Renato
   email: renato.rodrigues@pik-potsdam.de
+- family-names: Bantje
+  given-names: David
 - family-names: Baumstark
   given-names: Lavinia
 - family-names: Benke
@@ -35,6 +37,8 @@ authors:
   given-names: Johannes
 - family-names: Kowalczyk
   given-names: Katarzyna
+- family-names: Lécuyer
+  given-names: Fabrice
 - family-names: Levesque
   given-names: Antoine
 - family-names: Malik
@@ -74,6 +78,8 @@ authors:
 - family-names: Rüter
   given-names: Tonn
   email: tonn.rueter@pik-potsdam.de
+- family-names: Salzwedel
+  given-names: Robert
 license: LGPL-3.0
 repository-code: https://github.com/pik-piam/remind2
 
