@@ -65,13 +65,13 @@ reportPE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
     PE <- dimSums(mselect(demPE, all_enty = PEcarrier, all_enty1 = SEcarrier, all_te = te), dim = 3)
 
     # Some technologies output a couple of SE carriers: the main product (all_enty1), and the couple product (all_enty2)
-    # Add the couple PE of technologies that have SEcarrier as their couple product (and another carrier as main product)
-    # This requires summing over each technology (dim 3) and its possibly several couple products (dim 3.4)
-    pc2te_couple <- pc2te[(pc2te$all_enty %in% PEcarrier) & (pc2te$all_enty2 %in% SEcarrier) & (pc2te$all_te %in% te), ]
-    PE <- PE + dimSums(demPE[pc2te_couple] * prodCouple[pc2te_couple] / (1 + dimSums(prodCouple[pc2te_couple], dim = 3.4)), dim = 3)
-    # Subtract the couple PE of technologies that have SEcarrier as their main product, but also have couple products.
-    pc2te_mainPr <- pc2te[(pc2te$all_enty %in% PEcarrier) & (pc2te$all_enty1 %in% SEcarrier) & (pc2te$all_te %in% te), ]
-    PE <- PE - dimSums(demPE[pc2te_mainPr] * prodCouple[pc2te_mainPr] / (1 + dimSums(prodCouple[pc2te_mainPr], dim = 3.4)), dim = 3)
+    pc2te_subset <- pc2te[(pc2te$all_enty %in% PEcarrier) & (pc2te$all_te %in% te), ]
+    # Compute the share of a particular SE in the output of each technology by summing over its couple products (dim 3.4)
+    coupleContribution <- demPE[pc2te_subset] * prodCouple[pc2te_subset] / (1 + dimSums(prodCouple[pc2te_subset], dim = 3.4))
+    # Add contribution of technologies that have SEcarrier as their couple product (all_enty2) and another main product
+    PE <- PE + dimSums(mselect(coupleContribution, all_enty2 = SEcarrier), dim = 3)
+    # Subtract contribution of technologies that have SEcarrier as their main product (all_enty1) and have couple products
+    PE <- PE - dimSums(mselect(coupleContribution, all_enty1 = SEcarrier), dim = 3)
 
     if (!is.null(name)) magclass::getNames(PE) <- name
     return(PE)
