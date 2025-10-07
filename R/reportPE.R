@@ -159,7 +159,7 @@ reportPE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,c(se_Solids),               name="PE|Biomass|Solids (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,c("sehe"),                  name="PE|Biomass|Heat (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,"sehe", c("biohp","biochp"), name="PE|Biomass|Heat|w/o CC|CHP (EJ/yr)"),
-                pe_carrier(demPE,dataoc,oc2te,sety,pebio,"sehe", c("biopyrHeat","biopyrCHP","biopyrCHP850"),   
+                pe_carrier(demPE,dataoc,oc2te,sety,pebio,"sehe", c("biopyrHeat","biopyrCHP"),   
                                                                                      name="PE|Biomass|Heat|w/o CC|Pyrolysis (EJ/yr)"),
                 pe_carrier(demPE,dataoc,oc2te,sety,pebio,"sebiochar", name="PE|Biomass|Biochar (EJ/yr)"),    
                 
