@@ -82,7 +82,7 @@ reportLCOE <- function(gdx, output.type = "both") {
   ttot_before2005 <- paste0("y", ttot[which(ttot <= 2000)])
   ttot_from2005 <- paste0("y", ttot[which(ttot >= 2005)])
   te        <- readGDX(gdx, "te")
-  te <- te[!te %in% c("lng_liq", "gas_pipe", "lng_gas", "lng_ves", "coal_ves", "pipe_gas", "termX_lng", "termM_lng", "vess_lng")]
+  te <- te[!te %in% c("lng_liq", "gas_pipe", "lng_gas", "lng_ves", "coal_ves", "pipe_gas", "termX_lng", "termM_lng", "vess_lng","biochar4soil")]
   p_priceCO2 <- readGDX(gdx, name = c("p_priceCO2", "pm_priceCO2"), format = "first_found") # co2 price
 
 
@@ -119,6 +119,7 @@ reportLCOE <- function(gdx, output.type = "both") {
     teCCS     <- readGDX(gdx, "teCCS")
     teReNoBio <- readGDX(gdx, "teReNoBio")
     teCDR     <- readGDX(gdx, "te_used33")
+    teBiochar <- readGDX(gdx,"emiBiochar2te",restore_zeros = F, react = "silent")$all_te
     EW_name   <- "weathering" # necessary for backward compatibility
 
     pc2te <- readGDX(gdx, "pc2te") # mapping of couple production & consumption
