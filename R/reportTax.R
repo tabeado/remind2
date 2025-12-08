@@ -40,7 +40,13 @@ reportTax <- function(gdx,output=NULL,regionSubsetList=NULL,t=c(seq(2005,2060,5)
   ### conversion factors
   TWa_2_EJ     <- 31.536
   tdptwyr2dpgj <- 31.71 #"multipl. factor to convert (TerraDollar per TWyear) to (Dollar per GJoule)"
+  cm_frac_NetNegEmi <- readGDX(gdx, name = "cm_frac_NetNegEmi", field = "l")
 
+
+  # intermediate calculation of cost
+  pm_taxCO2eq <- readGDX(gdx, name = "pm_taxCO2eq", field = "l", format = "first_found")
+
+  
   ### initialize output
   out <- NULL
 
@@ -209,8 +215,8 @@ reportTax <- function(gdx,output=NULL,regionSubsetList=NULL,t=c(seq(2005,2060,5)
   out <- mbind(out, setNames(p21_taxrevNetNegEmi0,"Net Taxes|Net-negative emissions (billion US$2017/yr)"))
 
   # negative CO2 emissions for taxes
-  p21_emiALLco2neg0 <- readGDX(gdx, name=c("p21_emiALLco2neg0", "p21_emiAllco2neg0"), format= "first_found")[,t,]*1000
-  out <- mbind(out, setNames(p21_emiALLco2neg0,"Net Taxes|Negative emissions (billion US$2017/yr)"))
+  p21_emiALLco2neg0 <- readGDX(gdx, name=c("p21_emiALLco2neg0", "p21_emiAllco2neg0"), format= "first_found")[,t,]*1000  
+  out <- mbind(out, setNames(p21_emiALLco2neg0,"Net Taxes|Negative emissions (billion US$2017/yr)")) # THIS IS WRONG
 
   # final energy tax
   p21_taxrevFE0 <- readGDX(gdx, name=c("p21_taxrevFE0"), format= "first_found")[,t,]*1000
@@ -264,6 +270,55 @@ reportTax <- function(gdx,output=NULL,regionSubsetList=NULL,t=c(seq(2005,2060,5)
                            + out[, , "Revenue|Government|Tax|Carbon|+|Supply (billion US$2017/yr)"],
                                          "Revenue|Government|Tax|Carbon (billion US$2017/yr)")
                   )
+### WITH LUC emissions
+# CO2 revenues 
+out <- mbind(out,
+      setNames(output_wo_GLO[,,"Emi|CO2|Gross (Mt CO2/yr)"] * output_wo_GLO[,,"Price|Carbon (US$2017/t CO2)"] / 1000, 
+              "Revenue|CO2|Gross (billion US$2017/yr)"),
+      setNames(output_wo_GLO[,,"Emi|CO2|CDR|Residual CO2 (Mt CO2/yr)"] * output_wo_GLO[,,"Price|Carbon (US$2017/t CO2)"] / 1000, 
+              "Revenue|CO2|CDR|Residual CO2 (billion US$2017/yr)"),
+      setNames(output_wo_GLO[,,"Emi|CO2|CDR|Net Negative CO2 (Mt CO2/yr)"] * (output_wo_GLO[,,"Price|Carbon (US$2017/t CO2)"] * (1-cm_frac_NetNegEmi)) / 1000,
+              "Revenue|CO2|CDR|Net Negative CO2 (billion US$2017/yr)"))
+
+out <- mbind(out, 
+    setNames(out[,,"Revenue|CO2|Gross (billion US$2017/yr)"] 
+            + out[,,"Revenue|CO2|CDR|Residual CO2 (billion US$2017/yr)"] 
+            + out[,,"Revenue|CO2|CDR|Net Negative CO2 (billion US$2017/yr)"], 
+      "Revenue|CO2 (billion US$2017/yr)"))
+
+# All GHG revenues
+out <- mbind(out, 
+    setNames(output_wo_GLO[,,"Emi|GHG|Gross (Mt CO2eq/yr)"] * output_wo_GLO[,,"Price|Carbon (US$2017/t CO2)"] / 1000, 
+                  "Revenue|GHG|Gross (billion US$2017/yr)"),
+    setNames(output_wo_GLO[,,"Emi|CO2|CDR|Residual CO2 (Mt CO2/yr)"] * output_wo_GLO[,,"Price|Carbon (US$2017/t CO2)"] / 1000,  
+                  "Revenue|GHG|CDR|Residual CO2 (billion US$2017/yr)"),
+    setNames(output_wo_GLO[,,"Emi|CO2|CDR|Residual non-CO2 GHG (Mt CO2/yr)"] * (output_wo_GLO[,,"Price|Carbon (US$2017/t CO2)"] * (1-cm_frac_NetNegEmi)) / 1000, 
+                 "Revenue|GHG|CDR|Residual non-CO2 GHG (billion US$2017/yr)" ),
+    setNames(output_wo_GLO[,,"Emi|CO2|CDR|Net Negative GHG (Mt CO2/yr)"] * (output_wo_GLO[,,"Price|Carbon (US$2017/t CO2)"] * (1-cm_frac_NetNegEmi)) / 1000, 
+                 "Revenue|GHG|CDR|Net Negative GHG (billion US$2017/yr)"))
+
+out <- mbind(out, 
+      setNames(out[,,"Revenue|GHG|Gross (billion US$2017/yr)"] 
+            + out[,,"Revenue|GHG|CDR|Residual CO2 (billion US$2017/yr)"] 
+            + out[,,"Revenue|GHG|CDR|Residual non-CO2 GHG (billion US$2017/yr)"] 
+            + out[,,"Revenue|GHG|CDR|Net Negative GHG (billion US$2017/yr)"], 
+            "Revenue|GHG (billion US$2017/yr)" ))
+
+### WITHOUT LUC emissions
+# CO2 revenues 
+out <- mbind(out,
+      setNames(output_wo_GLO[,,"Emi|CO2|Gross|w/o Land-Use Change (Mt CO2/yr)"] * output_wo_GLO[,,"Price|Carbon (US$2017/t CO2)"], 
+              "Revenue|CO2|Gross|w/o Land-Use Change (billion US$2017/yr)"),
+      setNames(output_wo_GLO[,,"Emi|CO2|CDR|Residual CO2|w/o Land-Use Change (Mt CO2/yr)"] * output_wo_GLO[,,"Price|Carbon (US$2017/t CO2)"], 
+              "Revenue|CO2|CDR|Residual CO2|w/o Land-Use Change (billion US$2017/yr)"),
+      setNames( output_wo_GLO[,,"Emi|CO2|CDR|Net Negative CO2|w/o Land-Use Change (Mt CO2/yr)"] * (output_wo_GLO[,,"Price|Carbon (US$2017/t CO2)"] * (1-cm_frac_NetNegEmi)),
+              "Revenue|CO2|CDR|Net Negative CO2|w/o Land-Use Change (billion US$2017/yr)"))
+
+out <- mbind(out, 
+        setNames(out[,,"Revenue|CO2|Gross|w/o Land-Use Change (billion US$2017/yr)"] 
+               + out[,,"Revenue|CO2|CDR|Residual CO2|w/o Land-Use Change (billion US$2017/yr)"] 
+               + out[,,"Revenue|CO2|CDR|Net Negative CO2|w/o Land-Use Change (billion US$2017/yr)"], 
+      "Revenue|CO2|w/o Land-Use Change (billion US$2017/yr)"))
 
   # reporting subsidy or tax rate necessary to reach implicit set energy bounds
   p47_implEnergyBoundTax <- readGDX(gdx, "p47_implEnergyBoundTax", format= "first_found", react = "silent")

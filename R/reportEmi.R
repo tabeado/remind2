@@ -43,8 +43,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   # get realisations
   module2realisation <- readGDX(gdx, "module2realisation")
   rownames(module2realisation) <- module2realisation$modules
-
-
+  
   # unit conversion parameters needed
   sm_c_2_co2 <- readGDX(gdx, "sm_c_2_co2")
   GtC_2_MtCO2 <- sm_c_2_co2 * 1000 # conversion of GtC to MtCO2
@@ -162,7 +161,8 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
     # variable used in the rest of the reporting
     vm_emiCdrTeDetail <- mbind(vm_emiCdrTeDetail, emiOAE)
   }
-
+  p45_budgetCO2from2020Regi <- readGDX(gdx,"p45_budgetCO2from2020Regi", field = "l", restore_zeros = FALSE, react = "silent")
+  
   # CO2 captured from CDR-related activities that does not come from the atmosphere
   vm_co2capture <- readGDX(gdx, c("vm_co2capture", "v_co2capture"), field = "l", restore_zeros = FALSE)[, t, ]
 
@@ -2102,6 +2102,15 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                "Emi|CO2|+|non-ES CDR (Mt CO2/yr)")
   )
 
+  if(!is.null(p45_budgetCO2from2020Regi)) {
+    tmpX <- new.magpie(getRegions(out), getYears(out), names = "Emi|Cum|Regional Target (Gt CO2)", fill = p45_budgetCO2from2020Regi)
+  } else {
+    tmpX <- new.magpie(getRegions(out), getYears(out), names = "Emi|Cum|Regional Target (Gt CO2)", fill = 0)
+  }
+  out <- mbind(out, 
+              setNames(tmpX[,,"Emi|Cum|Regional Target (Gt CO2)"],
+              "Emi|Cum|Regional Target (Gt CO2)"))
+
   ## 4. Gross Emissions ----
   # (fossil co2 emissions, that is, net emissions excl. negative emissions from CDR)
 
@@ -2850,6 +2859,13 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
              "Emi|CO2|w/o Land-Use Change (Mt CO2/yr)")
   )
 
+  out <- mbind(out,
+    setNames(out[, , "Emi|CO2|Gross (Mt CO2/yr)"] 
+            - out[, , "Emi|CO2|+|Land-Use Change (Mt CO2/yr)"]
+            + out[, , "Emi|CO2|CDR|+|Land-Use Change (Mt CO2/yr)"],
+             "Emi|CO2|Gross|w/o Land-Use Change (Mt CO2/yr)")
+  )
+
   # total co2 emissions industry: energy emissions + process emissions (IPCC 1A2 + 2)
   out <- mbind(out,
     setNames(out[, , "Emi|CO2|Energy|Demand|+|Industry (Mt CO2/yr)"]
@@ -2937,6 +2953,59 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
   if (!is.null(regionSubsetList)) {
     out <- mbind(out, calc_regionSubset_sums(out, regionSubsetList))
   }
+  
+  # Add CDR function calculations
+  # differentiating different functions
+  out <- mbind(out,
+    # Residual CDR
+    setNames(pmax(out[,,"Emi|CO2|CDR (Mt CO2/yr)"],
+               - out[,,"Emi|GHG|Gross (Mt CO2eq/yr)"]),
+            ("Emi|CO2|CDR|Residual all GHG (Mt CO2/yr)")),  
+    setNames(pmax(out[,,"Emi|CO2|CDR (Mt CO2/yr)"],
+               - out[,,"Emi|CO2|Gross (Mt CO2/yr)"]),
+            "Emi|CO2|CDR|Residual CO2 (Mt CO2/yr)"))
+
+    out <- mbind(out,         
+    setNames(out[,,"Emi|CO2|CDR|Residual all GHG (Mt CO2/yr)"] - out[,,"Emi|CO2|CDR|Residual CO2 (Mt CO2/yr)"],
+            "Emi|CO2|CDR|Residual non-CO2 GHG (Mt CO2/yr)"),
+
+    # Net negative CDR
+    setNames(out[,,"Emi|CO2|CDR (Mt CO2/yr)"] - out[,,"Emi|CO2|CDR|Residual all GHG (Mt CO2/yr)"],
+            "Emi|CO2|CDR|Net Negative GHG (Mt CO2/yr)"), 
+    setNames(out[,,"Emi|CO2|CDR (Mt CO2/yr)"] - out[,,"Emi|CO2|CDR|Residual CO2 (Mt CO2/yr)"],
+            "Emi|CO2|CDR|Net Negative CO2 (Mt CO2/yr)"), 
+
+    # CDR total w/o Land-use change emissions
+    setNames(out[,,"Emi|CO2|CDR (Mt CO2/yr)"] - out[,,"Emi|CO2|CDR|+|Land-Use Change (Mt CO2/yr)"],
+            "Emi|CO2|CDR|w/o Land-Use Change (Mt CO2/yr)"))
+  out <- mbind(out, 
+    # CDR residual w/o Land-use change emissions
+    setNames(pmax(out[,,"Emi|CO2|CDR|w/o Land-Use Change (Mt CO2/yr)"],
+               - out[,,"Emi|CO2|Gross|w/o Land-Use Change (Mt CO2/yr)"]),
+            "Emi|CO2|CDR|Residual CO2|w/o Land-Use Change (Mt CO2/yr)"))
+   
+   out <- mbind(out, 
+    # CDR net negative CO2 w/o Land-Use Change emissions 
+    setNames(out[,,"Emi|CO2|CDR|w/o Land-Use Change (Mt CO2/yr)"] - out[,,"Emi|CO2|CDR|Residual CO2|w/o Land-Use Change (Mt CO2/yr)"],
+            "Emi|CO2|CDR|Net Negative CO2|w/o Land-Use Change (Mt CO2/yr)")) 
+
+  #### ADD GLOBAL CALCULATION BASED ON REGIONAL VALUES 
+
+  tmpN <- setNames(dimSums(out[getRegions(vm_co2eq),,"Emi|CO2|CDR|Residual CO2 (Mt CO2/yr)"], dim = 1),
+            "Emi|CO2|CDR|Residual CO2 GLO (Mt CO2/yr)")
+  tmpN <- mbind(tmpN, 
+        setNames(dimSums(out[getRegions(vm_co2eq),,"Emi|CO2|CDR|Residual all GHG (Mt CO2/yr)"], dim = 1),
+            "Emi|CO2|CDR|Residual all GHG GLO (Mt CO2/yr)"),
+        setNames(dimSums(out[getRegions(vm_co2eq),,"Emi|CO2|CDR|Residual non-CO2 GHG (Mt CO2/yr)"], dim = 1),
+            "Emi|CO2|CDR|Residual non-CO2 GHG GLO (Mt CO2/yr)"),
+      # net negative
+        setNames(dimSums(out[getRegions(vm_co2eq),,"Emi|CO2|CDR|Net Negative GHG (Mt CO2/yr)"], dim = 1),
+            "Emi|CO2|CDR|Net Negative GHG GLO (Mt CO2/yr)"),
+        setNames(dimSums(out[getRegions(vm_co2eq),,"Emi|CO2|CDR|Net Negative CO2 (Mt CO2/yr)"], dim = 1),
+            "Emi|CO2|CDR|Net Negative CO2 GLO (Mt CO2/yr)"))
+   tmpN2 <- new.magpie(getRegions(out), getYears(out), getNames(tmpN), fill = 0)
+  tmpN2["GLO",,] <- tmpN["GLO",,]             
+  out <- mbind(out, tmpN2)
 
   ## 8. Aggregate intensive variables ----
   .regionSubsetList <- c(list("GLO" = getItems(vm_co2CCS, dim = "all_regi")),
@@ -3083,7 +3152,15 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
     "Emi|CO2|CDR|+|EW (Mt CO2/yr)",
     "Emi|CO2|CDR|+|OAE (Mt CO2/yr)",
     "Emi|CO2|CDR|+|Land-Use Change (Mt CO2/yr)",
-    "Emi|CO2|CDR|+|Materials (Mt CO2/yr)"
+    "Emi|CO2|CDR|+|Materials (Mt CO2/yr)",
+    "Emi|CO2|CDR|Residual all GHG (Mt CO2/yr)",
+    "Emi|CO2|CDR|Residual CO2 (Mt CO2/yr)",
+    "Emi|CO2|CDR|Residual non-CO2 GHG (Mt CO2/yr)",
+    "Emi|CO2|CDR|Net Negative GHG (Mt CO2/yr)",
+    "Emi|CO2|CDR|Net Negative CO2 (Mt CO2/yr)", 
+    "Emi|CO2|CDR|w/o Land-Use Change (Mt CO2/yr)", 
+    "Emi|CO2|CDR|Residual CO2|w/o Land-Use Change (Mt CO2/yr)",
+    "Emi|CO2|CDR|Net Negative CO2|w/o Land-Use Change (Mt CO2/yr)"
   )
 
   # variable names for cumulated emissions variables
