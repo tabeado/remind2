@@ -505,7 +505,7 @@ reportSE <- function(gdx, regionSubsetList = NULL, t = c(seq(2005, 2060, 5), seq
   )
 
   ## Biochar
-  vm_prodBC <- vm_prodSe[,,"sebiochar"] / pm_conv_TWa_EJ / s_tBC_2_TWa  # EJ BC / TWa2EJ  = TWa BC / tBC2TWa = tBC (reconvert vm_prdoSE from EJ to TWa to apply conversion factor from REMIND)
+  vm_prodBC <- vm_prodSe[,,"sebiochar"] / pm_conv_TWa_EJ / s_tBC_2_TWa * 10^-6 # EJ BC / TWa2EJ  = TWa BC / tBC2TWa = tBC (reconvert vm_prdoSE from EJ to TWa to apply conversion factor from REMIND)
 
   tmp1 <- mbind(tmp1,
     se.prod(vm_prodSe, dataoc, oc2te, entySe, "pebiolc", se_Biochar,                           name = "SE|Biochar (EJ/yr)"),
