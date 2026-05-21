@@ -210,7 +210,10 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
 
   # maximum annual CO2 storage potential assumed
   # collapseDim removes 'cco2', 'ico2', and 'rlf' dimensions and keeps only 'ccsinjeon/ccsinjeoff'
-  max_geolStorage <- collapseDim(readGDX(gdx, "vm_co2CCS", field = "up", restore_zeros = FALSE), keepdim = "all_te")
+  # in some cases there are more technologies and more grades. Thus, explicitly pick ccsinje* techs and their only grade '1'
+  max_geolStorage <- readGDX(gdx, "vm_co2CCS", field = "up", restore_zeros = FALSE)
+  max_geolStorage <- max_geolStorage[,,c("ccsinjeon","ccsinjeoff"), pmatch = TRUE][,,"1"]
+  max_geolStorage <- collapseDim(max_geolStorage, keepdim = "all_te")
 
   ## Read CO2 captured per industry subsector ----
   # NOTE: The parameter pm_IndstCO2Captured was calculated without taking into
