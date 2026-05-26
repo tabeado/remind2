@@ -468,8 +468,8 @@ dCumul <- dCumul %>%
 # define lines for usual CO2 budgets of standard REMIND runs
 pkBudg <- tribble(
       ~region, ~period, ~value, ~variable,                      
-      "World", 2020,    500,    "|target|500 Gt from",
       "World", 2020,    650,    "|target|650 Gt from",
+      "World", 2020,    750,    "|target|750 Gt from",
       "World", 2020,    1000,   "|target|1000 Gt from",
   )
 ```
