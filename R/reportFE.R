@@ -86,6 +86,11 @@ reportFE <- function(gdx, regionSubsetList = NULL,
   )[, t, ] * TWa_2_EJ
   vm_demFeSector[is.na(vm_demFeSector)] <- 0
 
+  ## Ensure backwards compatibility for release version 3.6.0 (can be removed with 3.7.0)
+  getNames(vm_demFeSector, dim = 3) <- tolower(getNames(vm_demFeSector, dim = 3))
+  ## End backwards compatibility
+
+
   # FE non-energy use
   vm_demFENonEnergySector <- readGDX(gdx, "vm_demFENonEnergySector",
                                      field = "l",
@@ -365,7 +370,6 @@ reportFE <- function(gdx, regionSubsetList = NULL,
     setNames((dimSums(mselect(vm_demFeSector, all_enty1 = "feh2s", emi_sectors = "build", all_emiMkt = "ETS"), dim = 3, na.rm = TRUE)), "FE|Buildings|ETS|+|Hydrogen (EJ/yr)"),
 
     # CDR
-
     setNames((dimSums(mselect(vm_demFeSector, emi_sectors = "cdr"), dim = 3, na.rm = TRUE)), "FE|++|CDR (EJ/yr)"),
     setNames((dimSums(mselect(vm_demFeSector, emi_sectors = "cdr", all_emiMkt = "ETS"), dim = 3, na.rm = TRUE)), "FE|CDR|+++|ETS (EJ/yr)"),
 
