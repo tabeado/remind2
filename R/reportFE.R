@@ -612,7 +612,7 @@ reportFE <- function(gdx, regionSubsetList = NULL,
     # estimated here assuming the FE-UE efficiency of the basline (from EDGE-B)
     p36_uedemand_build <- readGDX(gdx, "p36_uedemand_build", react = "silent")[, t, ]
     if (!is.null(p36_uedemand_build)) {
-      pm_fedemandBuild <- readGDX(gdx, "pm_fedemandBuild")[, t, ]
+      pm_fedemandBuild <- readGDX(gdx, name = c("pm_fedemandBuild", "pm_fedemand"))[, t, ]
       feUeEff_build <- p36_uedemand_build[, , names(carrierBuild)] /
         pm_fedemandBuild[, , names(carrierBuild)]
       feUeEff_build[is.na(feUeEff_build) | is.infinite(feUeEff_build)] <- 1
