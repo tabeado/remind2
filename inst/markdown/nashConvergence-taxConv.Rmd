@@ -228,53 +228,144 @@ if (nrow(df) == 0) {
 
 ```
 
-## Tax revenue components
+## Tax revenue components (final iteration)
 
-The convergence check is on the **total** net tax revenue, but that total is the sum of
-many tax/subsidy components. This breaks it down by component
-(`p80_convNashTaxrevComp_iter`, a share of GDP) over iterations, so you can see which
-tax is still changing between iterations rather than clearing. One panel per region;
-one line per component and period (use the legend to isolate a component).
+The convergence check is on the **total** net tax revenue, but that total sums many
+tax/subsidy components. Only the final-iteration value of each component is stored in the
+gdx (the `v21_taxrev*` variables), so this shows the **end-of-run composition** — which
+taxes reach the largest magnitude and are therefore most able to push the net revenue out
+of balance. Values are a share of GDP (`vm_cesIO(...,"inco")`), matching the convergence
+metric. Components absent for this run's realisation are skipped (no error).
 
-Requires the `on` realisation of module 21_tax; the parameter is empty otherwise (and
-absent on runs predating it).
+```{r components_read, echo=FALSE, include=FALSE}
 
-```{r components, results = "asis"}
+# GDP denominator (final-iteration level), to express components as a share of GDP
+gdpMag <- suppressWarnings(gdx::readGDX(params$gdx, "vm_cesIO", field = "l",
+                                        restore_zeros = FALSE, react = "silent"))
 
-comp <- getPlotDataSafe("p80_convNashTaxrevComp_iter", params$gdx)
+# Tax revenue components read directly from the gdx (final-iteration levels, per the
+# vm_taxrev composition in modules/21_tax). Each is summed over any sub-index (dimSums
+# over the data dimension); sign = -1 for a subsidy that enters revenue with a minus.
+# Robust to missing symbols (skipped).
+compDefs <- list(
+  list(sym = "v21_taxrevGHG",                  label = "GHG",                sign = 1),
+  list(sym = "v21_taxrevCO2Sector",            label = "CO2 sector",         sign = 1),
+  list(sym = "v21_taxrevCO2luc",               label = "CO2 LUC",            sign = 1),
+  list(sym = "v21_taxemiMkt",                  label = "Emission market",    sign = 1),
+  list(sym = "v21_taxrevPE",                   label = "PE",                 sign = 1),
+  list(sym = "v21_taxrevResEx",                label = "Resource extr.",     sign = 1),
+  list(sym = "v21_taxrevBioEF",                label = "Bioenergy fee",      sign = 1),
+  list(sym = "v21_taxrevSE",                   label = "SE",                 sign = 1),
+  list(sym = "v21_taxrevFE",                   label = "FE",                 sign = 1),
+  list(sym = "v21_taxrevImport",               label = "PE import",          sign = 1),
+  list(sym = "v21_taxrevPE2SE",                label = "PE2SE",              sign = 1),
+  list(sym = "v21_taxrevSO2",                  label = "SO2",                sign = 1),
+  list(sym = "v21_taxrevFlex",                 label = "Flexibility",        sign = 1),
+  list(sym = "v21_taxrevCCS",                  label = "CCS",                sign = 1),
+  list(sym = "v21_taxrevNetNegEmi",            label = "Net-neg emi",        sign = 1),
+  list(sym = "v21_taxrevBioSust",              label = "Bio sustainability", sign = 1),
+  list(sym = "v21_taxrevEI",                   label = "Energy intensity",   sign = 1),
+  list(sym = "v21_taxrevChProdStartYear",      label = "Prod. change",       sign = 1),
+  list(sym = "vm_costSubsidizeLearning",       label = "Learning subsidy",   sign = -1),
+  list(sym = "v21_taxrevCES",                  label = "CES",                sign = 1),
+  list(sym = "vm_taxrevimplicitQttyTargetTax", label = "Implicit qty target", sign = 1),
+  list(sym = "vm_taxrevimplicitPriceTax",      label = "Implicit FE price",  sign = 1),
+  list(sym = "vm_taxrevimplicitPePriceTax",    label = "Implicit PE price",  sign = 1)
+)
 
-if (nrow(comp) == 0) {
-  cat("No per-component tax revenue data in this gdx (module 21_tax is not `on`, or this run predates the `p80_convNashTaxrevComp_iter` parameter).")
-} else {
+readComp <- function(def) {
+  x <- suppressWarnings(gdx::readGDX(params$gdx, def$sym, field = "l",
+                                     restore_zeros = FALSE, react = "silent"))
+  if (is.null(x)) return(NULL)
+  df <- tryCatch(quitte::as.quitte(x), error = function(e) NULL)
+  if (is.null(df) || nrow(df) == 0) return(NULL)
+  # sum over any sub-index (e.g. entyPe, emiMkt, emi_sectors) down to region x period
+  df <- df %>%
+    group_by(.data$region, .data$period) %>%
+    summarise("value" = def$sign * sum(.data$value, na.rm = TRUE), .groups = "drop") %>%
+    filter(!is.na(.data$value))
+  if (nrow(df) == 0) return(NULL)
+  df$component <- def$label
+  df
+}
+
+comp <- dplyr::bind_rows(lapply(compDefs, readComp))
+
+if (!is.null(gdpMag) && !is.null(comp) && nrow(comp) > 0) {
+  gdp <- quitte::as.quitte(gdpMag[, , "inco"]) %>%
+    group_by(.data$region, .data$period) %>%
+    summarise("gdp" = sum(.data$value, na.rm = TRUE), .groups = "drop") %>%
+    filter(.data$gdp != 0)
+
   comp <- comp %>%
-    rename("value" = "p80_convNashTaxrevComp_iter") %>%
+    inner_join(gdp, by = c("region", "period")) %>%
     mutate(
-      "iteration" := as.numeric(as.character(.data$iteration)),
-      "ttot" := as.numeric(as.character(.data$ttot))
+      "share" = .data$value / .data$gdp,
+      "period" := as.numeric(as.character(.data$period))
     ) %>%
-    filter(abs(.data$value) > 0) # drop components that are zero everywhere for this run
+    filter(abs(.data$share) > 1e-9)
+}
 
-  if (nrow(comp) == 0) {
-    cat("All tracked tax revenue components are zero in this run.")
-  } else {
-    comp$grp <- interaction(comp$taxrev80, comp$ttot)
-    comp$tooltip <- paste0(comp$taxrev80, " ", comp$ttot,
-                           "<br>Iteration: ", comp$iteration,
-                           "<br>", round(100 * comp$value, 3), "% of GDP")
+```
 
-    p <- ggplot(comp, aes_(
-      x = ~iteration, y = ~value, color = ~taxrev80,
-      group = ~grp, text = ~tooltip
-    )) +
-      geom_hline(yintercept = 0, color = "grey80") +
-      geom_line(alpha = 0.7) +
-      facet_wrap(~all_regi, scales = "free_y") +
-      scale_y_continuous(labels = scales::percent) +
-      theme_bw() +
-      labs(x = "iteration", y = "tax revenue component (share of GDP)", color = "component")
+Heatmap of each component's **peak signed contribution** per region (the value at the
+period where that component is largest in magnitude). Deep red / blue cells are the
+components most in play; components are ordered left-to-right by overall magnitude.
 
-    ggplotly(p, tooltip = c("text"))
-  }
+```{r components_heatmap, results = "asis"}
+
+if (is.null(comp) || !("share" %in% names(comp)) || nrow(comp) == 0) {
+  cat("No tax revenue component data in this gdx (module 21_tax is not `on`).")
+} else {
+  peak <- comp %>%
+    group_by(.data$region, .data$component) %>%
+    slice(which.max(abs(.data$share))) %>%
+    ungroup() %>%
+    mutate("tooltip" = paste0(.data$component, " · ", .data$region,
+                              "<br>period ", .data$period,
+                              "<br>", round(100 * .data$share, 3), "% of GDP"))
+
+  compOrder <- peak %>% group_by(.data$component) %>%
+    summarise("m" = max(abs(.data$share)), .groups = "drop") %>%
+    arrange(.data$m) %>% pull(.data$component)
+  peak$component <- factor(peak$component, levels = compOrder)
+
+  hm <- ggplot(peak, aes_(x = ~component, y = ~region, fill = ~share, text = ~tooltip)) +
+    geom_tile(color = "white", linewidth = 0.1) +
+    scale_fill_gradient2(low = "#2c7bb6", mid = "#ffffbf", high = "#d7191c",
+                         midpoint = 0, labels = scales::percent, name = "share of GDP") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1), panel.grid = element_blank()) +
+    labs(x = NULL, y = NULL)
+
+  ggplotly(hm, tooltip = c("text"))
+}
+
+```
+
+### Largest contributors
+
+Each component's peak magnitude (share of GDP) and where it peaks — the rows at the top
+are the tax components most able to unbalance the net revenue and hold up convergence.
+
+```{r components_table, results = "asis"}
+
+if (is.null(comp) || !("share" %in% names(comp)) || nrow(comp) == 0) {
+  cat("No component data.")
+} else {
+  tbl <- comp %>%
+    group_by(.data$component) %>%
+    slice(which.max(abs(.data$share))) %>%
+    ungroup() %>%
+    arrange(desc(abs(.data$share))) %>%
+    transmute(
+      component = .data$component,
+      `peak |share| of GDP (%)` = round(100 * abs(.data$share), 3),
+      `signed (%)` = round(100 * .data$share, 3),
+      region = .data$region,
+      period = .data$period
+    )
+  knitr::kable(tbl, row.names = FALSE)
 }
 
 ```

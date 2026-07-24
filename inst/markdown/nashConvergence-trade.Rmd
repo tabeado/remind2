@@ -96,15 +96,17 @@ mipIterationsSurplus <- function(plotData,
 
 ```
 
-## Surplus convergence history
+## Surplus convergence history {.tabset}
 
-For each traded good, the worst residual market surplus until 2100 over iterations
-(`p80_surplusMax_iter`) against its tolerance (dashed red, `p80_surplusMaxTolerance`).
-Log y-axis: the good whose line stays above its tolerance longest is the one holding up
-trade convergence. (Values that have reached exactly zero are dropped, as they cannot be
-shown on a log scale.)
+For each traded good, the worst residual market surplus over iterations (`p80_surplusMax_iter`) is checked against two criteria in REMIND's `postsolve.gms`:
+1. **Primary check (until 2100)**: worst surplus up to 2100 against tolerance (`p80_surplusMaxTolerance`).
+2. **Secondary check (until 2150)**: worst surplus up to 2150 against 10x tolerance (`10 * p80_surplusMaxTolerance`).
 
-```{r conv_history, results = "asis", fig.height=6}
+Log y-axis: the good whose line stays above its tolerance longest is the one holding up trade convergence. (Values that have reached exactly zero are dropped, as they cannot be shown on a log scale.)
+
+### Primary check (until 2100, 1x tolerance)
+
+```{r conv_history_2100, results = "asis", fig.height=6}
 
 sm <- mip::getPlotData("p80_surplusMax_iter", params$gdx)
 
@@ -129,7 +131,7 @@ if (nrow(sm) == 0) {
     mutate("tooltip" = paste0(.data$all_enty,
                               "<br>Iteration: ", .data$iteration,
                               "<br>Worst surplus until ", horizon, ": ", round(.data$value, 4),
-                              "<br>tolerance: ", round(.data$tol, 4),
+                              "<br>Tolerance (1x): ", round(.data$tol, 4),
                               "<br>", ifelse(.data$value > .data$tol, "outside tolerance", "within tolerance")))
 
   hlines <- smtol %>% filter(.data$all_enty %in% unique(d$all_enty))
@@ -144,6 +146,44 @@ if (nrow(sm) == 0) {
     labs(x = "iteration", y = paste0("worst surplus until ", horizon, " (log scale)"))
 
   ggplotly(p, tooltip = c("text"))
+}
+
+```
+
+### Secondary check (until 2150, 10x tolerance)
+
+```{r conv_history_2150, results = "asis", fig.height=6}
+
+if (nrow(sm) == 0) {
+  cat("p80_surplusMax_iter is empty in this gdx.")
+} else {
+  horizon2150 <- if (2150 %in% sm$tall) 2150 else max(sm$tall)
+
+  smtol2150 <- smtol %>%
+    mutate("tol10" = .data$tol * 10)
+
+  d2150 <- sm %>%
+    filter(.data$tall == horizon2150) %>%
+    left_join(smtol2150, by = "all_enty") %>%
+    filter(.data$value > 0) %>%
+    mutate("tooltip" = paste0(.data$all_enty,
+                              "<br>Iteration: ", .data$iteration,
+                              "<br>Worst surplus until ", horizon2150, ": ", round(.data$value, 4),
+                              "<br>10x Tolerance: ", round(.data$tol10, 4),
+                              "<br>", ifelse(.data$value > .data$tol10, "outside 10x tolerance", "within 10x tolerance")))
+
+  hlines2150 <- smtol2150 %>% filter(.data$all_enty %in% unique(d2150$all_enty))
+
+  p2150 <- ggplot(d2150, aes_(x = ~iteration, y = ~value, group = 1, text = ~tooltip)) +
+    geom_hline(data = hlines2150, aes_(yintercept = ~tol10), linetype = "dashed", color = "#F8766D") +
+    geom_line(alpha = 0.6) +
+    geom_point(size = 0.8, alpha = 0.7) +
+    facet_wrap(~all_enty, scales = "free_y") +
+    scale_y_log10() +
+    theme_bw() +
+    labs(x = "iteration", y = paste0("worst surplus until ", horizon2150, " (log scale)"))
+
+  ggplotly(p2150, tooltip = c("text"))
 }
 
 ```

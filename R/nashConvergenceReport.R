@@ -89,7 +89,7 @@ nashConvergenceReport <- function(gdx = "fulldata.gdx", outputDir = getwd()) {
   indexHTML <- paste0(indexHTML, "\n</body>\n</html>")
 
   # write html to file
-  fileConn <- file(normalizePath(paste0(output_dir, "/nashConvergence-index.html")))
+  fileConn <- file(file.path(output_dir, "nashConvergence-index.html"))
   writeLines(indexHTML, fileConn)
   close(fileConn)
 }
