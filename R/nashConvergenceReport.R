@@ -45,7 +45,7 @@ nashConvergenceReport <- function(gdx = "fulldata.gdx", outputDir = getwd()) {
 .getActiveReports <- function(gdx_file) {
   # all reports
   reports <- c(
-    "infes" = "overview", "surplus" = "trade", "DevPriceAnticip" = "priceAnticipation", "taxconv" = "taxConv", "target" = "emiTarget",
+    "infes" = "overview", "surplus" = "trade", "DevPriceAnticip" = "priceAnticipation", "taxconv" = "taxConv", "globalbudget" = "emiTarget",
     "regiTarget" = "regiTarget", "implicitEnergyTarget" = "qttyTarget", "cm_implicitPriceTarget" = "priceTarget", "cm_implicitPePriceTarget" = "pePriceTarget", "damage" = "damage",
     "peakbudget" = "co2price"
   )
@@ -71,7 +71,7 @@ nashConvergenceReport <- function(gdx = "fulldata.gdx", outputDir = getwd()) {
   indexHTML <- paste0(indexHTML, '\n<style> body { font-family: "Lato", sans-serif; } .sidenav { height: 100%; width: 160px; position: fixed; z-index: 1; top: 0; left: 0; background-color: #111; overflow-x: hidden; padding-top: 20px; } .sidenav a { padding: 6px 8px 6px 16px; text-decoration: none; font-size: 15px; color: #818181; display: block; } .sidenav a:hover { color: #a1a1a1; } .selected { color: #f1f1f1 !important; } .content { width: 100%; margin-left: 160px; /* Same as the width of the sidenav */ } @media screen and (max-height: 450px) { .sidenav {padding-top: 15px;} .sidenav a {font-size: 18px;} } iframe { position: fixed; height: 100%; width: calc(100vw - 160px); top: 0; left: 160px; } .hide { display: none; } .disabled { pointer-events: none; color: #434343 !important; } .lds-ring { /* change color here */ color: #1c4c5b; margin-left: 160px; } .lds-ring, .lds-ring div { box-sizing: border-box; } .lds-ring { display: inline-block; position: relative; width: 80px; height: 80px; } .lds-ring div { box-sizing: border-box; display: block; position: absolute; width: 64px; height: 64px; margin: 8px; border: 8px solid currentColor; border-radius: 50%; animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite; border-color: currentColor transparent transparent transparent; } .lds-ring div:nth-child(1) { animation-delay: -0.45s; } .lds-ring div:nth-child(2) { animation-delay: -0.3s; } .lds-ring div:nth-child(3) { animation-delay: -0.15s; } @keyframes lds-ring { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>')
   indexHTML <- paste0(indexHTML, '\n</head>\n<body>\n  <div id="sideBar" class="sidenav">')
   for (report in active_reports) {
-    indexHTML <- paste0(indexHTML, '\n    <a href="#', report, '" class="sidenavLink', ifelse(report %in% c("taxConv", "emiTarget", "priceTarget", "pePriceTarget", "damage"), " disabled", ifelse(report == "overview", " selected", "")), '">', titles[report], "</a>")
+    indexHTML <- paste0(indexHTML, '\n    <a href="#', report, '" class="sidenavLink', ifelse(report == "overview", " selected", ""), '">', titles[report], "</a>")
   }
   indexHTML <- paste0(indexHTML, '\n  </div>\n<div id="content">\n<div class="lds-ring"><div></div><div></div><div></div><div></div></div>')
   for (report in active_reports) {
