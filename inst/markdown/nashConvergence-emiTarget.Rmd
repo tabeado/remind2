@@ -9,7 +9,7 @@ params:
   gdx: "fulldata.gdx"
   warning: false
   message: false
-  figWidth: 10
+  figWidth: 12
 ---
 
 <style>
@@ -72,10 +72,11 @@ The global CO2 budget criterion requires the cumulated CO2 emissions to stay wit
 
 `r if (damagesOn) "**Damages are internalized in this run**, so only *positive* deviation (budget overshoot) is checked - a budget undershoot is acceptable." else "Both positive and negative deviations are checked (symmetric band)."`
 
-## Global budget deviation
+## Convergence summary — global budget deviation
 
 Absolute deviation of cumulated global CO2 emissions from the target budget, over
-iterations. The shaded band is the tolerance; iterations inside it pass the criterion.
+iterations. The shaded band is the tolerance; green points are inside it (converged),
+red are outside. This is the criterion that drives convergence.
 
 ```{r global, results = "asis"}
 
@@ -88,6 +89,7 @@ if (nrow(df) == 0) {
     rename("value" = "p80_globalBudget_absDev_iter") %>%
     mutate(
       "iteration" := as.numeric(as.character(.data$iteration)),
+      "converged" = if (is.na(tol)) "yes" else ifelse(.data$value > tol | (!damagesOn & .data$value < -tol), "no", "yes"),
       "tooltip" = paste0("Iteration: ", .data$iteration,
                          "<br>Deviation: ", round(.data$value, 3), " Gt CO2",
                          ifelse(.data$value > 0, " (budget exceeded)", " (below budget)"))
@@ -107,7 +109,8 @@ if (nrow(df) == 0) {
                                   linetype = "dashed", color = "grey40") else NULL } +
     geom_hline(yintercept = 0, color = "grey80") +
     geom_line(alpha = 0.7) +
-    geom_point(size = 1.2) +
+    suppressWarnings(geom_point(aes_(fill = ~converged), size = 2, shape = 21, color = "white")) +
+    scale_fill_manual(values = c("yes" = "#00BFC4", "no" = "#F8766D")) +
     theme_bw() +
     labs(x = "iteration", y = "deviation from target budget (Gt CO2)")
 

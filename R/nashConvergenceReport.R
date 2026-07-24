@@ -13,11 +13,18 @@
 nashConvergenceReport <- function(gdx = "fulldata.gdx", outputDir = getwd()) {
   yamlParams <- list(gdx = normalizePath(gdx, mustWork = TRUE))
 
-  # check if it is run
-  m2r <- gdx::readGDX(gdx, "module2realisation", restore_zeros = FALSE)
-  if (m2r[m2r$modules == "optimization", "*"] != "nash") {
-    print("Warning: this script only supports nash optimizations")
-    return()
+  # This report only supports nash optimization runs; for other optimization
+  # realisations (e.g. negishi, testOneRegi) the nash convergence parameters do not
+  # exist, so we do not attempt to render a (broken) report. Individual criterion pages
+  # are gated further down by activeConvMessage80, so an inactive criterion (e.g. a
+  # carbonprice / regipol realisation that does not use it) simply produces no page.
+  m2r <- suppressWarnings(gdx::readGDX(gdx, "module2realisation", restore_zeros = FALSE))
+  optiReali <- if (is.null(m2r)) NA_character_ else m2r[m2r$modules == "optimization", "*"]
+  if (length(optiReali) == 0 || is.na(optiReali) || optiReali != "nash") {
+    warning("nashConvergenceReport only supports nash optimization runs (found: ",
+            if (length(optiReali) == 0 || is.na(optiReali)) "unknown" else optiReali,
+            "). No report generated.")
+    return(invisible(NULL))
   }
 
   # create convergence criteria reports

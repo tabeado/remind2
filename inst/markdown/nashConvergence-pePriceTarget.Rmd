@@ -102,6 +102,42 @@ Two cases are *excluded* from the check (see `pm_implicitPePrice_ignConv`): a
 non-existent price (carrier not used), or a price that has not changed for the last 3
 iterations. Those show up in the final-iteration summary at the bottom.
 
+## Convergence summary
+
+Per iteration, the largest absolute PE price deviation across all targets, versus the
+tolerance (dashed). Green = every target within tolerance, red = at least one outside.
+
+```{r convsummary, results = "asis"}
+
+if (nrow(dev) == 0) {
+  emptyMsg("No implicit PE price target active in this run (p47_implicitPePrice_dev_iter is empty).")
+} else {
+  s <- dev %>%
+    group_by(.data$iteration) %>%
+    summarise("worst" = max(abs(.data$value)), .groups = "drop") %>%
+    mutate(
+      "converged" = ifelse(.data$worst > tol, "no", "yes"),
+      "tooltip" = paste0("Iteration: ", .data$iteration,
+                         "<br>Max |deviation|: ", round(100 * .data$worst, 2), "%<br>",
+                         ifelse(.data$worst > tol,
+                                paste0("not converged (> ", round(100 * tol, 2), "%)"),
+                                "converged"))
+    )
+
+  p <- ggplot(s, aes_(x = ~iteration, y = ~worst, group = 1, text = ~tooltip)) +
+    geom_hline(yintercept = tol, linetype = "dashed", color = "grey40") +
+    geom_line(alpha = 0.6) +
+    suppressWarnings(geom_point(aes_(fill = ~converged), size = 2, shape = 21, color = "white")) +
+    scale_fill_manual(values = c("yes" = "#00BFC4", "no" = "#F8766D")) +
+    scale_y_continuous(labels = scales::percent) +
+    theme_bw() +
+    labs(x = "iteration", y = "worst |price deviation|")
+
+  ggplotly(p, tooltip = c("text"))
+}
+
+```
+
 ## Price deviation per target
 
 Deviation over iterations, one panel per region / carrier. Dashed lines mark the

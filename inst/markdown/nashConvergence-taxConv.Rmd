@@ -9,7 +9,7 @@ params:
   gdx: "fulldata.gdx"
   warning: false
   message: false
-  figWidth: 10
+  figWidth: 12
 ---
 
 <style>
@@ -60,9 +60,16 @@ emptyPlot <- function(var, df = NULL) {
 
 booleanColor <- c("yes" = "#00BFC4", "no" = "#F8766D")
 
-# tolerance is hardcoded to 0.001 (0.1% of GDP) in 80_optimization/nash/postsolve.gms.
-# Read p80_taxConvTol from the gdx if it has been exported there, otherwise fall back.
-tol <- suppressWarnings(as.numeric(gdx::readGDX(params$gdx, "p80_taxConvTol", react = "silent")))
+# getPlotData() errors when a symbol is entirely absent from the gdx (e.g. the
+# per-component parameter on runs that predate it). Return a 0-row frame instead so the
+# nrow() == 0 guards handle it gracefully.
+getPlotDataSafe <- function(var, gdx) {
+  tryCatch(mip::getPlotData(var, gdx), error = function(e) data.frame())
+}
+
+# Tolerance: read cm_TaxConv_tolerance from the gdx (exported by nash); fall back to the
+# historical hardcoded value (0.1% of GDP) for older gdx files.
+tol <- suppressWarnings(as.numeric(gdx::readGDX(params$gdx, "cm_TaxConv_tolerance", react = "silent")))
 if (length(tol) == 0 || is.na(tol)) tol <- 0.001
 
 df <- mip::getPlotData("p80_convNashTaxrev_iter", params$gdx)
@@ -82,6 +89,43 @@ period to be below `r round(100 * tol, 2)`% of GDP** (`|p80_convNashTaxrev_iter|
 `r tol``). A non-zero tax revenue means the region is still collecting/paying a net
 implicit tax that should net out at the Nash equilibrium, so any region above the band
 blocks convergence.
+
+## Convergence summary
+
+Per iteration, the largest absolute net tax revenue across all regions and periods,
+versus the tolerance (dashed). The criterion converges once the worst region/period is
+inside the band. Green = converged, red = not.
+
+```{r summary, results = "asis"}
+
+if (nrow(df) == 0) {
+  emptyPlot("p80_convNashTaxrev_iter", df)
+} else {
+  s <- df %>%
+    group_by(.data$iteration) %>%
+    summarise("worst" = max(abs(.data$value)), .groups = "drop") %>%
+    mutate(
+      "converged" = ifelse(.data$worst > tol, "no", "yes"),
+      "tooltip" = paste0("Iteration: ", .data$iteration,
+                         "<br>Worst |tax revenue|: ", round(100 * .data$worst, 3), "% of GDP<br>",
+                         ifelse(.data$worst > tol,
+                                paste0("not converged (> ", round(100 * tol, 2), "%)"),
+                                "converged"))
+    )
+
+  p <- ggplot(s, aes_(x = ~iteration, y = ~worst, group = 1, text = ~tooltip)) +
+    geom_hline(yintercept = tol, linetype = "dashed", color = "grey40") +
+    geom_line(alpha = 0.6) +
+    suppressWarnings(geom_point(aes_(fill = ~converged), size = 2, shape = 21, color = "white")) +
+    scale_fill_manual(values = booleanColor) +
+    scale_y_continuous(labels = scales::percent) +
+    theme_bw() +
+    labs(x = "iteration", y = "worst |tax revenue| (share of GDP)")
+
+  ggplotly(p, tooltip = c("text"))
+}
+
+```
 
 ## Deviation per region and iteration
 
@@ -180,6 +224,57 @@ if (nrow(df) == 0) {
       ),
     row.names = FALSE
   )
+}
+
+```
+
+## Tax revenue components
+
+The convergence check is on the **total** net tax revenue, but that total is the sum of
+many tax/subsidy components. This breaks it down by component
+(`p80_convNashTaxrevComp_iter`, a share of GDP) over iterations, so you can see which
+tax is still changing between iterations rather than clearing. One panel per region;
+one line per component and period (use the legend to isolate a component).
+
+Requires the `on` realisation of module 21_tax; the parameter is empty otherwise (and
+absent on runs predating it).
+
+```{r components, results = "asis"}
+
+comp <- getPlotDataSafe("p80_convNashTaxrevComp_iter", params$gdx)
+
+if (nrow(comp) == 0) {
+  cat("No per-component tax revenue data in this gdx (module 21_tax is not `on`, or this run predates the `p80_convNashTaxrevComp_iter` parameter).")
+} else {
+  comp <- comp %>%
+    rename("value" = "p80_convNashTaxrevComp_iter") %>%
+    mutate(
+      "iteration" := as.numeric(as.character(.data$iteration)),
+      "ttot" := as.numeric(as.character(.data$ttot))
+    ) %>%
+    filter(abs(.data$value) > 0) # drop components that are zero everywhere for this run
+
+  if (nrow(comp) == 0) {
+    cat("All tracked tax revenue components are zero in this run.")
+  } else {
+    comp$grp <- interaction(comp$taxrev80, comp$ttot)
+    comp$tooltip <- paste0(comp$taxrev80, " ", comp$ttot,
+                           "<br>Iteration: ", comp$iteration,
+                           "<br>", round(100 * comp$value, 3), "% of GDP")
+
+    p <- ggplot(comp, aes_(
+      x = ~iteration, y = ~value, color = ~taxrev80,
+      group = ~grp, text = ~tooltip
+    )) +
+      geom_hline(yintercept = 0, color = "grey80") +
+      geom_line(alpha = 0.7) +
+      facet_wrap(~all_regi, scales = "free_y") +
+      scale_y_continuous(labels = scales::percent) +
+      theme_bw() +
+      labs(x = "iteration", y = "tax revenue component (share of GDP)", color = "component")
+
+    ggplotly(p, tooltip = c("text"))
+  }
 }
 
 ```

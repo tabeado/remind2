@@ -9,7 +9,7 @@ params:
   gdx: "fulldata.gdx"
   warning: false
   message: false
-  figWidth: 10
+  figWidth: 12
 ---
 
 <style>
@@ -103,6 +103,47 @@ iteration:
 
 The two charts below show each gate separately - the one still above its dashed
 threshold is the one holding up convergence.
+
+## Convergence summary
+
+Per iteration, whether damage internalization converged (i.e. **both** the SCC and the
+temperature gate are within tolerance). Green = converged, red = not.
+
+```{r summary, results = "asis"}
+
+scc <- mip::getPlotData("p80_sccConvergenceMaxDeviation_iter", params$gdx)
+gmt <- mip::getPlotData("p80_gmt_conv_iter", params$gdx)
+
+if (nrow(scc) == 0 || nrow(gmt) == 0) {
+  cat("No damage-internalization convergence data in this gdx (module internalizeDamages is off in this run).")
+} else {
+  scc <- scc %>% rename("scc" = "p80_sccConvergenceMaxDeviation_iter") %>%
+    mutate("iteration" := as.numeric(as.character(.data$iteration)))
+  gmt <- gmt %>% rename("gmt" = "p80_gmt_conv_iter") %>%
+    mutate("iteration" := as.numeric(as.character(.data$iteration)))
+
+  comb <- full_join(scc, gmt, by = "iteration") %>%
+    arrange(.data$iteration) %>%
+    mutate(
+      "converged" = ifelse((is.na(sccTol) | .data$scc <= sccTol) &
+                             (is.na(tempTol) | .data$gmt <= tempTol), "yes", "no"),
+      "tooltip" = paste0("Iteration: ", .data$iteration,
+                         "<br>SCC max dev: ", round(.data$scc, 4),
+                         "<br>GMT conv: ", round(.data$gmt, 4),
+                         "<br>", ifelse(.data$converged == "yes", "converged", "not converged"))
+    )
+
+  p <- suppressWarnings(ggplot(comb, aes_(x = ~iteration, y = "Damage\nInternalization",
+                                          fill = ~converged, text = ~tooltip)) +
+    geom_point(size = 3, shape = 21, color = "white") +
+    scale_fill_manual(values = booleanColor) +
+    theme_minimal() +
+    labs(x = "iteration", y = NULL))
+
+  ggplotly(p, tooltip = c("text"))
+}
+
+```
 
 ## SCC convergence
 

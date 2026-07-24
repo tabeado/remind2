@@ -39,6 +39,17 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
 
     activeCriteria <- suppressWarnings(gdx::readGDX(gdx, "activeConvMessage80"))
 
+    # convergence tolerances, read from the gdx with fallbacks to the historical
+    # hardcoded defaults for older gdx files (see main.gms / nash postsolve.gms)
+    objValConvTol <- suppressWarnings(as.numeric(readGDX(gdx, "cm_nashObjVal_tolerance", react = "silent")))
+    if (length(objValConvTol) == 0 || is.na(objValConvTol)) objValConvTol <- 1e-4
+
+    devPriceAnticipTolFactor <- suppressWarnings(as.numeric(readGDX(gdx, "cm_DevPriceAnticip_tolFactor", react = "silent")))
+    if (length(devPriceAnticipTolFactor) == 0 || is.na(devPriceAnticipTolFactor)) devPriceAnticipTolFactor <- 0.1
+
+    taxConvTol <- suppressWarnings(as.numeric(readGDX(gdx, "cm_TaxConv_tolerance", react = "silent")))
+    if (length(taxConvTol) == 0 || is.na(taxConvTol)) taxConvTol <- 0.001
+
     # Feasibility -----
     p80RepyIteration <- readGDX(gdx, name = "p80_repy_iteration", restore_zeros = FALSE, react = "error") %>%
       as.quitte() %>%
@@ -108,7 +119,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
       mutate(
         "objvalCondition" = ifelse(.data$modelstat == "2", TRUE,
           ifelse(.data$modelstat == "7" & is.na(.data$objvalDifference), FALSE,
-            ifelse(.data$modelstat == "7" & .data$objvalDifference < -1e-4, FALSE, TRUE)
+            ifelse(.data$modelstat == "7" & .data$objvalDifference < -objValConvTol, FALSE, TRUE)
           )
         )
       ) %>%
@@ -138,7 +149,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
         }
         tooltip <- paste0(
           "Iteration: ", iter, "<br>Not converged",
-          "<br>Region | Deviation", tooltip, "<br>The deviation limit is +- 0.0001"
+          "<br>Region | Deviation", tooltip, "<br>The deviation limit is +- ", objValConvTol
         )
         data[which(data$iteration == iter), ]$tooltip <- tooltip
       }
@@ -147,9 +158,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
     objVarSummary <- suppressWarnings(ggplot(data, aes_(
       x = ~iteration, y = "Objective\nDeviation",
       fill = ~objVarCondition, text = ~tooltip
-    ))) +
-      geom_hline(yintercept = 0) +
-      theme_minimal() +
+    ))) +      theme_minimal() +
       geom_point(size = 2, alpha = aestethics$alpha) +
       scale_fill_manual(values = booleanColor) +
       scale_y_discrete(breaks = c("Objective\nDeviation"), drop = FALSE) +
@@ -291,9 +300,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
 
     surplusSummary <- suppressWarnings(ggplot(surplusCondition,
                                               aes_(x = ~iteration, y = "Max. Trade\nSurplus",
-                                                   fill = ~withinLimits, text = ~tooltip))) +
-      geom_hline(yintercept = 0) +
-      theme_minimal() +
+                                                   fill = ~withinLimits, text = ~tooltip))) +      theme_minimal() +
       geom_point(size = 2, alpha = aestethics$alpha) +
       scale_fill_manual(values = booleanColor) +
       scale_y_discrete(breaks = c("Max. Trade\nSurplus"), drop = FALSE) +
@@ -318,12 +325,12 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
       select("iteration", "value") %>%
       mutate(
         "iteration" := as.numeric(as.character(.data$iteration)),
-        "converged" = ifelse(.data$value > 0.1 * maxTolerance, "no", "yes"),
-        "tooltip" = ifelse(.data$value > 0.1 * maxTolerance,
+        "converged" = ifelse(.data$value > devPriceAnticipTolFactor * maxTolerance, "no", "yes"),
+        "tooltip" = ifelse(.data$value > devPriceAnticipTolFactor * maxTolerance,
           paste0(
             "Iteration: ", .data$iteration, "<br>",
             "Not converged<br>Price Anticipation deviation is not low enough<br>",
-            round(.data$value, 5), " > ", 0.1 * maxTolerance
+            round(.data$value, 5), " > ", devPriceAnticipTolFactor * maxTolerance
           ),
           paste0(
             "Iteration: ", .data$iteration, "<br>",
@@ -403,9 +410,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
       emiMktTargetDev <- suppressWarnings(ggplot(data, aes_(
         x = ~iteration, y = "Emission Market\nTarget",
         fill = ~converged, text = ~tooltip
-      ))) +
-        geom_hline(yintercept = 0) +
-        theme_minimal() +
+      ))) +        theme_minimal() +
         geom_point(size = 2, alpha = aestethics$alpha) +
         scale_fill_manual(values = booleanColor) +
         scale_y_discrete(breaks = c("Emission Market\nTarget"), drop = FALSE) +
@@ -465,9 +470,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
       qttyTarget <- suppressWarnings(ggplot(data, aes_(
         x = ~iteration, y = "Implicit Quantity\nTarget",
         fill = ~converged, text = ~tooltip
-      ))) +
-        geom_hline(yintercept = 0) +
-        theme_minimal() +
+      ))) +        theme_minimal() +
         geom_point(size = 2, alpha = aestethics$alpha) +
         scale_fill_manual(values = booleanColor) +
         scale_y_discrete(breaks = c("Implicit Quantity\nTarget"), drop = FALSE) +
@@ -517,9 +520,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
       implicitPriceTargetDev <- suppressWarnings(ggplot(data, aes_(
         x = ~iteration, y = "FE Price\nTarget",
         fill = ~converged, text = ~tooltip
-      ))) +
-        geom_hline(yintercept = 0) +
-        theme_minimal() +
+      ))) +        theme_minimal() +
         geom_point(size = 2, alpha = aestethics$alpha) +
         scale_fill_manual(values = booleanColor) +
         scale_y_discrete(breaks = c("FE Price\nTarget"), drop = FALSE) +
@@ -563,9 +564,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
       implicitPePriceTargetDev <- suppressWarnings(ggplot(data, aes_(
         x = ~iteration, y = "PE Price\nTarget",
         fill = ~converged, text = ~tooltip
-      ))) +
-        geom_hline(yintercept = 0) +
-        theme_minimal() +
+      ))) +        theme_minimal() +
         geom_point(size = 2, alpha = aestethics$alpha) +
         scale_fill_manual(values = booleanColor) +
         scale_y_discrete(breaks = c("PE Price\nTarget"), drop = FALSE) +
@@ -597,9 +596,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
       globalBuget <- suppressWarnings(ggplot(data, aes_(
         x = ~iteration, y = "Global Budget\nDeviation",
         fill = ~converged, text = ~tooltip
-      ))) +
-        geom_hline(yintercept = 0) +
-        theme_minimal() +
+      ))) +        theme_minimal() +
         geom_point(size = 2, alpha = aestethics$alpha) +
         scale_fill_manual(values = booleanColor) +
         scale_y_discrete(breaks = c("Global Budget\nDeviation"), drop = FALSE) +
@@ -642,9 +639,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
       damageInternalization <- suppressWarnings(ggplot(data, aes_(
         x = ~iteration, y = "Damage\nInternalization",
         fill = ~converged, text = ~tooltip
-      ))) +
-        geom_hline(yintercept = 0) +
-        theme_minimal() +
+      ))) +        theme_minimal() +
         geom_point(size = 2, alpha = aestethics$alpha) +
         scale_fill_manual(values = booleanColor) +
         scale_y_discrete(breaks = c("Damage\nInternalization"), drop = FALSE) +
@@ -662,7 +657,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
     p80ConvNashTaxrevIter <- readGDX(gdx, name = "p80_convNashTaxrev_iter", restore_zeros = FALSE, react = "error") %>%
       as.quitte() %>%
       select("region", "period", "iteration", "value") %>%
-      mutate("failed" = abs(.data$value) > 0.001)
+      mutate("failed" = abs(.data$value) > taxConvTol)
 
     data <- p80ConvNashTaxrevIter %>%
       group_by(.data$iteration) %>%
@@ -675,7 +670,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
         worstRow <- failedIter[which.max(abs(failedIter$value)), ]
         worstStr <- paste0(
           "<br>Worst: ", worstRow$region, " ", worstRow$period, " | ",
-          round(100 * worstRow$value, 3), "% of GDP (limit +-0.1%)"
+          round(100 * worstRow$value, 3), "% of GDP (limit +-", round(100 * taxConvTol, 2), "%)"
         )
         tmp <- failedIter %>%
           mutate("item" = paste0(.data$region, " ", .data$period)) %>%
@@ -705,9 +700,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
     taxConvergence <- suppressWarnings(ggplot(data, aes_(
       x = ~iteration, y = yLabel,
       fill = ~converged, text = ~tooltip
-    ))) +
-      geom_hline(yintercept = 0) +
-      theme_minimal() +
+    ))) +      theme_minimal() +
       geom_point(size = 2, alpha = aestethics$alpha) +
       scale_fill_manual(values = booleanColor) +
       scale_y_discrete(breaks = c(yLabel), drop = FALSE) +
