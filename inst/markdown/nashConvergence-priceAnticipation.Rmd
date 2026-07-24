@@ -59,6 +59,50 @@ adjustSliderAnimation <- function(p) {
 ```
 
 
+## Convergence summary
+
+The price-anticipation criterion converges when the maximum monetary trade-expenditure
+deviation until 2100 falls below **10% of the trade-good surplus tolerance**. The dashed
+line is that threshold; green points pass, red points fail.
+
+```{r summary, results = "asis"}
+
+threshold <- NA_real_
+mt <- mip::getPlotData("p80_surplusMaxTolerance", params$gdx)
+if (nrow(mt) > 0 && "good" %in% mt$all_enty) {
+  threshold <- 0.1 * mt$p80_surplusMaxTolerance[mt$all_enty == "good"]
+}
+
+df <- mip::getPlotData("p80_DevPriceAnticipGlobAllMax2100Iter", params$gdx)
+
+if (nrow(df) == 0) {
+  cat("p80_DevPriceAnticipGlobAllMax2100Iter is empty in this gdx.")
+} else {
+  df <- df %>%
+    rename("value" = "p80_DevPriceAnticipGlobAllMax2100Iter") %>%
+    mutate(
+      "iteration" := as.numeric(as.character(.data$iteration)),
+      "converged" = ifelse(!is.na(threshold) & .data$value > threshold, "no", "yes"),
+      "tooltip" = paste0("Iteration: ", .data$iteration,
+                         "<br>Max deviation: ", round(.data$value, 5), " T$",
+                         if (all(!is.na(threshold))) paste0("<br>threshold: ", round(threshold, 5)) else "")
+    )
+
+  p <- ggplot(df, aes_(x = ~iteration, y = ~value, group = 1, text = ~tooltip)) +
+    { if (!is.na(threshold)) geom_hline(yintercept = threshold, linetype = "dashed", color = "grey40") else NULL } +
+    geom_line(alpha = 0.6) +
+    suppressWarnings(geom_point(aes_(fill = ~converged), size = 2, shape = 21, color = "white")) +
+    scale_fill_manual(values = c("yes" = "#00BFC4", "no" = "#F8766D")) +
+    scale_y_log10() +
+    theme_bw() +
+    labs(x = "iteration", y = "max trade expenditure deviation until 2100 [T$]")
+
+  ggplotly(p, tooltip = c("text"))
+}
+
+```
+
+
 ## Monetary trade deviation
 
 ### Max trade expenditure deviation  
