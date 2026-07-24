@@ -479,9 +479,102 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
 
     }
 
-    # Price Target (TODO) ->  pm_implicitPrice_NotConv, pm_implicitPePriceTarget
+    # Implicit FE Price Target (optional) ----
+    # The convergence criterion is |deviation| <= 5% (hardcoded in
+    # regiCarbonPrice/postsolve.gms). We read the per-iteration deviation and flag
+    # any iteration where a target exceeds the tolerance. Ignored ("ignConv") cases
+    # are only stored for the final iteration, so the intermediate coloring here is a
+    # close approximation of the criterion, see nashConvergence-priceTarget.html for detail.
 
-    # Primary energy price Target (TODO) ->  pm_implicitPePrice_NotConv, pm_implicitPePriceTarget
+    p47ImplicitPriceDevIter <- suppressWarnings(
+      readGDX(gdx, name = "p47_implicitPrice_dev_iter", restore_zeros = FALSE, react = "silent")
+    )
+
+    if (!is.null(p47ImplicitPriceDevIter)) {
+
+      implicitPriceTol <- suppressWarnings(as.numeric(readGDX(gdx, name = "cm_implicitPriceTarget_tolerance", react = "silent")))
+      if (length(implicitPriceTol) == 0 || is.na(implicitPriceTol)) implicitPriceTol <- 0.05
+
+      p47ImplicitPriceDevIter <- p47ImplicitPriceDevIter %>%
+        as.quitte() %>%
+        filter(!is.na(.data$value)) %>%
+        select("iteration", "value") %>%
+        mutate(
+          "iteration" := as.numeric(as.character(.data$iteration)),
+          "failed" = abs(.data$value) > implicitPriceTol
+        )
+
+      data <- p47ImplicitPriceDevIter %>%
+        group_by(.data$iteration) %>%
+        summarise(
+          converged = ifelse(any(.data$failed == TRUE), "no", "yes"),
+          worst = max(abs(.data$value))
+        ) %>%
+        mutate("tooltip" = ifelse(.data$converged == "yes",
+          paste0("Iteration: ", .data$iteration, "<br>Converged<br>Max |deviation|: ", round(100 * .data$worst, 2), "%"),
+          paste0("Iteration: ", .data$iteration, "<br>Not converged<br>Max |deviation|: ", round(100 * .data$worst, 2), "% > ", round(100 * implicitPriceTol, 2), "%")))
+
+      implicitPriceTargetDev <- suppressWarnings(ggplot(data, aes_(
+        x = ~iteration, y = "FE Price\nTarget",
+        fill = ~converged, text = ~tooltip
+      ))) +
+        geom_hline(yintercept = 0) +
+        theme_minimal() +
+        geom_point(size = 2, alpha = aestethics$alpha) +
+        scale_fill_manual(values = booleanColor) +
+        scale_y_discrete(breaks = c("FE Price\nTarget"), drop = FALSE) +
+        labs(x = NULL, y = NULL) +
+        theme(axis.text.y = element_text(colour = ifelse(("cm_implicitPriceTarget" %in% activeCriteria), activeCriteriaColor["true"], activeCriteriaColor["false"])))
+
+      implicitPriceTargetDevPlotly <- ggplotly(implicitPriceTargetDev, tooltip = c("text"))
+      subplots <- append(subplots, list(implicitPriceTargetDevPlotly))
+    }
+
+    # Implicit PE Price Target (optional) ----
+
+    p47ImplicitPePriceDevIter <- suppressWarnings(
+      readGDX(gdx, name = "p47_implicitPePrice_dev_iter", restore_zeros = FALSE, react = "silent")
+    )
+
+    if (!is.null(p47ImplicitPePriceDevIter)) {
+
+      implicitPePriceTol <- suppressWarnings(as.numeric(readGDX(gdx, name = "cm_implicitPePriceTarget_tolerance", react = "silent")))
+      if (length(implicitPePriceTol) == 0 || is.na(implicitPePriceTol)) implicitPePriceTol <- 0.05
+
+      p47ImplicitPePriceDevIter <- p47ImplicitPePriceDevIter %>%
+        as.quitte() %>%
+        filter(!is.na(.data$value)) %>%
+        select("iteration", "value") %>%
+        mutate(
+          "iteration" := as.numeric(as.character(.data$iteration)),
+          "failed" = abs(.data$value) > implicitPePriceTol
+        )
+
+      data <- p47ImplicitPePriceDevIter %>%
+        group_by(.data$iteration) %>%
+        summarise(
+          converged = ifelse(any(.data$failed == TRUE), "no", "yes"),
+          worst = max(abs(.data$value))
+        ) %>%
+        mutate("tooltip" = ifelse(.data$converged == "yes",
+          paste0("Iteration: ", .data$iteration, "<br>Converged<br>Max |deviation|: ", round(100 * .data$worst, 2), "%"),
+          paste0("Iteration: ", .data$iteration, "<br>Not converged<br>Max |deviation|: ", round(100 * .data$worst, 2), "% > ", round(100 * implicitPePriceTol, 2), "%")))
+
+      implicitPePriceTargetDev <- suppressWarnings(ggplot(data, aes_(
+        x = ~iteration, y = "PE Price\nTarget",
+        fill = ~converged, text = ~tooltip
+      ))) +
+        geom_hline(yintercept = 0) +
+        theme_minimal() +
+        geom_point(size = 2, alpha = aestethics$alpha) +
+        scale_fill_manual(values = booleanColor) +
+        scale_y_discrete(breaks = c("PE Price\nTarget"), drop = FALSE) +
+        labs(x = NULL, y = NULL) +
+        theme(axis.text.y = element_text(colour = ifelse(("cm_implicitPePriceTarget" %in% activeCriteria), activeCriteriaColor["true"], activeCriteriaColor["false"])))
+
+      implicitPePriceTargetDevPlotly <- ggplotly(implicitPePriceTargetDev, tooltip = c("text"))
+      subplots <- append(subplots, list(implicitPePriceTargetDevPlotly))
+    }
 
     # Global Bugdet Deviation (optional) ----
     cm_budgetCO2_absDevTol <- as.vector(readGDX(gdx, name = "cm_budgetCO2_absDevTol", react = "error"))
@@ -511,7 +604,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
         scale_fill_manual(values = booleanColor) +
         scale_y_discrete(breaks = c("Global Budget\nDeviation"), drop = FALSE) +
         labs(x = NULL, y = NULL) +
-        theme(axis.text.y = element_text(colour = ifelse(("target" %in% activeCriteria), activeCriteriaColor["true"], activeCriteriaColor["false"])))
+        theme(axis.text.y = element_text(colour = ifelse(("globalbudget" %in% activeCriteria), activeCriteriaColor["true"], activeCriteriaColor["false"])))
 
       globalBugetPlotly <- ggplotly(globalBuget, tooltip = c("text"))
       subplots <- append(subplots, list(globalBugetPlotly))
@@ -578,7 +671,13 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
 
     for (i in unique(p80ConvNashTaxrevIter$iteration)) {
       if (data[data$iteration == i, "converged"] == "no") {
-        tmp <- filter(p80ConvNashTaxrevIter, .data$iteration == i, .data$failed == TRUE) %>%
+        failedIter <- filter(p80ConvNashTaxrevIter, .data$iteration == i, .data$failed == TRUE)
+        worstRow <- failedIter[which.max(abs(failedIter$value)), ]
+        worstStr <- paste0(
+          "<br>Worst: ", worstRow$region, " ", worstRow$period, " | ",
+          round(100 * worstRow$value, 3), "% of GDP (limit +-0.1%)"
+        )
+        tmp <- failedIter %>%
           mutate("item" = paste0(.data$region, " ", .data$period)) %>%
           select("region", "period", "item") %>%
           distinct()
@@ -586,7 +685,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
         if (nrow(tmp) > 10) {
           data[data$iteration == i, "tooltip"] <- paste0(
             "Iteration ", i, "<br>",
-            "Not converged:<br>",
+            "Not converged:", worstStr, "<br>",
             paste0(unique(tmp$region), collapse = ", "),
             "<br>",
             paste0(unique(tmp$period), collapse = ", ")
@@ -594,7 +693,7 @@ plotNashConvergence <- function(gdx) { # nolint cyclocomp_linter
         } else {
           data[data$iteration == i, "tooltip"] <- paste0(
             "Iteration ", i, "<br>",
-            "Not converged:<br>",
+            "Not converged:", worstStr, "<br>",
             paste0(unique(tmp$item), collapse = ", ")
           )
         }
