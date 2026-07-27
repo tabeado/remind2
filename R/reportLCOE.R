@@ -492,7 +492,6 @@ reportLCOE <- function(gdx, output.type = "both") {
       # To allow interpretation of the LC, separate these cost components.
       p33_EW_transport_costs <- readGDX(gdx, c("p33_EW_transport_costs", "p33_transport_costs"), format = "first_found")
 
-      EW_fixed_other_cost <- 10^12 * s33_costs_fix * v33_EW_onfield_sum
       EW_fixed_transport_cost <-  10^12 *  dimSums(p33_EW_transport_costs[, , getNames(v33_EW_onfield)] * v33_EW_onfield)
     }
 
@@ -691,10 +690,10 @@ reportLCOE <- function(gdx, output.type = "both") {
           setNames(EW_fixed_transport_cost / cdrco2_byTech_tCO2[, ttot_from2005, EW_name],
                    paste0("LCOCS|average|", "sco2|", EW_name, "|carbon management", "|OMF transport Cost")),
           # sum for enhanced weathering (incl. special om cost)
-          setNames((te_annual_inv_cost[, ttot_from2005, EW_name] +  te_annual_OMF_cost[, , EW_name] + te_annual_otherFuel_cost[, , EW_name] + EW_fixed_other_cost +
+          setNames((te_annual_inv_cost[, ttot_from2005, EW_name] +  te_annual_OMF_cost[, , EW_name] + te_annual_otherFuel_cost[, , EW_name] +
                       EW_fixed_transport_cost) / cdrco2_byTech_tCO2[, ttot_from2005, EW_name],
                    paste0("LCOCS|average|", "sco2|", EW_name, "|carbon management", "|Total Cost")),
-          setNames((te_annual_inv_cost_wadj[, ttot_from2005, EW_name] + te_annual_otherFuel_cost[, , EW_name] + EW_fixed_other_cost +
+          setNames((te_annual_inv_cost_wadj[, ttot_from2005, EW_name] + te_annual_otherFuel_cost[, , EW_name] +
                       EW_fixed_transport_cost) / cdrco2_byTech_tCO2[, ttot_from2005, EW_name],
                    paste0("LCOCS|average|", "sco2|", EW_name, "|carbon management", "|Total Cost w/ Adj Cost"))
         )
