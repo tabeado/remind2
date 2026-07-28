@@ -1136,7 +1136,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                   "Emi|CO2|+|Energy (Mt CO2/yr)")
   )
   
-  # carbon stored in biochar (already negative in EmiPe2Se) NEEDS TO BE DONE ELSEWHERE!
+  # carbon stored in biochar (already negative in EmiPe2Se)
   emi_Biochar <- new.magpie(getItems(EmiPe2Se, "all_regi"), getItems(EmiPe2Se, "tall"), fill = 0)
   if (!is.null(dimSums(mselect(EmiPe2Se,all_enty1 = "sebiochar"), dim=3))){
        emi_Biochar <- dimSums(mselect(EmiPe2Se,all_enty1 = "sebiochar"), dim=3)}
@@ -1169,7 +1169,7 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
                # land-use change CO2
                setNames(dimSums(vm_emiMacSector[, , "co2luc"], dim = 3) * GtC_2_MtCO2,
                         "Emi|CO2|+|Land-Use Change (Mt CO2/yr)"),
-               # negative emissions from (non-Enery System) CDR (DACCS, EW) !! need to check with OAE
+               # negative emissions from (non-Enery System) CDR (DACCS, EW) 
                setNames((
                   vm_emiCdr_co2 - vm_emiCdrTeDetail[, , "dac"] * (1 - p_share_CCS)
                ) * GtC_2_MtCO2,

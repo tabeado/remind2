@@ -128,7 +128,6 @@ showAreaAndBarPlots(
                 'SE|Biochar Mt|biopyrOnly (Mt/yr)',
                 'SE|Biochar Mt|biopyrHeat (Mt/yr)', 
                 'SE|Biochar Mt|biopyrCHP (Mt/yr)',  
-                'SE|Biochar Mt|biopyrCHP850 (Mt/yr)',
                 'SE|Biochar Mt|biopyrFuel (Mt/yr)')),
   tot = 'SE|Biochar Mt (Mt/yr)',
   scales = 'fixed',
