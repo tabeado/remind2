@@ -693,7 +693,7 @@ reportLCOE <- function(gdx, output.type = "both") {
           setNames((te_annual_inv_cost[, ttot_from2005, EW_name] +  te_annual_OMF_cost[, , EW_name] + te_annual_otherFuel_cost[, , EW_name] +
                       EW_fixed_transport_cost) / cdrco2_byTech_tCO2[, ttot_from2005, EW_name],
                    paste0("LCOCS|average|", "sco2|", EW_name, "|carbon management", "|Total Cost")),
-          setNames((te_annual_inv_cost_wadj[, ttot_from2005, EW_name] + te_annual_otherFuel_cost[, , EW_name] +
+          setNames((te_annual_inv_cost_wadj[, ttot_from2005, EW_name] + te_annual_OMF_cost[, , EW_name] + te_annual_otherFuel_cost[, , EW_name]  +
                       EW_fixed_transport_cost) / cdrco2_byTech_tCO2[, ttot_from2005, EW_name],
                    paste0("LCOCS|average|", "sco2|", EW_name, "|carbon management", "|Total Cost w/ Adj Cost"))
         )
