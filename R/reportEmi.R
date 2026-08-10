@@ -3781,7 +3781,8 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
     vars %>%
       deletePlus() %>% # remove all + from extended variables: summation checks only make sense if all sub-variables are covered
       sub("^Emi\\|CO2", paste0("Emi|CO2|", addedString), .) %>%
-      sub("^Emi\\|GHG", paste0("Emi|GHG|", addedString), .)
+      sub("^Emi\\|GHG", paste0("Emi|GHG|", addedString), .) %>%
+      sub("^Carbon Management\\|Storage", paste0("Carbon Management|Storage|", addedString), .)
   }
 
   # emissions variables with bunkers. Insert 'w/ Bunkers' into variable name
@@ -3838,7 +3839,8 @@ reportEmi <- function(gdx, output = NULL, regionSubsetList = NULL,
     "Emi|CO2|CDR|+|EW (Mt CO2/yr)",
     "Emi|CO2|CDR|+|OAE (Mt CO2/yr)",
     "Emi|CO2|CDR|+|Land-Use Change (Mt CO2/yr)",
-    "Emi|CO2|CDR|+|Materials (Mt CO2/yr)"
+    "Emi|CO2|CDR|+|Materials (Mt CO2/yr)",
+    "Carbon Management|Storage (Mt CO2/yr)"
   ) %>%
     intersect(getNames(out)) # keep only variables that are in out
 
