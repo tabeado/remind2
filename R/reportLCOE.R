@@ -1375,7 +1375,27 @@ reportLCOE <- function(gdx, output.type = "both") {
       right_join(df.Fuel.Price, by = c("region", "fuel")) %>%
       rename(secfuel.price = fuel.price)
 
+    # Identify which technologies have two co-products
+    dup_secfuel_techs <- df.secfuel %>%
+      dplyr::count(region, period, tech, fuel, name = "n") %>%
+      filter(n > 1) %>%
+      mutate(tech = droplevels(tech)) %>%
+      select(tech) %>%
+      unique()
 
+    # create a new dataframe, that has only the second co-product for those technologies that have two co-products
+    df.secfuel2 <- df.secfuel %>% mutate(secfuel2 = dplyr::if_else(tech %in% dup_secfuel_techs$tech, as.character(secfuel), NA_character_),
+                      secfuel2.prod = dplyr::if_else(tech %in% dup_secfuel_techs$tech, secfuel.prod, NA_real_),
+                      secfuel2.price = dplyr::if_else(tech %in% dup_secfuel_techs$tech, secfuel.price, NA_real_)) %>%
+                     group_by(region, period, tech) %>%
+                     filter(dplyr::row_number() == 2 | !(tech %in% dup_secfuel_techs$tech)) %>%
+                     ungroup() %>% select(c(region, tech, fuel, secfuel2, secfuel2.prod, period, secfuel2.price)) 
+    
+    # for df.secfuel, keep only the first appearing secfuel for the dup_secfuel_techs$tech                           
+    df.secfuel <- df.secfuel %>%
+      group_by(region, period, tech) %>%
+      filter(dplyr::row_number() == 1 | !(tech %in% dup_secfuel_techs$tech)) %>%
+      ungroup()
 
 
     ### Read curtailment share -----
@@ -1535,6 +1555,7 @@ reportLCOE <- function(gdx, output.type = "both") {
       left_join(df.co2_dem, by = c("region", "period", if (ccuRealization == "on") "tech")) %>%
       left_join(df.CO2StoreShare, by = c("region", "period")) %>%
       left_join(df.secfuel, by = c("region", "period", "tech", "fuel")) %>%
+      left_join(df.secfuel2, by = c("region", "period", "tech", "fuel")) %>%
       left_join(df.curtShare, by = c("region", "period", "tech")) %>%
       left_join(df.CCStax, by = c("region", "period", "tech")) %>%
       left_join(df.flexPriceShare, by = c("region", "period", "tech")) %>%
@@ -1552,9 +1573,13 @@ reportLCOE <- function(gdx, output.type = "both") {
 
     # replace NA by 0 in certain columns
     # columns where NA should be replaced by 0
-    col.NA.zero <- c("OMF", "OMV", "AdjCost", "co2.price", "co2.price.weighted", "fuel.price", "fuel.price.weighted", "co2_dem", "emiFac.se2fe", "Co2.Capt.Price",
-                     "secfuel.prod", "secfuel.price", "curtShare", "CCStax.cost", "FEtax", "AddH2TdCost", "tau_SE_tax")
-    df.LCOE[, col.NA.zero][is.na(df.LCOE[, col.NA.zero])] <- 0
+    col.NA.zero <- c("OMF", "OMV", "AdjCost", "co2.price", "co2.price.weighted", "fuel.price", "fuel.price.weighted", "co2_dem",  "Co2.Capt.Price", "emiFac.se2fe",
+                     "secfuel.prod", "secfuel.price", "secfuel2", "secfuel2.prod", "secfuel2.price", "curtShare", "CCStax.cost", "FEtax", "AddH2TdCost", "tau_SE_tax")
+                     
+    df.LCOE[, col.NA.zero] <- lapply(df.LCOE[, col.NA.zero], function(x) {
+      x[is.na(x)] <- 0
+      x
+    })
 
     # replace NA by 1 in certain columns
     # columns where NA should be replaced by 1
@@ -1648,6 +1673,7 @@ reportLCOE <- function(gdx, output.type = "both") {
       # is positive for cost of second input
       # is negative for benefit of a second output
       mutate(`Second Fuel Cost` = -(secfuel.prod * secfuel.price)) %>%
+      mutate(`Third Fuel Cost` = -(secfuel2.prod * secfuel2.price)) %>%
       # curtailment cost are generation LCOE of VRE technologies of curtailed generation
       mutate(`Curtailment Cost` = curtShare / (1 - curtShare) * (`Investment Cost` + `OMF Cost` + `OMV Cost`)) %>%
       # CCS Tax cost as defined in 21_tax module
@@ -1665,10 +1691,10 @@ reportLCOE <- function(gdx, output.type = "both") {
       mutate(
         # Total LCOE with fuel cost and co2 tax cost based on fuel prices and carbon prices of time step for which LCOE are calculated
         `Total LCOE (time step prices)` = `Investment Cost` + `OMF Cost` + `OMV Cost` + `Adjustment Cost` + `Fuel Cost (time step prices)` + `CO2 Tax Cost (time step prices)` +
-          `CO2 Provision Cost` + `Second Fuel Cost` + `CCS Tax Cost` + `Curtailment Cost` + `Flex Tax` + `SE Tax` + `FE Tax` + `Additional H2 t&d Cost`,
+          `CO2 Provision Cost` + `Second Fuel Cost` + `Third Fuel Cost` + `CCS Tax Cost` + `Curtailment Cost` + `Flex Tax` + `SE Tax` + `FE Tax` + `Additional H2 t&d Cost`,
         # Total LCOE with fuel cost and co2 tax cost based on fuel prices and carbon prices that are intertemporally weighted and averaged over the plant lifetime
         `Total LCOE (intertemporal prices)` = `Investment Cost` + `OMF Cost` + `OMV Cost` + `Adjustment Cost` + `Fuel Cost (intertemporal prices)` + `CO2 Tax Cost (intertemporal prices)` +
-          `CO2 Provision Cost` + `Second Fuel Cost` + `CCS Tax Cost` + `Curtailment Cost` + `Flex Tax` + `SE Tax` + `FE Tax` + `Additional H2 t&d Cost`)
+          `CO2 Provision Cost` + `Second Fuel Cost` + `Third Fuel Cost` + `CCS Tax Cost` + `Curtailment Cost` + `Flex Tax` + `SE Tax` + `FE Tax` + `Additional H2 t&d Cost`)
 
 
     # Levelized Cost of UE in Buildings Putty Realization ----
@@ -1682,7 +1708,7 @@ reportLCOE <- function(gdx, output.type = "both") {
              `Investment Cost`, `Adjustment Cost`, `OMF Cost`, `OMV Cost`,
              `Fuel Cost (time step prices)`, `CO2 Tax Cost (time step prices)`,
              `Fuel Cost (intertemporal prices)`, `CO2 Tax Cost (intertemporal prices)`,
-             `CO2 Provision Cost`, `Second Fuel Cost`, `Curtailment Cost`,
+             `CO2 Provision Cost`, `Second Fuel Cost`, `Third Fuel Cost`, `Curtailment Cost`,
              `CCS Tax Cost`, `Flex Tax`, `SE Tax`, `FE Tax`, `Additional H2 t&d Cost`,
              `Total LCOE (time step prices)`,
              `Total LCOE (intertemporal prices)`
