@@ -1374,28 +1374,25 @@ reportLCOE <- function(gdx, output.type = "both") {
       select(region, tech, fuel, secfuel, secfuel.prod) %>%
       right_join(df.Fuel.Price, by = c("region", "fuel")) %>%
       rename(secfuel.price = fuel.price)
-
-    # Identify which technologies have two co-products
-    dup_secfuel_techs <- df.secfuel %>%
-      dplyr::count(region, period, tech, fuel, name = "n") %>%
-      filter(n > 1) %>%
-      mutate(tech = droplevels(tech)) %>%
-      select(tech) %>%
-      unique()
-
-    # create a new dataframe, that has only the second co-product for those technologies that have two co-products
-    df.secfuel2 <- df.secfuel %>% mutate(secfuel2 = dplyr::if_else(tech %in% dup_secfuel_techs$tech, as.character(secfuel), NA_character_),
-                      secfuel2.prod = dplyr::if_else(tech %in% dup_secfuel_techs$tech, secfuel.prod, NA_real_),
-                      secfuel2.price = dplyr::if_else(tech %in% dup_secfuel_techs$tech, secfuel.price, NA_real_)) %>%
-                     group_by(region, period, tech) %>%
-                     filter(dplyr::row_number() == 2 | !(tech %in% dup_secfuel_techs$tech)) %>%
-                     ungroup() %>% select(c(region, tech, fuel, secfuel2, secfuel2.prod, period, secfuel2.price)) 
     
-    # for df.secfuel, keep only the first appearing secfuel for the dup_secfuel_techs$tech                           
-    df.secfuel <- df.secfuel %>%
-      group_by(region, period, tech) %>%
-      filter(dplyr::row_number() == 1 | !(tech %in% dup_secfuel_techs$tech)) %>%
-      ungroup()
+    # Identify multiple co-products per (region, period, tech, fuel) and split deterministically into 1st/2nd co-product
+     df.secfuel_ranked <- df.secfuel %>%
+       group_by(region, period, tech, fuel) %>%
+       arrange(secfuel, .by_group = TRUE) %>%
+       mutate(.secfuel_rank = dplyr::row_number()) %>%
+       ungroup()
+     
+     df.secfuel2 <- df.secfuel_ranked %>%
+       filter(.secfuel_rank == 2) %>%
+       dplyr::transmute(region, period, tech, fuel,
+                 secfuel2 = as.character(secfuel),
+                 secfuel2.prod = secfuel.prod,
+                 secfuel2.price = secfuel.price) 
+
+     df.secfuel <- df.secfuel_ranked %>%
+       filter(.secfuel_rank == 1) %>%
+       select(-.secfuel_rank)
+
 
 
     ### Read curtailment share -----
