@@ -1377,21 +1377,21 @@ reportLCOE <- function(gdx, output.type = "both") {
     
     # Identify multiple co-products per (region, period, tech, fuel) and split deterministically into 1st/2nd co-product
      df.secfuel_ranked <- df.secfuel %>%
-       group_by(region, period, tech, fuel) %>%
-       arrange(secfuel, .by_group = TRUE) %>%
-       mutate(.secfuel_rank = dplyr::row_number()) %>%
+       group_by(.data$region, .data$period, .data$tech, .data$fuel) %>%
+       arrange(.data$secfuel, .by_group = TRUE) %>%
+       mutate(".secfuel_rank" = dplyr::row_number()) %>%
        ungroup()
      
      df.secfuel2 <- df.secfuel_ranked %>%
-       filter(.secfuel_rank == 2) %>%
+       filter(.data$.secfuel_rank == 2) %>%
        dplyr::transmute(region, period, tech, fuel,
-                 secfuel2 = as.character(secfuel),
+                 secfuel2 = as.character(.data$secfuel),
                  secfuel2.prod = secfuel.prod,
                  secfuel2.price = secfuel.price) 
 
      df.secfuel <- df.secfuel_ranked %>%
-       filter(.secfuel_rank == 1) %>%
-       select(-.secfuel_rank)
+       filter(.data$.secfuel_rank == 1) %>%
+       select(-.data$.secfuel_rank)
 
 
 
@@ -1670,7 +1670,7 @@ reportLCOE <- function(gdx, output.type = "both") {
       # is positive for cost of second input
       # is negative for benefit of a second output
       mutate(`Second Fuel Cost` = -(secfuel.prod * secfuel.price)) %>%
-      mutate(`Third Fuel Cost` = -(secfuel2.prod * secfuel2.price)) %>%
+      mutate(`Third Fuel Cost` = -(.data$secfuel2.prod * .data$secfuel2.price)) %>%
       # curtailment cost are generation LCOE of VRE technologies of curtailed generation
       mutate(`Curtailment Cost` = curtShare / (1 - curtShare) * (`Investment Cost` + `OMF Cost` + `OMV Cost`)) %>%
       # CCS Tax cost as defined in 21_tax module
@@ -1688,10 +1688,10 @@ reportLCOE <- function(gdx, output.type = "both") {
       mutate(
         # Total LCOE with fuel cost and co2 tax cost based on fuel prices and carbon prices of time step for which LCOE are calculated
         `Total LCOE (time step prices)` = `Investment Cost` + `OMF Cost` + `OMV Cost` + `Adjustment Cost` + `Fuel Cost (time step prices)` + `CO2 Tax Cost (time step prices)` +
-          `CO2 Provision Cost` + `Second Fuel Cost` + `Third Fuel Cost` + `CCS Tax Cost` + `Curtailment Cost` + `Flex Tax` + `SE Tax` + `FE Tax` + `Additional H2 t&d Cost`,
+          `CO2 Provision Cost` + `Second Fuel Cost` + .data$`Third Fuel Cost` + `CCS Tax Cost` + `Curtailment Cost` + `Flex Tax` + `SE Tax` + `FE Tax` + `Additional H2 t&d Cost`,
         # Total LCOE with fuel cost and co2 tax cost based on fuel prices and carbon prices that are intertemporally weighted and averaged over the plant lifetime
         `Total LCOE (intertemporal prices)` = `Investment Cost` + `OMF Cost` + `OMV Cost` + `Adjustment Cost` + `Fuel Cost (intertemporal prices)` + `CO2 Tax Cost (intertemporal prices)` +
-          `CO2 Provision Cost` + `Second Fuel Cost` + `Third Fuel Cost` + `CCS Tax Cost` + `Curtailment Cost` + `Flex Tax` + `SE Tax` + `FE Tax` + `Additional H2 t&d Cost`)
+          `CO2 Provision Cost` + `Second Fuel Cost` + .data$`Third Fuel Cost` + `CCS Tax Cost` + `Curtailment Cost` + `Flex Tax` + `SE Tax` + `FE Tax` + `Additional H2 t&d Cost`)
 
 
     # Levelized Cost of UE in Buildings Putty Realization ----
@@ -1705,7 +1705,7 @@ reportLCOE <- function(gdx, output.type = "both") {
              `Investment Cost`, `Adjustment Cost`, `OMF Cost`, `OMV Cost`,
              `Fuel Cost (time step prices)`, `CO2 Tax Cost (time step prices)`,
              `Fuel Cost (intertemporal prices)`, `CO2 Tax Cost (intertemporal prices)`,
-             `CO2 Provision Cost`, `Second Fuel Cost`, `Third Fuel Cost`, `Curtailment Cost`,
+             `CO2 Provision Cost`, `Second Fuel Cost`, .data$`Third Fuel Cost`, `Curtailment Cost`,
              `CCS Tax Cost`, `Flex Tax`, `SE Tax`, `FE Tax`, `Additional H2 t&d Cost`,
              `Total LCOE (time step prices)`,
              `Total LCOE (intertemporal prices)`
