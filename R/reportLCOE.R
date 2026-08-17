@@ -488,8 +488,7 @@ reportLCOE <- function(gdx, output.type = "both") {
       v33_EW_onfield <- readGDX(gdx, c("v33_EW_onfield", "v33_grindrock_onfield"), restore_zeros = FALSE, field = "l", format = "first_found")[, ttot_from2005, ]
       v33_EW_onfield_sum <- dimSums(v33_EW_onfield, dim = 3)
 
-      # EW-specific fixed OM cost are given by v33_EW_transport_costs This cumulates a) completely fixed cost for mining, grinding and spreading; and b) fixed transportation cost that depend on the distance grade.
-      # To allow interpretation of the LC, separate these cost components.
+      # EW-specific fixed OM cost are given by v33_EW_transport_costs, i.e. fixed transportation cost that depend on the distance grade.
       p33_EW_transport_costs <- readGDX(gdx, c("p33_EW_transport_costs", "p33_transport_costs"), format = "first_found")
 
       EW_fixed_transport_cost <-  10^12 *  dimSums(p33_EW_transport_costs[, , getNames(v33_EW_onfield)] * v33_EW_onfield)
